@@ -1,0 +1,60 @@
+dockerizzare db
+struttura backend e chiamate al db
+creiamo porta su localhost (per test poi da togliere per mettere il ssr di tjaz)
+
+
+user
+{
+    id number
+    username string
+    mail    string
+    psw (criptata) string
+    token (forse) string 
+    wallet (indirizzo) string
+    friends_id[] (forse) number[]
+    match_history_ids[] number[]
+    admin bool
+    google_id string
+    player_stats
+}
+
+match
+{
+    id number
+    ids_users[] number[]
+    result string
+    stats
+}
+
+stats
+{
+    id_match
+    goal_scored[] map(id_player, number)
+}
+
+message (se ci sono gli amici)
+{
+    id number
+    username string
+    content number
+    time time_stamp 
+}
+
+tournament
+{
+    id number
+    ids_match[] number[]
+    ids_players[] number[]
+    time_start time_stamp
+    time_end time_stamp
+}
+
+player_stats
+{
+    id_player number
+    win number
+    lost number
+    goal_scored number
+    goal_taken number
+    elo(forse) number 
+}
