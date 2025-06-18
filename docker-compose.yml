@@ -1,12 +1,25 @@
 services:
+
   database:
     build:
       context: ./web/database
+    image: db-sqlite:0.1
+    container_name: database
+    env_file: .env
+    networks:
+      - transcendnet
     volumes:
       - sqlite_data:/var/www/app/data
+    restart: on-failure
+
   backend:
     build:
       context: ./web/backend
+    image: backend-fastify:0.1
+    container_name: backend
+    env_file: .env
+    networks:
+      - transcendnet
     volumes:
       - ./web/backend/srcs:/app/srcs
       - ./web/backend/package.json:/app/package.json
@@ -16,6 +29,19 @@ services:
       - "3000:3000"
     depends_on:
       - database
+    restart: on-failure
+
+
 volumes:
   backend_node_modules:
+    name: backend_node_modules
+    driver: local
   sqlite_data:
+    name: sqlite_data
+    driver: local
+
+
+networks:
+  transcendnet:
+    name: transcendnet
+    driver: bridge

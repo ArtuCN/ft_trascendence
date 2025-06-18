@@ -24,7 +24,8 @@ fclean: clean ## remove volumes and build cache
 	@docker system prune -a --volumes -f
 	@docker volume prune -f
 
-# clean_host_data: fclean ## removes host data; needs sudo
+clean_host_data: fclean ## removes all the volumes on your computer
+	@docker volume rm $$(docker volume ls -q)
 
 
 
