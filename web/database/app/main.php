@@ -50,15 +50,27 @@ $db->exec("CREATE TABLE friends (
     CHECK (user_id_1 < user_id_2)
 )");
 
+
+$db->exec("DROP TABLE IF EXISTS tournament");
+$db->exec("CREATE TABLE tournament (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tournament_name TEXT,
+    started BOOLEAN DEFAULT FALSE,
+    finished BOOLEAN DEFAULT FALSE
+)");
+
 $db->exec("DROP TABLE IF EXISTS game_match");
 $db->exec("CREATE TABLE game_match (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_tournament INTEGER, 
     time_stamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    number_of_players INTEGER
+    number_of_players INTEGER,
+    FOREIGN KEY (id_tournament) REFERENCES tournament(id)
 )");
+//non è obbligatorio che id_torunament ci sia, dipende se il game fa parte di un tournament o no
 
-$db->exec("DROP TABLE IF EXISTS player_stats");
-$db->exec("CREATE TABLE player_stats(
+$db->exec("DROP TABLE IF EXISTS player_match_stats");
+$db->exec("CREATE TABLE player_match_stats(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     id_user INTEGER,
     id_match INTEGER,
@@ -68,11 +80,24 @@ $db->exec("CREATE TABLE player_stats(
     FOREIGN KEY (id_match) REFERENCES game_match(id)
 )");
 
+$db->exec("DROP TABLE IF EXISTS player_all_time_stats");
+$db->exec("CREATE TABLE player_all_time_stats(
+    id_player PRIMARY KEY,
+    goal_scored INTEGER DEFAULT 0,
+    goal_taken INTEGER DEFAULT 0,
+    tournament_won INTGER DEFAULT 0,
+    FOREIGN KEY (id_player) REFERENCES user(id)
+)");
+
+
+
+//DA QUA IN POI E' PURO TESTING
+//TODO AGGIUNGERE FUNZIONI PIU COMODE CHE AGGIUNGANO AL DB MA DA CAPIRE DOVE
 $db->exec("INSERT INTO user (username, mail, psw) VALUES ('Mario_Bro', 'marione@marione.com', 'xxxxxxx')");
 $db->exec("INSERT INTO user (username, mail, psw) VALUES ('Luigi_Bro', 'luigi@marione.com', 'xxxxxxx')");
 $db->exec("INSERT INTO game_match (number_of_players) VALUES (2)");
-$db->exec("INSERT INTO player_stats (id_user, id_match, goal_scored, goal_taken) VALUES (1, 1, 3, 1)");
-$db->exec("INSERT INTO player_stats (id_user, id_match, goal_scored, goal_taken) VALUES (2, 1, 1, 3)");
+$db->exec("INSERT INTO player_match_stats (id_user, id_match, goal_scored, goal_taken) VALUES (1, 1, 3, 1)");
+$db->exec("INSERT INTO player_match_stats (id_user, id_match, goal_scored, goal_taken) VALUES (2, 1, 1, 3)");
 
 
 foreach ($db->query('SELECT * FROM user') as $row) {
@@ -84,7 +109,7 @@ echo PHP_EOL;
 foreach ($db->query('SELECT * FROM game_match') as $match) {
     echo "Match ID {$match['id']} - Number of Players: {$match['number_of_players']}" . PHP_EOL;
 
-    $stmt = $db->prepare('SELECT * FROM player_stats WHERE id_match = ?');
+    $stmt = $db->prepare('SELECT * FROM player_match_stats WHERE id_match = ?');
     $stmt->execute([$match['id']]);
     $playerStats = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
