@@ -2,15 +2,20 @@ services:
   database:
     build:
       context: ./web/database
+    volumes:
+      - sqlite_data:/var/www/app/data
   backend:
     build:
       context: ./web/backend
     volumes:
-      - ./web/backend:/app
+      - ./web/backend/srcs:/app/srcs
+      - ./web/backend/package.json:/app/package.json
       - backend_node_modules:/app/node_modules
+      - sqlite_data:/app/data
     ports:
       - "3000:3000"
     depends_on:
       - database
 volumes:
   backend_node_modules:
+  sqlite_data:
