@@ -2,28 +2,26 @@ import Fastify from 'fastify';
 import { insertUser, getAllUsers } from './db.js';
 
 const fastify = Fastify({ logger: true });
-
-// Route POST /users
 fastify.post('/users', async (request, reply) => {
-  const { name, mail } = request.body;
-  insertUser(name, mail, (err, result) => {
-    if (err) {
-      reply.code(500).send({ error: 'Errore durante l\'inserimento' });
-    } else {
-      reply.send({ success: true, id: result.id });
-    }
-  });
+  const { name, mail, psw } = request.body;
+
+  try {
+    const result = await insertUser(name, mail, psw);
+    reply.send({ success: true, id: result.id });
+  } catch (err) {
+    request.log.error(err);
+    reply.code(500).send({ error: 'Error while adding into the db' });
+  }
 });
 
-// Route GET /users
 fastify.get('/users', async (request, reply) => {
-  getAllUsers((err, users) => {
-    if (err) {
-      reply.code(500).send({ error: 'Errore durante la lettura degli utenti' });
-    } else {
-      reply.send(users);
-    }
-  });
+  try {
+    const users = await getAllUsers();
+    reply.send(users);
+  } catch (err) {
+    request.log.error(err);
+    reply.code(500).send({ error: 'Error while reading users' });
+  }
 });
 
 // Avvio del server

@@ -8,27 +8,30 @@ const db = new (verbose()).Database('./data/database.sqlite', (err) => {
     console.log('DB opened successfully!');
   }
 });
-
-export function insertUser(name, mail, callback) {
-  const query = 'INSERT INTO users (name, mail) VALUES (?, ?)';
-  db.run(query, [name, mail], function (err) {
-    if (err) {
-      console.error('Error while adding user:', err);
-      callback(err);
-    } else {
-      console.log(`User insert with ID ${this.lastID}`);
-      callback(null, { id: this.lastID });
-    }
+export function insertUser(name, mail, psw) {
+  return new Promise((resolve, reject) => {
+    const query = 'INSERT INTO user (name, mail, psw) VALUES (?, ?, ?)';
+    db.run(query, [name, mail, psw], function (err) {
+      if (err) {
+        console.error('Error while adding user:', err);
+        reject(err);
+      } else {
+        resolve({ id: this.lastID });
+      }
+    });
   });
 }
 
-export function getAllUsers(callback) {
-  db.all('SELECT * FROM users', (err, rows) => {
-    if (err) {
-      console.error('Error during SELECT:', err);
-      callback(err);
-    } else {
-      callback(null, rows);
-    }
+export function getAllUsers() {
+  return new Promise((resolve, reject) => {
+    db.all('SELECT * FROM user', (err, rows) => {
+      if (err) {
+        console.error('Error during SELECT:', err);
+        reject(err);
+      } else {
+        resolve(rows);
+      }
+    });
   });
 }
+
