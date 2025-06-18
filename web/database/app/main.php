@@ -2,27 +2,6 @@
 
 
 $db = new PDO('sqlite:/var/www/app/data/database.sqlite');
-function getUserIdByUsername(string $username, PDO $db) : ?int
-{
-    $stmt = $db->prepare("SELECT id FROM user WHERE username = :username LIMIT 1");
-    $stmt->execute(['username' => $username]);
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    if ($row) {
-        return (int)$row['id'];
-    }
-    return -1;
-}
-
-function getUsernameById(int $id, PDO $db) : ?string
-{
-    $stmt = $db->prepare("SELECT username FROM user WHERE id = :id LIMIT 1");
-    $stmt->execute(['id' => $id]);
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    if ($row) {
-        return (string)$row['username'];
-    }
-    return null;
-}
 
 
 $db->exec("DROP TABLE IF EXISTS user");
@@ -98,13 +77,20 @@ $db->exec("INSERT INTO user (username, mail, psw) VALUES ('Luigi_Bro', 'luigi@ma
 $db->exec("INSERT INTO game_match (number_of_players) VALUES (2)");
 $db->exec("INSERT INTO player_match_stats (id_user, id_match, goal_scored, goal_taken) VALUES (1, 1, 3, 1)");
 $db->exec("INSERT INTO player_match_stats (id_user, id_match, goal_scored, goal_taken) VALUES (2, 1, 1, 3)");
-
+$db->exec("INSERT INTO friends (user_id_1, user_id_2) VALUES (1, 2)");
 
 foreach ($db->query('SELECT * FROM user') as $row) {
     echo "User ID {$row['id']}: {$row['username']}, Mail: {$row['mail']}" . PHP_EOL;
 }
 
 echo PHP_EOL;
+
+foreach ($db->query('SELECT user_id_2 FROM friends WHERE user_id_1 = 1 UNION SELECT user_id_1 FROM friends WHERE user_id_2 = 1') as $row)
+{
+    echo "USER FRIEND ID = {$row['friend_id']}\n";
+}
+echo PHP_EOL;
+
 
 foreach ($db->query('SELECT * FROM game_match') as $match) {
     echo "Match ID {$match['id']} - Number of Players: {$match['number_of_players']}" . PHP_EOL;
