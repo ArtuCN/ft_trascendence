@@ -4,6 +4,8 @@ const canvas_container = document.getElementById("canvas-container")!;
 const ctx = canvas.getContext("2d")!;
 
 let nbrPlayer = 2;
+let leftPlayerGoal = 0;
+let rightPlayerGoal = 0;
 
 const keysPressed: Record<string, boolean> = {};
 
@@ -30,6 +32,10 @@ class Player {
 		this.Bar.drawPaddles();
 	}
 
+	public getNameTag() {
+		return this.nameTag;
+	}
+
 	public getPaddle() {
 		return this.Bar;
 	}
@@ -39,7 +45,7 @@ class Player {
 class Paddles {
 	// private nameTag: string;
 	private id;
-	private paddleLength = 100;
+	private paddleLength = 60;
 	private paddleThickness = 20;
 	private speed = 4;
 	private initialPosition;
@@ -65,9 +71,11 @@ class Paddles {
 		return this.speed;
 	}
 
-	public movePaddles() {
+	public reset() {
+		this.initialPosition = canvas.height / 2 - this.paddleLength / 2
+	}
 
-		let zero: number = 0;
+	public movePaddles() {
 		
 		for (let i = 0; i < nbrPlayer; i++) {
 
@@ -111,53 +119,118 @@ class Paddles {
 }
 
 class Ball {
-	private ballX = canvas.width / 2;
-	private ballY = canvas.height / 2;
-	private ballSpeedX = 2;
-	private ballSpeedY = 2;
-	private ballSize = 12;
+    private ballX = canvas.width / 2;
+    private ballY = canvas.height / 2;
+    private ballSize = 12;
+    private speed = 5;
+    private vx = this.speed * (Math.random() > 0.5 ? 1 : -1);
+    private vy = this.speed * (Math.random() * 2 - 1);
 
-	public moveBall(Player: Paddles) {
+    private resetGame(leftPlayer: Player, rightPlayer: Player) {
+        this.ballX = canvas.width / 2;
+        this.ballY = canvas.height / 2;
+        this.speed = 5;
+        // Randomize direction
+        const angle = (Math.random() * Math.PI / 2) - (Math.PI / 4); // -45° to 45°
+        const dir = Math.random() > 0.5 ? 1 : -1;
+        this.vx = this.speed * Math.cos(angle) * dir;
+        this.vy = this.speed * Math.sin(angle);
+        leftPlayer.getPaddle().reset();
+        rightPlayer.getPaddle().reset();
+    }
 
-		this.ballX += this.ballSpeedX;
-		this.ballY += this.ballSpeedY;
+    public moveBall(leftPlayer: Player, rightPlayer: Player) {
+        this.ballX += this.vx;
+        this.ballY += this.vy;
 
-		if (this.ballX < 0) {
-			alert("Player 2 win!");
-			this.ballSpeedX *= -1;
-		}
-		else if (this.ballX > canvas.width) {
-			alert("Player 1 win!");
-			this.ballSpeedX *= -1;
-		}
-		if (this.ballY < 0 || this.ballY > canvas.height)
-			this.ballSpeedY *= -1;
+        // Top/bottom wall collision
+        if (this.ballY < 0 + this.ballSize / 2) {
+            this.ballY = this.ballSize / 2;
+            this.vy *= -1;
+        }
+        if (this.ballY > canvas.height - this.ballSize / 2) {
+            this.ballY = canvas.height - this.ballSize / 2;
+            this.vy *= -1;
+        }
 
-		if ( this.ballX < 20 + Player.getPaddleThickness() &&
-			this.ballY > Player.getInitialPosition() &&
-			this.ballY < Player.getInitialPosition() + Player.getPaddleLength())
-		{
-			this.ballSpeedX *= -1;
-			this.ballX = 20 + Player.getPaddleThickness();
-		}
+        // Left goal
+        if (this.ballX < 0) {
+            rightPlayerGoal++;
+            drawScore();
+            if (rightPlayerGoal >= 5) {
+                rightPlayerGoal = 0;
+                leftPlayerGoal = 0;
+                alert(rightPlayer.getNameTag() + " win!");
+            }
+            this.resetGame(leftPlayer, rightPlayer);
+            return;
+        }
+        // Right goal
+        if (this.ballX > canvas.width) {
+            leftPlayerGoal++;
+            drawScore();
+            if (leftPlayerGoal >= 5) {
+                leftPlayerGoal = 0;
+                rightPlayerGoal = 0;
+                alert(leftPlayer.getNameTag() + " win!");
+            }
+            this.resetGame(leftPlayer, rightPlayer);
+            return;
+        }
 
-		if ( this.ballX > canvas.width - 20 - Player.getPaddleThickness() &&
-			this.ballY > Player.getInitialPosition() &&
-			this.ballY < Player.getInitialPosition() + Player.getPaddleLength())
-		{
-			this.ballSpeedX *= -1;
-			this.ballX = canvas.width - 20 - Player.getPaddleThickness();
-		}
-	}
+        // Paddle collision (left)
+        const leftPaddle = leftPlayer.getPaddle();
+        if (
+            this.ballX - this.ballSize / 2 < 20 + leftPaddle.getPaddleThickness() &&
+            this.ballY > leftPaddle.getInitialPosition() &&
+            this.ballY < leftPaddle.getInitialPosition() + leftPaddle.getPaddleLength()
+        ) {
+            this.ballX = 20 + leftPaddle.getPaddleThickness() + this.ballSize / 2;
+            this.calculateBounce(leftPaddle);
+        }
 
-	public drawBall() {
+        // Paddle collision (right)
+        const rightPaddle = rightPlayer.getPaddle();
+        if (
+            this.ballX + this.ballSize / 2 > canvas.width - 20 - rightPaddle.getPaddleThickness() &&
+            this.ballY > rightPaddle.getInitialPosition() &&
+            this.ballY < rightPaddle.getInitialPosition() + rightPaddle.getPaddleLength()
+        ) {
+            this.ballX = canvas.width - 20 - rightPaddle.getPaddleThickness() - this.ballSize / 2;
+            this.calculateBounce(rightPaddle, true);
+        }
+    }
 
-		ctx.beginPath();
-		ctx.arc(this.ballX, this.ballY, this.ballSize / 2, 0, Math.PI * 2);
-		ctx.fillStyle = "white";
-		ctx.fill();
-		ctx.closePath();
-	}
+    // Calculate bounce angle based on where the ball hits the paddle
+    private calculateBounce(paddle: Paddles, isRight: boolean = false) {
+        const paddleY = paddle.getInitialPosition();
+        const paddleLength = paddle.getPaddleLength();
+        const relativeIntersectY = (this.ballY - paddleY) - paddleLength / 2;
+        const normalizedRelativeIntersectionY = relativeIntersectY / (paddleLength / 2);
+        const bounceAngle = normalizedRelativeIntersectionY * (Math.PI / 4); // Max 45°
+
+        this.speed *= 1.05; // Optional: increase speed after each hit
+
+        const direction = isRight ? -1 : 1;
+        this.vx = direction * this.speed * Math.cos(bounceAngle);
+        this.vy = this.speed * Math.sin(bounceAngle);
+    }
+
+    public drawBall() {
+        ctx.beginPath();
+        ctx.arc(this.ballX, this.ballY, this.ballSize / 2, 0, Math.PI * 2);
+        ctx.fillStyle = "white";
+        ctx.fill();
+        ctx.closePath();
+    }
+}
+
+function drawScore() {
+	ctx.font = "bold 36px Arial";
+	ctx.fillStyle = "white";
+	ctx.textAlign = "center";
+	ctx.fillText(leftPlayerGoal.toString(), canvas.width / 4, 50);
+	ctx.fillText(rightPlayerGoal.toString(), (canvas.width * 3) / 4, 50);
 }
 
 function drawMiddleLine() {
@@ -185,10 +258,10 @@ function draw() {
 
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	drawMiddleLine();
+	drawScore();
 	Player1.drawAndMove();
 	Player2.drawAndMove();
-	Pebble.moveBall(Player1.getPaddle());
-	Pebble.moveBall(Player2.getPaddle());
+	Pebble.moveBall(Player1, Player2);
 	Pebble.drawBall();
 	requestAnimationFrame(draw);
 }
