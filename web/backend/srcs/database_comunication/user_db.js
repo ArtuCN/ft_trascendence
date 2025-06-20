@@ -1,5 +1,5 @@
 import sqlite3 from 'sqlite3';
-import models from './models/models.js'
+import models from '../models/models.js'
 
 const { verbose } = sqlite3;
 const db = new (verbose()).Database('./data/database.sqlite', (err) => {
@@ -52,3 +52,31 @@ export function getAllUsers() {
   });
 }
 
+
+export function getUserByMail(mail)
+{
+  return new Promise((resolve, reject)=> {
+    db.all('SELECT * FROM user WHERE mail = ?', [mail], (err, rows) => {
+      if (err) {
+        console.error('Error during SELECT by mail:', err);
+        reject(err);
+      } else {
+        resolve(rows);
+      }
+    });
+  });
+}
+
+export function getUserByUsername(username)
+{
+  return new Promise((resolve, reject)=> {
+    db.all('SELECT * FROM user WHERE username = ?', [username], (err, rows) => {
+      if (err) {
+        console.error('Error during SELECT by username:', err);
+        reject(err);
+      } else {
+        resolve(rows);
+      }
+    });
+  });
+}

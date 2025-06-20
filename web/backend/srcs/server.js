@@ -1,5 +1,5 @@
 import Fastify from 'fastify';
-import { insertUser, getAllUsers } from './db.js';
+import { insertUser, getAllUsers } from './database_comunication/user_db.js';
 import models from './models/models.js'
 
 const fastify = Fastify({ logger: true });
