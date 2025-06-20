@@ -1,11 +1,11 @@
 const button = document.getElementById("PlayButton") as HTMLButtonElement;
 const canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
 const canvas_container = document.getElementById("canvas-container")!;
+const SelectNbrPlayer = document.getElementById("nbrPlayerInput") as HTMLInputElement;
 const ctx = canvas.getContext("2d")!;
 
-let nbrPlayer = 2;
-let leftPlayerGoal = 0;
-let rightPlayerGoal = 0;
+let nbrPlayer: number = parseInt(SelectNbrPlayer.value, 10);
+let playerGoals = [0, 0, 0, 0];
 
 const keysPressed: Record<string, boolean> = {};
 
@@ -16,260 +16,393 @@ document.addEventListener("keyup", (e) => {
 	keysPressed[e.key] = false;
 });
 
+type PaddleOrientation = "vertical" | "horizontal";
+
 class Player {
-
 	private nameTag: string;
-	private Bar;
-	private touchBall: boolean = false;
+	private paddle: Paddles;
 
-	public constructor(name: string, id: number) {
+	public constructor(name: string, id: number, orientation: PaddleOrientation) {
 		this.nameTag = name;
-		this.Bar = new Paddles(id);
+		this.paddle = new Paddles(id, orientation);
 	}
 
 	public drawAndMove() {
-		this.Bar.movePaddles();
-		this.Bar.drawPaddles();
+		this.paddle.movePaddles();
+		this.paddle.drawPaddles();
 	}
 
-	public getNameTag() {
+	public getNameTag(): string {
 		return this.nameTag;
 	}
 
-	public getPaddle() {
-		return this.Bar;
+	public getPaddle(): Paddles {
+		return this.paddle;
 	}
-
 }
 
 class Paddles {
-	// private nameTag: string;
-	private id;
-	private paddleLength = 60;
-	private paddleThickness = 20;
-	private speed = 4;
-	private initialPosition;
+	private id: number;
+	private orientation: PaddleOrientation;
+	private paddleLength: number;
+	private paddleThickness: number;
+	private speed: number = 4;
+	private initialPosition: number;
 
-	public constructor(i: number) {
-			this.id = i + 1;
+	public constructor(i: number, orientation: PaddleOrientation) {
+
+		this.id = i;
+		this.orientation = orientation;
+		if (orientation === "vertical") {
+			this.paddleLength = 60;
+			this.paddleThickness = 20;
 			this.initialPosition = canvas.height / 2 - this.paddleLength / 2;
+		} else {
+			this.paddleLength = 60;
+			this.paddleThickness = 20;
+			this.initialPosition = canvas.width / 2 - this.paddleLength / 2;
+		}
 	}
 
-	public getPaddleLength() {
+	public getPaddleLength(): number {
 		return this.paddleLength;
 	}
 
-	public getPaddleThickness() {
+	public getPaddleThickness(): number {
 		return this.paddleThickness;
 	}
 
-	public getInitialPosition() {
+	public getInitialPosition(): number {
 		return this.initialPosition;
 	}
 
-	public getSpeed() {
+	public getSpeed(): number {
 		return this.speed;
 	}
 
 	public reset() {
-		this.initialPosition = canvas.height / 2 - this.paddleLength / 2
+		if (this.orientation === "vertical")
+			this.initialPosition = canvas.height / 2 - this.paddleLength / 2;
+		else
+			this.initialPosition = canvas.width / 2 - this.paddleLength / 2;
 	}
 
 	public movePaddles() {
-		
-		for (let i = 0; i < nbrPlayer; i++) {
-
-			if (this.id % 2 != 0) {
-				if (keysPressed["s"] && this.initialPosition <= (canvas.height - this.paddleLength)
-					&& this.initialPosition >= 0)
-					 this.initialPosition += this.speed;
-				if (keysPressed["w"] && this.initialPosition <= (canvas.height - this.paddleLength)
-					&& this.initialPosition >= 0)
-					this.initialPosition -= this.speed;
-				else if (this.initialPosition > (canvas.height - this.paddleLength))
-					this.initialPosition = canvas.height - this.paddleLength - 1;
-				else if (this.initialPosition < 0)
-					this.initialPosition = 1;
-			}
-			else {
-				if (keysPressed["ArrowUp"]&& this.initialPosition <= (canvas.height - this.paddleLength)
-					&& this.initialPosition >= 0)
-					this.initialPosition -= this.speed;
-				if (keysPressed["ArrowDown"]&& this.initialPosition <= (canvas.height - this.paddleLength)
-					&& this.initialPosition >= 0)
-					this.initialPosition += this.speed;
-				else if (this.initialPosition > (canvas.height - this.paddleLength))
-					this.initialPosition = canvas.height - this.paddleLength - 1;
-				else if (this.initialPosition < 0)
-					this.initialPosition = 1;
-			}
+		// Left paddle (Player 0, vertical)
+		if (this.id === 0 && this.orientation === "vertical") {
+			if (keysPressed["s"] && this.initialPosition <= (canvas.height - this.paddleLength))
+				this.initialPosition += this.speed;
+			if (keysPressed["w"] && this.initialPosition >= 0)
+				this.initialPosition -= this.speed;
 		}
-
+		// Right paddle (Player 1, vertical)
+		else if (this.id === 1 && this.orientation === "vertical") {
+			if (keysPressed["ArrowDown"] && this.initialPosition <= (canvas.height - this.paddleLength))
+				this.initialPosition += this.speed;
+			if (keysPressed["ArrowUp"] && this.initialPosition >= 0)
+				this.initialPosition -= this.speed;
+		}
+		// Top paddle (Player 2, horizontal)
+		else if (this.id === 2 && this.orientation === "horizontal") {
+			if (keysPressed["d"] && this.initialPosition <= (canvas.width - this.paddleLength))
+				this.initialPosition += this.speed;
+			if (keysPressed["a"] && this.initialPosition >= 0)
+				this.initialPosition -= this.speed;
+		}
+		// Bottom paddle (Player 3, horizontal)
+		else if (this.id === 3 && this.orientation === "horizontal") {
+			if (keysPressed["l"] && this.initialPosition <= (canvas.width - this.paddleLength))
+				this.initialPosition += this.speed;
+			if (keysPressed["j"] && this.initialPosition >= 0)
+				this.initialPosition -= this.speed;
+		}
+		// Clamp position
+		if (this.orientation === "vertical") {
+			if (this.initialPosition > (canvas.height - this.paddleLength))
+				this.initialPosition = canvas.height - this.paddleLength;
+			if (this.initialPosition < 0)
+				this.initialPosition = 0;
+		} else {
+			if (this.initialPosition > (canvas.width - this.paddleLength))
+				this.initialPosition = canvas.width - this.paddleLength;
+			if (this.initialPosition < 0)
+				this.initialPosition = 0;
+		}
 	}
-
 	public drawPaddles() {
-
 		ctx.fillStyle = "white";
-
-		if (this.id % 2 != 0)
-			ctx.fillRect(20, this.initialPosition, this.paddleThickness, this.paddleLength);
-		else
-			ctx.fillRect(canvas.width - 20 - this.paddleThickness, this.initialPosition, this.paddleThickness, this.paddleLength);
+		if (this.orientation === "vertical") {
+			if (this.id === 0)
+				ctx.fillRect(20, this.initialPosition, this.paddleThickness, this.paddleLength); // Left
+			else
+				ctx.fillRect(canvas.width - 20 - this.paddleThickness, this.initialPosition, this.paddleThickness, this.paddleLength); // Right
+		}
+		else if (this.orientation === "horizontal") {
+			if (this.id === 2)
+				ctx.fillRect(this.initialPosition, 20, this.paddleLength, this.paddleThickness); // Top
+			else
+				ctx.fillRect(this.initialPosition, canvas.height - 20 - this.paddleThickness, this.paddleLength, this.paddleThickness); // Bottom
+		}
 	}
+}
+// Reset goalscore
+function resetGoalscore() {
+	playerGoals = [0, 0, 0, 0];
 }
 
 class Ball {
-    private ballX = canvas.width / 2;
-    private ballY = canvas.height / 2;
-    private ballSize = 12;
-    private speed = 5;
-    private vx = this.speed * (Math.random() > 0.5 ? 1 : -1);
-    private vy = this.speed * (Math.random() * 2 - 1);
+	private ballX: number = canvas.width / 2;
+	private ballY: number = canvas.height / 2;
+	private ballSize: number = 12;
+	private speed: number = 5;
+	private vx: number = this.speed * (Math.random() > 0.5 ? 1 : -1);
+	private vy: number = this.speed * (Math.random() * 2 - 1);
+	private lastTouchedPlayer: number = -1; // -1 means no player touched the ball yet
 
-    private resetGame(leftPlayer: Player, rightPlayer: Player) {
-        this.ballX = canvas.width / 2;
-        this.ballY = canvas.height / 2;
-        this.speed = 5;
-        // Randomize direction
-        const angle = (Math.random() * Math.PI / 2) - (Math.PI / 4); // -45° to 45°
-        const dir = Math.random() > 0.5 ? 1 : -1;
-        this.vx = this.speed * Math.cos(angle) * dir;
-        this.vy = this.speed * Math.sin(angle);
-        leftPlayer.getPaddle().reset();
-        rightPlayer.getPaddle().reset();
-    }
+	private resetGame(players: Player[]) {
+		this.ballX = canvas.width / 2;
+		this.ballY = canvas.height / 2;
+		this.speed = 5;
+		const angle: number = (Math.random() * Math.PI * 2); // Any direction
+		this.vx = this.speed * Math.cos(angle);
+		this.vy = this.speed * Math.sin(angle);
+		players.forEach(p => p.getPaddle().reset());
+		this.lastTouchedPlayer = -1; // Reset last touched player
+	}
 
-    public moveBall(leftPlayer: Player, rightPlayer: Player) {
-        this.ballX += this.vx;
-        this.ballY += this.vy;
+		// Left goal
+	 public moveBall(players: Player[]) {
+		this.ballX += this.vx;
+		this.ballY += this.vy;
 
-        // Top/bottom wall collision
-        if (this.ballY < 0 + this.ballSize / 2) {
-            this.ballY = this.ballSize / 2;
-            this.vy *= -1;
-        }
-        if (this.ballY > canvas.height - this.ballSize / 2) {
-            this.ballY = canvas.height - this.ballSize / 2;
-            this.vy *= -1;
-        }
+		// Left goal
+		if (this.ballX < 0) {
+			if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
+			drawScore(nbrPlayer);
+			this.resetGame(players);
+			return;
+		}
+		// Right goal
+		if (this.ballX > canvas.width) {
+			if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
+			drawScore(nbrPlayer);
+			this.resetGame(players);
+			return;
+		}
+		if (nbrPlayer == 2) {
+			// Bounce off top wall
+			if (this.ballY - this.ballSize / 2 <= 0) {
+				this.ballY = this.ballSize / 2;
+				this.vy *= -1;
+			}
+			// Bounce off bottom wall
+			if (this.ballY + this.ballSize / 2 >= canvas.height) {
+				this.ballY = canvas.height - this.ballSize / 2;
+				this.vy *= -1;
+			}
+		}
+		else if (nbrPlayer == 4) {
+			if (this.ballY < 0) {
+				if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
+				drawScore(nbrPlayer);
+				this.resetGame(players);
+				return;
+			}
+			// Bottom goal
+			if (this.ballY > canvas.height) {
+				if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
+				drawScore(nbrPlayer);
+				this.resetGame(players);
+				return;
+			}
+		}
 
-        // Left goal
-        if (this.ballX < 0) {
-            rightPlayerGoal++;
-            drawScore();
-            if (rightPlayerGoal >= 5) {
-                rightPlayerGoal = 0;
-                leftPlayerGoal = 0;
-                alert(rightPlayer.getNameTag() + " win!");
-            }
-            this.resetGame(leftPlayer, rightPlayer);
-            return;
-        }
-        // Right goal
-        if (this.ballX > canvas.width) {
-            leftPlayerGoal++;
-            drawScore();
-            if (leftPlayerGoal >= 5) {
-                leftPlayerGoal = 0;
-                rightPlayerGoal = 0;
-                alert(leftPlayer.getNameTag() + " win!");
-            }
-            this.resetGame(leftPlayer, rightPlayer);
-            return;
-        }
+		// Paddle collisions
+		// Only check paddles that exist
+		if (nbrPlayer == 2) {
+			// Left paddle (Player 0)
+			const leftPaddle = players[1].getPaddle();
+			if (
+				this.ballX - this.ballSize / 2 <= 20 + leftPaddle.getPaddleThickness() &&
+				this.ballY + this.ballSize / 2 >= leftPaddle.getInitialPosition() &&
+				this.ballY - this.ballSize / 2 <= leftPaddle.getInitialPosition() + leftPaddle.getPaddleLength()
+			) {
+				this.ballX = 20 + leftPaddle.getPaddleThickness() + this.ballSize / 2;
+				this.calculateBounce(leftPaddle, "vertical");
+			}
+			// Right paddle (Player 1)
+			const rightPaddle = players[0].getPaddle();
+			if (
+				this.ballX + this.ballSize / 2 >= canvas.width - 20 - rightPaddle.getPaddleThickness() &&
+				this.ballY + this.ballSize / 2 >= rightPaddle.getInitialPosition() &&
+				this.ballY - this.ballSize / 2 <= rightPaddle.getInitialPosition() + rightPaddle.getPaddleLength()
+			) {
+				this.ballX = canvas.width - 20 - rightPaddle.getPaddleThickness() - this.ballSize / 2;
+				this.calculateBounce(rightPaddle, "vertical", true);
+			}
+		}
 
-        // Paddle collision (left)
-        const leftPaddle = leftPlayer.getPaddle();
-        if (
-            this.ballX - this.ballSize / 2 < 20 + leftPaddle.getPaddleThickness() &&
-            this.ballY > leftPaddle.getInitialPosition() &&
-            this.ballY < leftPaddle.getInitialPosition() + leftPaddle.getPaddleLength()
-        ) {
-            this.ballX = 20 + leftPaddle.getPaddleThickness() + this.ballSize / 2;
-            this.calculateBounce(leftPaddle);
-        }
+		if (nbrPlayer == 4) {
+			// Left paddle (Player 0)
+			const leftPaddle = players[1].getPaddle();
+			if (
+				this.ballX - this.ballSize / 2 <= 20 + leftPaddle.getPaddleThickness() &&
+				this.ballY + this.ballSize / 2 >= leftPaddle.getInitialPosition() &&
+				this.ballY - this.ballSize / 2 <= leftPaddle.getInitialPosition() + leftPaddle.getPaddleLength()
+			) {
+				this.ballX = 20 + leftPaddle.getPaddleThickness() + this.ballSize / 2;
+				this.calculateBounce(leftPaddle, "vertical");
+			}
+			// Right paddle (Player 1)
+			const rightPaddle = players[0].getPaddle();
+			if (
+				this.ballX + this.ballSize / 2 >= canvas.width - 20 - rightPaddle.getPaddleThickness() &&
+				this.ballY + this.ballSize / 2 >= rightPaddle.getInitialPosition() &&
+				this.ballY - this.ballSize / 2 <= rightPaddle.getInitialPosition() + rightPaddle.getPaddleLength()
+			) {
+				this.ballX = canvas.width - 20 - rightPaddle.getPaddleThickness() - this.ballSize / 2;
+				this.calculateBounce(rightPaddle, "vertical", true);
+			}
+			// Top paddle (Player 2)
+			const topPaddle = players[2].getPaddle();
+			if (
+				this.ballY - this.ballSize / 2 <= 20 + topPaddle.getPaddleThickness() &&
+				this.ballX + this.ballSize / 2 >= topPaddle.getInitialPosition() &&
+				this.ballX - this.ballSize / 2 <= topPaddle.getInitialPosition() + topPaddle.getPaddleLength()
+			) {
+				this.ballY = 20 + topPaddle.getPaddleThickness() + this.ballSize / 2;
+				this.calculateBounce(topPaddle, "horizontal");
+			}
+			// Bottom paddle (Player 3)
+			const bottomPaddle = players[3].getPaddle();
+			if (
+				this.ballY + this.ballSize / 2 >= canvas.height - 20 - bottomPaddle.getPaddleThickness() &&
+				this.ballX + this.ballSize / 2 >= bottomPaddle.getInitialPosition() &&
+				this.ballX - this.ballSize / 2 <= bottomPaddle.getInitialPosition() + bottomPaddle.getPaddleLength()
+			) {
+				this.ballY = canvas.height - 20 - bottomPaddle.getPaddleThickness() - this.ballSize / 2;
+				this.calculateBounce(bottomPaddle, "horizontal", true);
+			}
+		}
+	}
 
-        // Paddle collision (right)
-        const rightPaddle = rightPlayer.getPaddle();
-        if (
-            this.ballX + this.ballSize / 2 > canvas.width - 20 - rightPaddle.getPaddleThickness() &&
-            this.ballY > rightPaddle.getInitialPosition() &&
-            this.ballY < rightPaddle.getInitialPosition() + rightPaddle.getPaddleLength()
-        ) {
-            this.ballX = canvas.width - 20 - rightPaddle.getPaddleThickness() - this.ballSize / 2;
-            this.calculateBounce(rightPaddle, true);
-        }
-    }
+	private calculateBounce(paddle: Paddles, orientation: PaddleOrientation, isReverse: boolean = false) {
+		let relativeIntersect: number, normalizedRelativeIntersection: number, bounceAngle: number;
+		if (orientation === "vertical") {
+			const paddleY = paddle.getInitialPosition();
+			const paddleLength = paddle.getPaddleLength();
+			relativeIntersect = (this.ballY - paddleY) - paddleLength / 2;
+			normalizedRelativeIntersection = relativeIntersect / (paddleLength / 2);
+			bounceAngle = normalizedRelativeIntersection * (Math.PI / 4); // Max 45°
+			this.speed *= 1.05;
+			const direction = isReverse ? -1 : 1;
+			this.vx = direction * this.speed * Math.cos(bounceAngle);
+			this.vy = this.speed * Math.sin(bounceAngle);
+		} else {
+			const paddleX = paddle.getInitialPosition();
+			const paddleLength = paddle.getPaddleLength();
+			relativeIntersect = (this.ballX - paddleX) - paddleLength / 2;
+			normalizedRelativeIntersection = relativeIntersect / (paddleLength / 2);
+			bounceAngle = normalizedRelativeIntersection * (Math.PI / 4); // Max 45°
+			this.speed *= 1.05;
+			const direction = isReverse ? -1 : 1;
+			this.vy = direction * this.speed * Math.cos(bounceAngle);
+			this.vx = this.speed * Math.sin(bounceAngle);
+		}
+	}
 
-    // Calculate bounce angle based on where the ball hits the paddle
-    private calculateBounce(paddle: Paddles, isRight: boolean = false) {
-        const paddleY = paddle.getInitialPosition();
-        const paddleLength = paddle.getPaddleLength();
-        const relativeIntersectY = (this.ballY - paddleY) - paddleLength / 2;
-        const normalizedRelativeIntersectionY = relativeIntersectY / (paddleLength / 2);
-        const bounceAngle = normalizedRelativeIntersectionY * (Math.PI / 4); // Max 45°
-
-        this.speed *= 1.05; // Optional: increase speed after each hit
-
-        const direction = isRight ? -1 : 1;
-        this.vx = direction * this.speed * Math.cos(bounceAngle);
-        this.vy = this.speed * Math.sin(bounceAngle);
-    }
-
-    public drawBall() {
-        ctx.beginPath();
-        ctx.arc(this.ballX, this.ballY, this.ballSize / 2, 0, Math.PI * 2);
-        ctx.fillStyle = "white";
-        ctx.fill();
-        ctx.closePath();
-    }
+	public drawBall() {
+		ctx.beginPath();
+		ctx.arc(this.ballX, this.ballY, this.ballSize / 2, 0, Math.PI * 2);
+		ctx.fillStyle = "white";
+		ctx.fill();
+		ctx.closePath();
+	}
 }
 
-function drawScore() {
+function drawScore(nbrPlayer: number) {
 	ctx.font = "bold 36px Arial";
 	ctx.fillStyle = "white";
-	ctx.textAlign = "center";
-	ctx.fillText(leftPlayerGoal.toString(), canvas.width / 4, 50);
-	ctx.fillText(rightPlayerGoal.toString(), (canvas.width * 3) / 4, 50);
+
+	ctx.textAlign = "left";
+	ctx.textBaseline = "top";
+	if (nbrPlayer == 2) {
+		ctx.fillText(playerGoals[0].toString(), 20, 20); // Left player
+		ctx.fillText(playerGoals[1].toString(), canvas.width - 20, 20); // Right player
+	}
+	if (nbrPlayer == 4) {
+		ctx.fillText(playerGoals[0].toString(), 20, 20); // Left player
+		ctx.fillText(playerGoals[1].toString(), canvas.width - 20, 20); // Right player
+		ctx.fillText(playerGoals[2].toString(), 20, canvas.height - 20); // Top player
+		ctx.fillText(playerGoals[3].toString(), canvas.width - 20, canvas.height - 20); // Bottom player
+	}
 }
 
 function drawMiddleLine() {
-
 	const dashHeight = 20;
 	const gap = 15;
 	const x = canvas.width / 2;
+	const y = canvas.height / 2;
 
 	ctx.strokeStyle = "white";
 	ctx.lineWidth = 4;
 
-	for (let y = 0; y < canvas.height; y += dashHeight + gap) {
-		ctx.beginPath();
-		ctx.moveTo(x, y);
-		ctx.lineTo(x, y + dashHeight);
-		ctx.stroke();
+	// Vertical line
+	if (nbrPlayer >= 2) {
+		for (let yPos = 0; yPos < canvas.height; yPos += dashHeight + gap) {
+			ctx.beginPath();
+			ctx.moveTo(x, yPos);
+			ctx.lineTo(x, yPos + dashHeight);
+			ctx.stroke();
+		}
+	}
+   if (nbrPlayer == 4) {
+		// Horizontal line
+		for (let xPos = 0; xPos < canvas.width; xPos += dashHeight + gap) {
+			ctx.beginPath();
+			ctx.moveTo(xPos, y);
+			ctx.lineTo(xPos + dashHeight, y);
+			ctx.stroke();
+		}
 	}
 }
 
-let Player1 = new Player("Matteo", 0);
-let Player2 = new Player("Arturo", 1);
-let Pebble = new Ball()
+// Create 4 players
+let players: Player[] = [];
+if (isNaN(nbrPlayer) || nbrPlayer < 2 || nbrPlayer > 4)
+	nbrPlayer = 2;
+
+players = [];
+if (nbrPlayer == 2) {
+	players.push(new Player("Left", 0, "vertical"));
+	players.push(new Player("Right", 1, "vertical"));
+}
+else if (nbrPlayer == 4) {
+	players.push(new Player("Left", 0, "vertical"));
+	players.push(new Player("Right", 1, "vertical"));
+	players.push(new Player("Top", 2, "horizontal"));
+	players.push(new Player("Bottom", 3, "horizontal"));
+}
+
+let Pebble = new Ball();
 
 function draw() {
-
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	drawMiddleLine();
-	drawScore();
-	Player1.drawAndMove();
-	Player2.drawAndMove();
-	Pebble.moveBall(Player1, Player2);
+	drawScore(nbrPlayer);
+	players.forEach(player => player.drawAndMove());
+	Pebble.moveBall(players);
 	Pebble.drawBall();
 	requestAnimationFrame(draw);
 }
 
 button.addEventListener("click", () => {
-
 	button.style.display = "none";
+	SelectNbrPlayer.style.display = "none";
+	SelectNbrPlayer.disabled = true;
 	canvas_container.style.display = "block";
 	canvas.style.display = "block";
+	nbrPlayer = parseInt(SelectNbrPlayer.value, 10);
+	resetGoalscore();
 	draw();
-})
+});
