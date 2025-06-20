@@ -17,18 +17,6 @@ $db->exec("CREATE TABLE IF NOT EXISTS user (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 
 )");
-/*
-//$db->exec("DROP TABLE IF EXISTS friends");
-$db->exec("CREATE TABLE IF NOT EXISTS friends (
-    user_id_1 INTEGER NOT NULL,
-    user_id_2 INTEGER NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id_1, user_id_2),
-    FOREIGN KEY (user_id_1) REFERENCES user(id),
-    FOREIGN KEY (user_id_2) REFERENCES user(id),
-    CHECK (user_id_1 < user_id_2)
-)");
-*/
 
 //$db->exec("DROP TABLE IF EXISTS tournament");
 $db->exec("CREATE TABLE IF NOT EXISTS tournament (
@@ -67,47 +55,4 @@ $db->exec("CREATE TABLE IF NOT EXISTS player_all_time_stats(
     tournament_won INTGER DEFAULT 0,
     FOREIGN KEY (id_player) REFERENCES user(id)
 )");
-
-
-
-//DA QUA IN POI E' PURO TESTING
-//TODO AGGIUNGERE FUNZIONI PIU COMODE CHE AGGIUNGANO AL DB MA DA CAPIRE DOVE
-/*$db->exec("INSERT INTO user (username, mail, psw) VALUES ('Mario_Bro', 'marione@marione.com', 'xxxxxxx')");
-$db->exec("INSERT INTO user (username, mail, psw) VALUES ('Luigi_Bro', 'luigi@marione.com', 'xxxxxxx')");
-$db->exec("INSERT INTO game_match (number_of_players) VALUES (2)");
-$db->exec("INSERT INTO player_match_stats (id_user, id_match, goal_scored, goal_taken) VALUES (1, 1, 3, 1)");
-$db->exec("INSERT INTO player_match_stats (id_user, id_match, goal_scored, goal_taken) VALUES (2, 1, 1, 3)");
-//$db->exec("INSERT INTO friends (user_id_1, user_id_2) VALUES (2, 1)");
-
-
-foreach ($db->query('SELECT * FROM user') as $row) {
-    echo "User ID {$row['id']}: {$row['username']}, Mail: {$row['mail']}" . PHP_EOL;
-}
-
-echo PHP_EOL;
-
-foreach ($db->query('SELECT user_id_2 FROM friends WHERE user_id_1 = 1 UNION SELECT user_id_1 FROM friends WHERE user_id_2 = 1') as $row)
-{
-    echo "USER FRIEND ID = {$row['friend_id']}\n";
-}
-echo PHP_EOL;
-
-
-foreach ($db->query('SELECT * FROM game_match') as $match) {
-    echo "Match ID {$match['id']} - Number of Players: {$match['number_of_players']}" . PHP_EOL;
-
-    $stmt = $db->prepare('SELECT * FROM player_match_stats WHERE id_match = ?');
-    $stmt->execute([$match['id']]);
-    $playerStats = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    foreach ($playerStats as $ps) {
-        echo "  Player Stats ID {$ps['id']} - User ID: {$ps['id_user']}, Goals Scored: {$ps['goal_scored']}, Goals Taken: {$ps['goal_taken']}" . PHP_EOL;
-    }
-
-    echo PHP_EOL;
-}
-
-echo PHP_EOL;
-
-*/
 ?>
