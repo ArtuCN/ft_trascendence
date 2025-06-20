@@ -1,4 +1,5 @@
 import sqlite3 from 'sqlite3';
+import models from './models/models.js'
 
 const { verbose } = sqlite3;
 const db = new (verbose()).Database('./data/database.sqlite', (err) => {
@@ -8,19 +9,35 @@ const db = new (verbose()).Database('./data/database.sqlite', (err) => {
     console.log('DB opened successfully!');
   }
 });
-export function insertUser(name, mail, psw) {
+export function insertUser(user) {
   return new Promise((resolve, reject) => {
-    const query = 'INSERT INTO user (name, mail, psw) VALUES (?, ?, ?)';
-    db.run(query, [name, mail, psw], function (err) {
-      if (err) {
-        console.error('Error while adding user:', err);
-        reject(err);
-      } else {
-        resolve({ id: this.lastID });
+    const query = `
+      INSERT INTO user (username, mail, psw, token, wallet, is_admin, google_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+    db.run(
+      query,
+      [
+        user.username,
+        user.mail,
+        user.psw,
+        user.token,
+        user.wallet,
+        user.is_admin ? 1 : 0,
+        user.google_id
+      ],
+      function (err) {
+        if (err) {
+          console.error('Error while adding user:', err);
+          reject(err);
+        } else {
+          resolve({ id: this.lastID });
+        }
       }
-    });
+    );
   });
 }
+
 
 export function getAllUsers() {
   return new Promise((resolve, reject) => {
