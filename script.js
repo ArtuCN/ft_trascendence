@@ -3,8 +3,10 @@ var canvas = document.getElementById("gameCanvas");
 var canvas_container = document.getElementById("canvas-container");
 var SelectNbrPlayer = document.getElementById("nbrPlayerInput");
 var ctx = canvas.getContext("2d");
+var cornerWallSize = 40; // Length of each wall side (square)
+var cornerWallThickness = 40; // Thickness of the wall
 var nbrPlayer = parseInt(SelectNbrPlayer.value, 10);
-var playerGoals = [0, 0, 0, 0];
+var playerGoals; // Goals for each player
 var keysPressed = {};
 document.addEventListener("keydown", function (e) {
     keysPressed[e.key] = true;
@@ -12,6 +14,23 @@ document.addEventListener("keydown", function (e) {
 document.addEventListener("keyup", function (e) {
     keysPressed[e.key] = false;
 });
+function drawCornerWalls() {
+    if (nbrPlayer !== 4)
+        return;
+    ctx.fillStyle = "#888";
+    // Top-left
+    ctx.fillRect(0, 0, cornerWallSize, cornerWallThickness); // horizontal
+    ctx.fillRect(0, 0, cornerWallThickness, cornerWallSize); // vertical
+    // Top-right
+    ctx.fillRect(canvas.width - cornerWallSize, 0, cornerWallSize, cornerWallThickness);
+    ctx.fillRect(canvas.width - cornerWallThickness, 0, cornerWallThickness, cornerWallSize);
+    // Bottom-left
+    ctx.fillRect(0, canvas.height - cornerWallThickness, cornerWallSize, cornerWallThickness);
+    ctx.fillRect(0, canvas.height - cornerWallSize, cornerWallThickness, cornerWallSize);
+    // Bottom-right
+    ctx.fillRect(canvas.width - cornerWallSize, canvas.height - cornerWallThickness, cornerWallSize, cornerWallThickness);
+    ctx.fillRect(canvas.width - cornerWallThickness, canvas.height - cornerWallSize, cornerWallThickness, cornerWallSize);
+}
 var Player = /** @class */ (function () {
     function Player(name, id, orientation) {
         this.nameTag = name;
@@ -87,9 +106,9 @@ var Paddles = /** @class */ (function () {
         }
         // Bottom paddle (Player 3, horizontal)
         else if (this.id === 3 && this.orientation === "horizontal") {
-            if (keysPressed["l"] && this.initialPosition <= (canvas.width - this.paddleLength))
+            if (keysPressed["ArrowRight"] && this.initialPosition <= (canvas.width - this.paddleLength))
                 this.initialPosition += this.speed;
-            if (keysPressed["j"] && this.initialPosition >= 0)
+            if (keysPressed["ArrowLeft"] && this.initialPosition >= 0)
                 this.initialPosition -= this.speed;
         }
         // Clamp position
@@ -125,7 +144,8 @@ var Paddles = /** @class */ (function () {
 }());
 // Reset goalscore
 function resetGoalscore() {
-    playerGoals = [0, 0, 0, 0];
+    for (var i = 0; i < playerGoals.length; i++)
+        playerGoals[i] = 0;
 }
 var Ball = /** @class */ (function () {
     function Ball() {
@@ -147,10 +167,7 @@ var Ball = /** @class */ (function () {
         players.forEach(function (p) { return p.getPaddle().reset(); });
         this.lastTouchedPlayer = -1; // Reset last touched player
     };
-    // Left goal
-    Ball.prototype.moveBall = function (players) {
-        this.ballX += this.vx;
-        this.ballY += this.vy;
+    Ball.prototype.checkScore = function (players) {
         // Left goal
         if (this.ballX < 0) {
             if (this.lastTouchedPlayer !== -1)
@@ -196,58 +213,162 @@ var Ball = /** @class */ (function () {
                 return;
             }
         }
-        // Paddle collisions
-        // Only check paddles that exist
+    };
+    Ball.prototype.moveBall = function (players) {
+        this.ballX += this.vx;
+        this.ballY += this.vy;
+        this.checkScore(players);
         if (nbrPlayer == 2) {
             // Left paddle (Player 0)
-            var leftPaddle = players[1].getPaddle();
+            var leftPaddle = players[0].getPaddle();
             if (this.ballX - this.ballSize / 2 <= 20 + leftPaddle.getPaddleThickness() &&
                 this.ballY + this.ballSize / 2 >= leftPaddle.getInitialPosition() &&
                 this.ballY - this.ballSize / 2 <= leftPaddle.getInitialPosition() + leftPaddle.getPaddleLength()) {
                 this.ballX = 20 + leftPaddle.getPaddleThickness() + this.ballSize / 2;
                 this.calculateBounce(leftPaddle, "vertical");
+                this.lastTouchedPlayer = 0; // Left player touched the ball
             }
-            // Right paddle (Player 1)
-            var rightPaddle = players[0].getPaddle();
+            var rightPaddle = players[1].getPaddle();
             if (this.ballX + this.ballSize / 2 >= canvas.width - 20 - rightPaddle.getPaddleThickness() &&
                 this.ballY + this.ballSize / 2 >= rightPaddle.getInitialPosition() &&
                 this.ballY - this.ballSize / 2 <= rightPaddle.getInitialPosition() + rightPaddle.getPaddleLength()) {
                 this.ballX = canvas.width - 20 - rightPaddle.getPaddleThickness() - this.ballSize / 2;
                 this.calculateBounce(rightPaddle, "vertical", true);
+                this.lastTouchedPlayer = 1; // Right player touched the ball
             }
         }
         if (nbrPlayer == 4) {
-            // Left paddle (Player 0)
+            this.cornerCollision();
             var leftPaddle = players[1].getPaddle();
             if (this.ballX - this.ballSize / 2 <= 20 + leftPaddle.getPaddleThickness() &&
                 this.ballY + this.ballSize / 2 >= leftPaddle.getInitialPosition() &&
                 this.ballY - this.ballSize / 2 <= leftPaddle.getInitialPosition() + leftPaddle.getPaddleLength()) {
                 this.ballX = 20 + leftPaddle.getPaddleThickness() + this.ballSize / 2;
                 this.calculateBounce(leftPaddle, "vertical");
+                this.lastTouchedPlayer = 0; // Left player touched the ball
             }
-            // Right paddle (Player 1)
             var rightPaddle = players[0].getPaddle();
             if (this.ballX + this.ballSize / 2 >= canvas.width - 20 - rightPaddle.getPaddleThickness() &&
                 this.ballY + this.ballSize / 2 >= rightPaddle.getInitialPosition() &&
                 this.ballY - this.ballSize / 2 <= rightPaddle.getInitialPosition() + rightPaddle.getPaddleLength()) {
                 this.ballX = canvas.width - 20 - rightPaddle.getPaddleThickness() - this.ballSize / 2;
                 this.calculateBounce(rightPaddle, "vertical", true);
+                this.lastTouchedPlayer = 1; // Right player touched the ball
             }
-            // Top paddle (Player 2)
             var topPaddle = players[2].getPaddle();
             if (this.ballY - this.ballSize / 2 <= 20 + topPaddle.getPaddleThickness() &&
                 this.ballX + this.ballSize / 2 >= topPaddle.getInitialPosition() &&
                 this.ballX - this.ballSize / 2 <= topPaddle.getInitialPosition() + topPaddle.getPaddleLength()) {
                 this.ballY = 20 + topPaddle.getPaddleThickness() + this.ballSize / 2;
                 this.calculateBounce(topPaddle, "horizontal");
+                this.lastTouchedPlayer = 2; // Top player touched the ball
             }
-            // Bottom paddle (Player 3)
             var bottomPaddle = players[3].getPaddle();
             if (this.ballY + this.ballSize / 2 >= canvas.height - 20 - bottomPaddle.getPaddleThickness() &&
                 this.ballX + this.ballSize / 2 >= bottomPaddle.getInitialPosition() &&
                 this.ballX - this.ballSize / 2 <= bottomPaddle.getInitialPosition() + bottomPaddle.getPaddleLength()) {
                 this.ballY = canvas.height - 20 - bottomPaddle.getPaddleThickness() - this.ballSize / 2;
                 this.calculateBounce(bottomPaddle, "horizontal", true);
+                this.lastTouchedPlayer = 3; // Bottom player touched the ball
+            }
+        }
+    };
+    Ball.prototype.reflect = function (normalX, normalY) {
+        var dot = this.vx * normalX + this.vy * normalY;
+        this.vx = this.vx - 2 * dot * normalX;
+        this.vy = this.vy - 2 * dot * normalY;
+    };
+    Ball.prototype.cornerCollision = function () {
+        if (this.ballX - this.ballSize / 2 < cornerWallSize &&
+            this.ballY - this.ballSize / 2 < cornerWallThickness &&
+            this.ballX - this.ballSize / 2 < cornerWallThickness &&
+            this.ballY - this.ballSize / 2 < cornerWallSize) {
+            var dx = this.ballX - cornerWallThickness;
+            var dy = this.ballY - cornerWallThickness;
+            if (Math.abs(dx) < Math.abs(dy)) {
+                // Closer to vertical wall (left)
+                this.ballX = cornerWallThickness + this.ballSize / 2;
+                this.reflect(1, 0);
+            }
+            else if (Math.abs(dy) < Math.abs(dx)) {
+                // Closer to horizontal wall (top)
+                this.ballY = cornerWallThickness + this.ballSize / 2;
+                this.reflect(0, 1);
+            }
+            else {
+                // Corner point: reflect both
+                this.ballX = cornerWallThickness + this.ballSize / 2;
+                this.ballY = cornerWallThickness + this.ballSize / 2;
+                this.reflect(1 / Math.sqrt(2), 1 / Math.sqrt(2));
+            }
+        }
+        if (this.ballX + this.ballSize / 2 > canvas.width - cornerWallSize &&
+            this.ballY - this.ballSize / 2 < cornerWallThickness &&
+            this.ballX + this.ballSize / 2 > canvas.width - cornerWallThickness &&
+            this.ballY - this.ballSize / 2 < cornerWallSize) {
+            var dx = this.ballX - (canvas.width - cornerWallThickness);
+            var dy = this.ballY - cornerWallThickness;
+            if (Math.abs(dx) < Math.abs(dy)) {
+                // Closer to vertical wall (right)
+                this.ballX = canvas.width - cornerWallThickness - this.ballSize / 2;
+                this.reflect(-1, 0);
+            }
+            else if (Math.abs(dy) < Math.abs(dx)) {
+                // Closer to horizontal wall (top)
+                this.ballY = cornerWallThickness + this.ballSize / 2;
+                this.reflect(0, 1);
+            }
+            else {
+                // Corner point
+                this.ballX = canvas.width - cornerWallThickness - this.ballSize / 2;
+                this.ballY = cornerWallThickness + this.ballSize / 2;
+                this.reflect(-1 / Math.sqrt(2), 1 / Math.sqrt(2));
+            }
+        }
+        if (this.ballX - this.ballSize / 2 < cornerWallSize &&
+            this.ballY + this.ballSize / 2 > canvas.height - cornerWallThickness &&
+            this.ballX - this.ballSize / 2 < cornerWallThickness &&
+            this.ballY + this.ballSize / 2 > canvas.height - cornerWallSize) {
+            var dx = this.ballX - cornerWallThickness;
+            var dy = this.ballY - (canvas.height - cornerWallThickness);
+            if (Math.abs(dx) < Math.abs(dy)) {
+                // Closer to vertical wall (left)
+                this.ballX = cornerWallThickness + this.ballSize / 2;
+                this.reflect(1, 0);
+            }
+            else if (Math.abs(dy) < Math.abs(dx)) {
+                // Closer to horizontal wall (bottom)
+                this.ballY = canvas.height - cornerWallThickness - this.ballSize / 2;
+                this.reflect(0, -1);
+            }
+            else {
+                // Corner point
+                this.ballX = cornerWallThickness + this.ballSize / 2;
+                this.ballY = canvas.height - cornerWallThickness - this.ballSize / 2;
+                this.reflect(1 / Math.sqrt(2), -1 / Math.sqrt(2));
+            }
+        }
+        if (this.ballX + this.ballSize / 2 > canvas.width - cornerWallSize &&
+            this.ballY + this.ballSize / 2 > canvas.height - cornerWallThickness &&
+            this.ballX + this.ballSize / 2 > canvas.width - cornerWallThickness &&
+            this.ballY + this.ballSize / 2 > canvas.height - cornerWallSize) {
+            var dx = this.ballX - (canvas.width - cornerWallThickness);
+            var dy = this.ballY - (canvas.height - cornerWallThickness);
+            if (Math.abs(dx) < Math.abs(dy)) {
+                // Closer to vertical wall (right)
+                this.ballX = canvas.width - cornerWallThickness - this.ballSize / 2;
+                this.reflect(-1, 0);
+            }
+            else if (Math.abs(dy) < Math.abs(dx)) {
+                // Closer to horizontal wall (bottom)
+                this.ballY = canvas.height - cornerWallThickness - this.ballSize / 2;
+                this.reflect(0, -1);
+            }
+            else {
+                // Corner point
+                this.ballX = canvas.width - cornerWallThickness - this.ballSize / 2;
+                this.ballY = canvas.height - cornerWallThickness - this.ballSize / 2;
+                this.reflect(-1 / Math.sqrt(2), -1 / Math.sqrt(2));
             }
         }
     };
@@ -289,19 +410,26 @@ var Ball = /** @class */ (function () {
 function drawScore(nbrPlayer) {
     ctx.font = "bold 36px Arial";
     ctx.fillStyle = "white";
-    ctx.textAlign = "left";
-    ctx.textBaseline = "top";
-    SelectNbrPlayer.style.display = "none";
-    ctx.fillText(nbrPlayer + " Player(s)", canvas.width / 2 - 50, 20);
     if (nbrPlayer == 2) {
-        ctx.fillText(playerGoals[0].toString(), 20, 20); // Left player
-        ctx.fillText(playerGoals[1].toString(), canvas.width - 20, 20); // Right player
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+        ctx.fillText(playerGoals[0].toString(), canvas.width / 2 - 100, 20); // Left player
+        ctx.textAlign = "right";
+        ctx.fillText(playerGoals[1].toString(), canvas.width / 2 + 100, 20); // Right player
     }
     if (nbrPlayer == 4) {
-        ctx.fillText(playerGoals[0].toString(), 20, 20); // Left player
-        ctx.fillText(playerGoals[1].toString(), canvas.width - 20, 20); // Right player
-        ctx.fillText(playerGoals[2].toString(), 20, canvas.height - 20); // Top player
-        ctx.fillText(playerGoals[3].toString(), canvas.width - 20, canvas.height - 20); // Bottom player
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+        ctx.fillText(playerGoals[2].toString(), cornerWallThickness / 2 - 10, cornerWallThickness / 2 - 15);
+        ctx.textAlign = "right";
+        ctx.textBaseline = "top";
+        ctx.fillText(playerGoals[1].toString(), canvas.width - cornerWallThickness / 2 + 10, cornerWallThickness / 2 - 15);
+        ctx.textAlign = "right";
+        ctx.textBaseline = "bottom";
+        ctx.fillText(playerGoals[3].toString(), canvas.width - cornerWallThickness / 2 + 10, canvas.height - cornerWallThickness / 2 + 15);
+        ctx.textAlign = "left";
+        ctx.textBaseline = "bottom";
+        ctx.fillText(playerGoals[0].toString(), cornerWallThickness / 2 - 10, canvas.height - cornerWallThickness / 2 + 15);
     }
 }
 function drawMiddleLine() {
@@ -332,35 +460,37 @@ function drawMiddleLine() {
 }
 // Create 4 players
 var players = [];
-if (isNaN(nbrPlayer) || nbrPlayer < 2 || nbrPlayer > 4)
-    nbrPlayer = 2;
-players = [];
-if (nbrPlayer == 2) {
-    players.push(new Player("Left", 0, "vertical"));
-    players.push(new Player("Right", 1, "vertical"));
-}
-else if (nbrPlayer == 4) {
-    players.push(new Player("Left", 0, "vertical"));
-    players.push(new Player("Right", 1, "vertical"));
-    players.push(new Player("Top", 2, "horizontal"));
-    players.push(new Player("Bottom", 3, "horizontal"));
-}
 var Pebble = new Ball();
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawMiddleLine();
-    drawScore(nbrPlayer);
-    players.forEach(function (player) { return player.drawAndMove(); });
+    drawCornerWalls();
     Pebble.moveBall(players);
     Pebble.drawBall();
+    players.forEach(function (player) { return player.drawAndMove(); });
+    drawScore(nbrPlayer);
     requestAnimationFrame(draw);
 }
 button.addEventListener("click", function () {
     button.style.display = "none";
     SelectNbrPlayer.style.display = "none";
+    SelectNbrPlayer.disabled = true;
     canvas_container.style.display = "block";
     canvas.style.display = "block";
     nbrPlayer = parseInt(SelectNbrPlayer.value, 10);
-    resetGoalscore();
+    playerGoals = Array(nbrPlayer).fill(0);
+    if (isNaN(nbrPlayer) || nbrPlayer < 2 || nbrPlayer > 4)
+        nbrPlayer = 2;
+    players = [];
+    if (nbrPlayer == 2) {
+        players.push(new Player("Left", 0, "vertical"));
+        players.push(new Player("Right", 1, "vertical"));
+    }
+    else if (nbrPlayer == 4) {
+        players.push(new Player("Left", 0, "vertical"));
+        players.push(new Player("Right", 1, "vertical"));
+        players.push(new Player("Top", 2, "horizontal"));
+        players.push(new Player("Bottom", 3, "horizontal"));
+    }
     draw();
 });
