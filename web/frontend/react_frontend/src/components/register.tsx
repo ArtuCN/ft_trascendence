@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 const Register = () => {
   const [mail, setMail] = useState("");
   const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [psw, setPassword] = useState("");
   const navigate = useNavigate();
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -13,7 +13,7 @@ const Register = () => {
     const res = await fetch("http://localhost:3000/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mail, username, password }),
+      body: JSON.stringify({ mail, username, psw }),
     });
 
     const data = await res.json();
@@ -45,7 +45,7 @@ const Register = () => {
       <input
         type="password"
         placeholder="Password"
-        value={password}
+        value={psw}
         onChange={(e) => setPassword(e.target.value)}
         required
       />
