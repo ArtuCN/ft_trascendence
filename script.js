@@ -7,6 +7,14 @@ const buttonAi = document.getElementById("PlayAI");
 const textPong = document.getElementById("PongGame");
 export let nbrPlayer;
 export let playerGoals;
+export function showMenu() {
+    button2P.style.display = "inline-block";
+    button4P.style.display = "inline-block";
+    buttonAi.style.display = "inline-block";
+    textPong.style.display = "block";
+    canvas_container.style.display = "none";
+    canvas.style.display = "none";
+}
 function drawCornerWalls() {
     if (nbrPlayer !== 4)
         return;
@@ -25,7 +33,7 @@ function drawCornerWalls() {
     ctx.fillRect(canvas.width - cornerWallThickness, canvas.height - cornerWallSize, cornerWallThickness, cornerWallSize);
 }
 // Reset goalscore
-function resetGoalscore() {
+export function resetGoalscore() {
     for (let i = 0; i < playerGoals.length; i++)
         playerGoals[i] = 0;
 }
@@ -69,7 +77,6 @@ function draw() {
     requestAnimationFrame(draw);
 }
 button2P.addEventListener("click", () => {
-    alert("2 Players Mode");
     button2P.style.display = "none";
     button4P.style.display = "none";
     buttonAi.style.display = "none";
@@ -79,15 +86,13 @@ button2P.addEventListener("click", () => {
     nbrPlayer = parseInt(button2P.value);
     if (isNaN(nbrPlayer))
         nbrPlayer = 2;
-    alert("nbrPlayer: " + nbrPlayer);
     playerGoals = [0, 0];
     players = [];
-    players.push(new Player("Left", 0, "vertical"));
-    players.push(new Player("Right", 1, "vertical"));
+    players.push(new Player("Matteo", 0, "vertical"));
+    players.push(new Player("Arturo", 1, "vertical"));
     draw();
 });
 button4P.addEventListener("click", () => {
-    alert("4 Players Mode");
     button4P.style.display = "none";
     button2P.style.display = "none";
     buttonAi.style.display = "none";
@@ -100,9 +105,9 @@ button4P.addEventListener("click", () => {
     playerGoals = [0, 0, 0, 0];
     canvas.height = canvas.width;
     players = [];
-    players.push(new Player("Left", 0, "vertical"));
-    players.push(new Player("Right", 1, "vertical"));
-    players.push(new Player("Top", 2, "horizontal"));
-    players.push(new Player("Bottom", 3, "horizontal"));
+    players.push(new Player("Matteo", 0, "vertical"));
+    players.push(new Player("Arturo", 1, "vertical"));
+    players.push(new Player("Khadim", 2, "horizontal"));
+    players.push(new Player("Tjaz", 3, "horizontal"));
     draw();
 });

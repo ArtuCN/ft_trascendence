@@ -10,6 +10,15 @@ const textPong = document.getElementById("PongGame") as HTMLHeadingElement;
  export let nbrPlayer: number;
  export let playerGoals: number[];
 
+export function showMenu() {
+    button2P.style.display = "inline-block";
+    button4P.style.display = "inline-block";
+    buttonAi.style.display = "inline-block";
+    textPong.style.display = "block";
+    canvas_container.style.display = "none";
+    canvas.style.display = "none";
+}
+
 function drawCornerWalls() {
     if (nbrPlayer !== 4) return;
     ctx.fillStyle = "#888";
@@ -32,7 +41,7 @@ function drawCornerWalls() {
 }
 
 // Reset goalscore
-function resetGoalscore() {
+export function resetGoalscore() {
 	for (let i = 0; i < playerGoals.length; i++)
 		playerGoals[i] = 0;
 }
@@ -96,8 +105,8 @@ button2P.addEventListener("click", () => {
 	playerGoals = [0, 0];
 
 	players = [];
-	players.push(new Player("Left", 0, "vertical"));
-	players.push(new Player("Right", 1, "vertical"));
+	players.push(new Player("Matteo", 0, "vertical"));
+	players.push(new Player("Arturo", 1, "vertical"));
 
 	draw();
 });
@@ -116,10 +125,10 @@ button4P.addEventListener("click", () => {
 	canvas.height = canvas.width;
 
 	players = [];
-	players.push(new Player("Left", 0, "vertical"));
-	players.push(new Player("Right", 1, "vertical"));
-	players.push(new Player("Top", 2, "horizontal"));
-	players.push(new Player("Bottom", 3, "horizontal"));
+	players.push(new Player("Matteo", 0, "vertical"));
+	players.push(new Player("Arturo", 1, "vertical"));
+	players.push(new Player("Khadim", 2, "horizontal"));
+	players.push(new Player("Tjaz", 3, "horizontal"));
 
 	draw();
 });

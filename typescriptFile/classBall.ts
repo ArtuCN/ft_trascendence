@@ -1,7 +1,7 @@
 import { Player } from './classPlayer.js';
 import { Paddles } from './classPaddles.js';
 import { PaddleOrientation, canvas, ctx, cornerWallSize, cornerWallThickness,  } from './variables.js';
-import { nbrPlayer, playerGoals } from '../script.js';
+import { nbrPlayer, playerGoals, showMenu, resetGoalscore } from '../script.js';
 
 export function drawScore(nbrPlayer: number) {
     ctx.font = "bold 36px Arial";
@@ -41,7 +41,7 @@ export class Ball {
 	private ballX: number = canvas.width / 2;
 	private ballY: number = canvas.height / 2;
 	private ballSize: number = 12;
-	private speed: number = 5;
+	private speed: number = 6;
 	private vx: number = this.speed * (Math.random() > 0.5 ? 1 : -1);
 	private vy: number = this.speed * (Math.random() * 2 - 1);
 	private lastTouchedPlayer: number = -1; // -1 means no player touched the ball yet
@@ -49,8 +49,20 @@ export class Ball {
 	private resetGame(players: Player[]) {
 		this.ballX = canvas.width / 2;
 		this.ballY = canvas.height / 2;
-		this.speed = 5;
-		const angle: number = (Math.random() * Math.PI * 2); // Any direction
+		this.speed = 6;
+		let angle: number;
+		if (nbrPlayer === 2) {
+			if (Math.random() < 0.5) {
+				// Right: -π/4 to π/4
+				angle = (Math.random() - 0.5) * (Math.PI / 2);
+			} else {
+				// Left: 3π/4 to 5π/4
+				angle = Math.PI + (Math.random() - 0.5) * (Math.PI / 2);
+			}
+		} else {
+			// Any direction for 4 players
+			angle = Math.random() * Math.PI * 2;
+		}
 		this.vx = this.speed * Math.cos(angle);
 		this.vy = this.speed * Math.sin(angle);
 		players.forEach(p => p.getPaddle().reset());
@@ -62,6 +74,13 @@ export class Ball {
 		if (this.ballX < 0) {
 			if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
 			drawScore(nbrPlayer);
+			if (playerGoals[this.lastTouchedPlayer] >= 5) {
+				alert(players[this.lastTouchedPlayer].getNameTag() +" wins!");
+				playerGoals.fill(0);
+				resetGoalscore();
+				if (typeof showMenu === "function")
+					showMenu();
+			}
 			this.resetGame(players);
 			return;
 		}
@@ -69,6 +88,12 @@ export class Ball {
 		if (this.ballX > canvas.width) {
 			if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
 			drawScore(nbrPlayer);
+			if (playerGoals[this.lastTouchedPlayer] >= 5) {
+				alert(players[this.lastTouchedPlayer].getNameTag() +" wins!");
+				playerGoals.fill(0);
+				if (typeof showMenu === "function")
+					showMenu();
+			}
 			this.resetGame(players);
 			return;
 		}
@@ -88,6 +113,12 @@ export class Ball {
 			if (this.ballY < 0) {
 				if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
 				drawScore(nbrPlayer);
+				if (playerGoals[this.lastTouchedPlayer] >= 5) {
+					alert(players[this.lastTouchedPlayer].getNameTag() +" wins!");
+					playerGoals.fill(0);
+					if (typeof showMenu === "function")
+						showMenu();
+				}
 				this.resetGame(players);
 				return;
 			}
@@ -96,6 +127,12 @@ export class Ball {
 				if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
 				drawScore(nbrPlayer);
 				this.resetGame(players);
+				if (playerGoals[this.lastTouchedPlayer] >= 5) {
+					alert(players[this.lastTouchedPlayer].getNameTag() +" wins!");
+					playerGoals.fill(0);
+					if (typeof showMenu === "function")
+						showMenu();
+				}
 				return;
 			}
 		}
