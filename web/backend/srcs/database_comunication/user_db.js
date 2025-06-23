@@ -55,17 +55,22 @@ export function getAllUsers() {
 
 export function getUserByMail(mail)
 {
-  return new Promise((resolve, reject)=> {
+  return new Promise((resolve, reject) => {
     db.all('SELECT * FROM user WHERE mail = ?', [mail], (err, rows) => {
       if (err) {
         console.error('Error during SELECT by mail:', err);
         reject(err);
       } else {
-        resolve(rows);
+        if (rows.length === 0) {
+          resolve(null);
+        } else {
+          resolve(rows[0]);
+        }
       }
     });
   });
 }
+
 
 export function getUserByUsername(username)
 {
