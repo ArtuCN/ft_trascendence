@@ -15,21 +15,22 @@ export function drawScore(nbrPlayer: number) {
         ctx.fillText(playerGoals[1].toString(), canvas.width / 2 + 100, 20); // Right player
     }
     if (nbrPlayer == 4) {
-
+		ctx.fillStyle = "blue";
         ctx.textAlign = "left";
         ctx.textBaseline = "top";
         ctx.fillText(playerGoals[2].toString(), cornerWallThickness / 2 - 10, cornerWallThickness / 2 - 15);
 
-
+		ctx.fillStyle = "red";
         ctx.textAlign = "right";
         ctx.textBaseline = "top";
         ctx.fillText(playerGoals[1].toString(), canvas.width - cornerWallThickness / 2 + 10, cornerWallThickness / 2 - 15);
 
-
+		ctx.fillStyle = "green";
         ctx.textAlign = "right";
         ctx.textBaseline = "bottom";
         ctx.fillText(playerGoals[3].toString(), canvas.width - cornerWallThickness / 2 + 10, canvas.height - cornerWallThickness / 2 + 15);
 
+		ctx.fillStyle = "white";
         ctx.textAlign = "left";
         ctx.textBaseline = "bottom";
         ctx.fillText(playerGoals[0].toString(), cornerWallThickness / 2 - 10, canvas.height - cornerWallThickness / 2 + 15);
@@ -45,6 +46,10 @@ export class Ball {
 	private vx: number = this.speed * (Math.random() > 0.5 ? 1 : -1);
 	private vy: number = this.speed * (Math.random() * 2 - 1);
 	private lastTouchedPlayer: number = -1; // -1 means no player touched the ball yet
+
+	public getBallSpeed(): number {
+		return this.speed;
+	}
 
 	private resetGame(players: Player[]) {
 		this.ballX = canvas.width / 2;

@@ -51,7 +51,7 @@ export class Paddles {
 		// Left paddle (Player 0, vertical)
 		if (nbrPlayer == 2) {
 			if (this.id === 0 && this.orientation === "vertical") {
-				if (keysPressed["s"] && this.initialPosition <= (canvas.height - this.paddleLength))
+				if ((keysPressed["s"] || keysPressed["S"]) && this.initialPosition <= (canvas.height - this.paddleLength))
 					this.initialPosition += this.speed;
 				if (keysPressed["w"] && this.initialPosition >= 0)
 					this.initialPosition -= this.speed;
@@ -110,18 +110,26 @@ export class Paddles {
 		}
 	}
 	public drawPaddles() {
-		ctx.fillStyle = "white";
+		
 		if (this.orientation === "vertical") {
-			if (this.id === 0)
+			if (this.id === 0) {
+				ctx.fillStyle = "white";
 				ctx.fillRect(20, this.initialPosition, this.paddleThickness, this.paddleLength); // Left
-			else
+			}
+			else {
+				ctx.fillStyle = "red";
 				ctx.fillRect(canvas.width - 20 - this.paddleThickness, this.initialPosition, this.paddleThickness, this.paddleLength); // Right
+			}
 		}
 		else if (this.orientation === "horizontal") {
-			if (this.id === 2)
+			if (this.id === 2) {
+				ctx.fillStyle = "blue";
 				ctx.fillRect(this.initialPosition, 20, this.paddleLength, this.paddleThickness); // Top
-			else
+			}
+			else {
+				ctx.fillStyle = "green";
 				ctx.fillRect(this.initialPosition, canvas.height - 20 - this.paddleThickness, this.paddleLength, this.paddleThickness); // Bottom
+			}
 		}
 	}
 }
