@@ -14,6 +14,7 @@ $db->exec("CREATE TABLE IF NOT EXISTS user (
     wallet TEXT UNIQUE,
     is_admin BOOLEAN DEFAULT FALSE, 
     google_id TEXT,
+    avatar BLOB,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 
 )");
@@ -33,6 +34,14 @@ $db->exec("CREATE TABLE IF NOT EXISTS game_match (
     time_stamp DATETIME DEFAULT CURRENT_TIMESTAMP,
     number_of_players INTEGER,
     FOREIGN KEY (id_tournament) REFERENCES tournament(id)
+)");
+
+$db->exec("CREATE TABLE IF NOT EXISTS friendship (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_user_1 INTEGER,
+    id_user_2 INTEGER,
+    FOREIGN KEY (id_user_1) REFERENCES user(id),
+    FOREIGN KEY (id_user_2) REFERENCES user(id)
 )");
 //non è obbligatorio che id_torunament ci sia, dipende se il game fa parte di un tournament o no
 
