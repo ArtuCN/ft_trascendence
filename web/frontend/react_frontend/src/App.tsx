@@ -1,22 +1,26 @@
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import Login from "./components/login";
-import Register from "./components/register";
+import { useState } from 'react'
+import Navbar from './components/ui/navbar'
+import './styles/App.css'
 
 function App() {
+  const [count, setCount] = useState(0)
+
   return (
-    <Router>
-      <nav style={{ display: "flex", gap: "1rem", padding: "1rem" }}>
-        <Link to="/">Home</Link>
-        <Link to="/login">Login</Link>
-        <Link to="/register">Register</Link>
-      </nav>
-      <Routes>
-        <Route path="/" element={<h1>Benvenuto su ft_transcendence!</h1>} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-      </Routes>
-    </Router>
-  );
+    <>
+      <Navbar />
+      <div className="p-8">
+        <div>
+          
+        </div>
+        <h1>Vite + React</h1>
+        <div className="card p-2">
+          <button onClick={() => setCount((count) => count + 1)}>
+            count is {count}
+          </button>
+        </div>
+      </div>
+    </>
+  )
 }
 
-export default App;
+export default App
