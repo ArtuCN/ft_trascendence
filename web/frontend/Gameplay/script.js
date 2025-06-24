@@ -65,7 +65,7 @@ function drawMiddleLine() {
 }
 // Create 4 players
 let players = [];
-let Pebble = new Ball();
+let Pebble;
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawMiddleLine();
@@ -87,6 +87,7 @@ button2P.addEventListener("click", () => {
     if (isNaN(nbrPlayer))
         nbrPlayer = 2;
     playerGoals = [0, 0];
+    Pebble = new Ball();
     players = [];
     players.push(new Player("Matteo", 0, "vertical"));
     players.push(new Player("Arturo", 1, "vertical"));
@@ -104,6 +105,7 @@ button4P.addEventListener("click", () => {
         nbrPlayer = 4;
     playerGoals = [0, 0, 0, 0];
     canvas.height = canvas.width;
+    Pebble = new Ball();
     players = [];
     players.push(new Player("Matteo", 0, "vertical"));
     players.push(new Player("Arturo", 1, "vertical"));

@@ -43,12 +43,30 @@ export class Ball {
 	private ballY: number = canvas.height / 2;
 	private ballSize: number = 12;
 	private speed: number = 6;
-	private vx: number = this.speed * (Math.random() > 0.5 ? 1 : -1);
-	private vy: number = this.speed * (Math.random() * 2 - 1);
+	private vx: number;
+	private vy: number;
 	private lastTouchedPlayer: number = -1; // -1 means no player touched the ball yet
 
 	public getBallSpeed(): number {
 		return this.speed;
+	}
+
+	public constructor() {
+		let angle: number;
+		if (nbrPlayer === 2) {
+			if (Math.random() < 0.5) {
+				// Right: -π/4 to π/4
+				angle = (Math.random() - 0.5) * (Math.PI / 4);
+			} else {
+				// Left: 3π/4 to 5π/4
+				angle = Math.PI + (Math.random() - 0.5) * (Math.PI / 4);
+			}
+		} else {
+			// Any direction for 4 players
+			angle = Math.random() * Math.PI * 2;
+		}
+		this.vx = this.speed * Math.cos(angle);
+		this.vy = this.speed * Math.sin(angle);
 	}
 
 	private resetGame(players: Player[]) {
@@ -59,10 +77,10 @@ export class Ball {
 		if (nbrPlayer === 2) {
 			if (Math.random() < 0.5) {
 				// Right: -π/4 to π/4
-				angle = (Math.random() - 0.5) * (Math.PI / 2);
+				angle = (Math.random() - 0.5) * (Math.PI / 4);
 			} else {
 				// Left: 3π/4 to 5π/4
-				angle = Math.PI + (Math.random() - 0.5) * (Math.PI / 2);
+				angle = Math.PI + (Math.random() - 0.5) * (Math.PI / 4);
 			}
 		} else {
 			// Any direction for 4 players
