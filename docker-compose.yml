@@ -6,8 +6,8 @@ services:
     image: db-sqlite:0.1
     container_name: database
     env_file: .env
-    networks:
-      - transcendnet
+    # networks:
+    #   - transcendnet
     volumes:
       - sqlite_data:/var/www/app/data
     restart: on-failure
@@ -27,8 +27,8 @@ services:
       - sqlite_data:/app/data
     ports:
       - "3000:3000"
-    depends_on:
-      - database
+    # depends_on:
+    #   - database
     restart: on-failure
 
   frontend:
@@ -53,9 +53,26 @@ services:
       - "5173:5173"
     networks:
       - transcendnet
-    depends_on:
-      - database
-      - backend
+    # depends_on:
+    #   - database
+    #   - backend
+    restart: on-failure
+
+  gameplay:
+    build:
+      context: ./web/Gameplay
+    image: gameplay-ts:0.1
+    container_name: gameplay
+    env_file: .env
+    volumes:
+      - gameplay_node_modules:/game/node_modules
+    ports:
+      - "3005:3005"
+    networks:
+      - transcendnet
+    # depends_on:
+    #   - database
+    #   - backend
     restart: on-failure
     
 
@@ -69,6 +86,9 @@ volumes:
     driver: local
   frontend_node_modules:
     name: frontend_node_modules
+    driver: local
+  gameplay_node_modules:
+    name: gameplay_node_modules
     driver: local
 
 
