@@ -2,7 +2,7 @@ import { getUserByMail, getUserByUsername } from '../database_comunication/user_
 import fastify from '../fastify' 
 const Fastify = new fastify;
 
-Fastify.post('login', asyinc (request, post))
+Fastify.post('login', async (request, post))
 {
     const { username,  mail, password } = request.body;
     user = '';
