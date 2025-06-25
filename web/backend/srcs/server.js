@@ -1,28 +1,24 @@
+ // aggiunto il token jwt per l'autenticazione ma va implementatop in un punto.env
+// aggiunto controllo CORS(praticamente per la coerenza lato frontend e backend)
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 
 import { getAllUsers, insertUser } from './database_comunication/user_db.js';
-import registerRoute from './controllers/register.js'; // 👈 importa la rotta modulare
+import registerRoute from './controllers/register.js';
+import loginRoute from './controllers/login.js'; // mancava l'import del controller login
 
 const fastify = Fastify({ logger: true });
-
-// CORS
 await fastify.register(cors, {
   origin: '*',
 });
 
-// JWT
 await fastify.register(jwt, {
-  secret: 'your_secret_key', // 🔐 metti un valore sicuro in .env
+  secret: 'your_secret_key',
 });
 
-
-
-// Registra la rotta custom
 await fastify.register(registerRoute);
-
-// Avvio del server
+await fastify.register(loginRoute);
 fastify.listen({ port: 3000, host: '0.0.0.0' }, (err, address) => {
   if (err) 
   {

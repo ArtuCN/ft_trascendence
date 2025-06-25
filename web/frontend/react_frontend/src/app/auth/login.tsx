@@ -1,47 +1,23 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import AuthModal from "../../components/ui/AuthModal";
 
 const Login = () => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const navigate = useNavigate();
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const res = await fetch("http://localhost:3000/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    });
-
-    const data = await res.json();
-    if (res.ok) {
-      localStorage.setItem("token", data.token);
-      navigate("/"); // Vai alla home
-    } else {
-      alert(data.message || "Login fallito");
-    }
-  };
+  const [showModal, setShowModal] = useState(false);
 
   return (
-    <form onSubmit={handleLogin}>
-      <h2>Login</h2>
-      <input
-        type="text"
-        placeholder="Username"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        required
+    <div>
+      <button 
+        onClick={() => setShowModal(true)}
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+      >
+        Accedi
+      </button>
+      
+      <AuthModal 
+        isOpen={showModal} 
+        onClose={() => setShowModal(false)} 
       />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-      />
-      <button type="submit">Login</button>
-    </form>
+    </div>
   );
 };
 

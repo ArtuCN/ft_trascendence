@@ -1,25 +1,15 @@
-import { useState } from 'react'
-import Navbar from './components/ui/navbar'
+import { BrowserRouter } from 'react-router-dom'
+import { AuthProvider } from './contexts/AuthContext'
+import AppRouter from './router/AppRouter'
 import './styles/App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <Navbar />
-      <div className="p-8">
-        <div>
-          
-        </div>
-        <h1>Vite + React</h1>
-        <div className="card p-2">
-          <button onClick={() => setCount((count) => count + 1)}>
-            count is {count}
-          </button>
-        </div>
-      </div>
-    </>
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRouter />
+      </AuthProvider>
+    </BrowserRouter>
   )
 }
 

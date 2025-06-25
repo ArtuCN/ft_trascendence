@@ -1,14 +1,9 @@
 import { useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-}
-
-interface FormFieldProps {
-  label: string;
-  type: string;
-  placeholder: string;
 }
 
 const COLORS = {
@@ -26,66 +21,10 @@ const COLORS = {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const FORM_FIELDS = {
-  login: [
-    { label: 'Email Address', type: 'email', placeholder: 'Enter your email address...' },
-    { label: 'Password', type: 'password', placeholder: 'Enter your password...' }
-  ],
-  register: [
-    { label: 'Username', type: 'text', placeholder: 'Enter your username...' },
-    { label: 'Email Address', type: 'email', placeholder: 'Enter your email address...' },
-    { label: 'Password', type: 'password', placeholder: 'Create a password...' },
-    { label: 'Confirm Password', type: 'password', placeholder: 'Confirm your password...' }
-  ]
-} as const;
-
 const TABS = [
   { id: 'login' as const, label: 'Log In' },
   { id: 'register' as const, label: 'Sign Up' }
 ];
-
-function FormField({ label, type, placeholder }: FormFieldProps) {
-  const [isEmailValid, setIsEmailValid] = useState(true);
-  
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (type === 'email') {
-      const isValid = EMAIL_REGEX.test(e.target.value) || e.target.value === '';
-      setIsEmailValid(isValid);
-    }
-  };
-
-  const borderColor = type === 'email' && !isEmailValid ? COLORS.error : COLORS.darkText;
-
-  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.target.style.borderColor = type === 'email' && !isEmailValid ? COLORS.error : COLORS.primary;
-    e.target.style.outline = 'none';
-  };
-
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.target.style.borderColor = borderColor;
-  };
-
-  return (
-    <div className="flex flex-col items-center">
-      <label className="block text-sm font-medium text-white text-center mb-2 w-full">
-        {label}
-      </label>
-      <input
-        type={type}
-        placeholder={placeholder}
-        className="w-4/5 px-4 py-3 border rounded-lg outline-none transition-all text-center text-black placeholder-gray-500"
-        style={{ 
-          backgroundColor: COLORS.inputBg, 
-          borderColor,
-          color: '#000000'
-        }}
-        onChange={handleInputChange}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-      />
-    </div>
-  );
-}
 
 function AuthTabs({ activeTab, onTabChange }: { activeTab: string; onTabChange: (tab: 'login' | 'register') => void }) {
   return (
@@ -134,18 +73,188 @@ function GoogleButton() {
   );
 }
 
-function AuthForm({ type }: { type: 'login' | 'register' }) {
+function AuthForm({ type, onClose }: { type: 'login' | 'register'; onClose: () => void }) {
   const [isHovered, setIsHovered] = useState(false);
+  const [formData, setFormData] = useState({
+    email: '',
+    username: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
+  
+  const { login, register, isLoading, error, successMessage, clearError, clearSuccessMessage } = useAuth();
   const isLogin = type === 'login';
-  const fields = FORM_FIELDS[type];
   const buttonText = isLogin ? 'Log in' : 'Create Account';
 
+  const handleInputChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, [field]: e.target.value }));
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+    if (error) {
+      clearError();
+    }
+    if (successMessage) {
+      clearSuccessMessage();
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors: {[key: string]: string} = {};
+
+    if (!EMAIL_REGEX.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    if (!isLogin && !formData.username.trim()) {
+      newErrors.username = 'Username is required';
+    }
+
+    if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    if (!isLogin && formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) return;
+
+    try {
+      if (isLogin) {
+        await login(formData.email, formData.password);
+      } else {
+        await register(formData.email, formData.username, formData.password);
+      }
+      
+      // Success - close modal
+      onClose();
+    } catch (err) {
+      // Error handling is done in the context
+      console.error('Auth error:', err);
+    }
+  };
+
+  // Helper function to get field props
+  const getFieldValue = (field: string) => formData[field as keyof typeof formData];
+  const getFieldError = (field: string) => errors[field];
+
   return (
-    <div className="flex flex-col gap-5 pt-4 px-8 pb-6 flex-1 min-h-[300px] items-center">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5 pt-4 px-8 pb-6 flex-1 min-h-[300px] items-center">
+      {error && (
+        <div className="w-full max-w-sm mb-4">
+          <p className="text-red-500 text-sm text-center bg-red-100 p-2 rounded">{error}</p>
+        </div>
+      )}
+      
+      {successMessage && (
+        <div className="w-full max-w-sm mb-4">
+          <p className="text-green-500 text-sm text-center bg-green-100 p-2 rounded">{successMessage}</p>
+        </div>
+      )}
+      
       <div className="flex flex-col gap-6 flex-grow w-full max-w-sm">
-        {fields.map((field, index) => (
-          <FormField key={`${type}-${index}`} {...field} />
-        ))}
+        {/* Email Field */}
+        <div className="flex flex-col items-center">
+          <label className="block text-sm font-medium text-white text-center mb-2 w-full">
+            Email Address
+          </label>
+          <input
+            type="email"
+            placeholder="Enter your email address..."
+            value={getFieldValue('email')}
+            onChange={handleInputChange('email')}
+            className="w-4/5 px-4 py-3 border rounded-lg outline-none transition-all text-center text-black placeholder-gray-500"
+            style={{ 
+              backgroundColor: COLORS.inputBg, 
+              borderColor: getFieldError('email') ? COLORS.error : COLORS.darkText,
+              color: '#000000'
+            }}
+          />
+          {getFieldError('email') && (
+            <p className="text-red-500 text-sm mt-1 text-center">{getFieldError('email')}</p>
+          )}
+        </div>
+
+        {/* Username Field - only for register */}
+        {!isLogin && (
+          <div className="flex flex-col items-center">
+            <label className="block text-sm font-medium text-white text-center mb-2 w-full">
+              Username
+            </label>
+            <input
+              type="text"
+              placeholder="Enter your username..."
+              value={getFieldValue('username')}
+              onChange={handleInputChange('username')}
+              className="w-4/5 px-4 py-3 border rounded-lg outline-none transition-all text-center text-black placeholder-gray-500"
+              style={{ 
+                backgroundColor: COLORS.inputBg, 
+                borderColor: getFieldError('username') ? COLORS.error : COLORS.darkText,
+                color: '#000000'
+              }}
+            />
+            {getFieldError('username') && (
+              <p className="text-red-500 text-sm mt-1 text-center">{getFieldError('username')}</p>
+            )}
+          </div>
+        )}
+
+        {/* Password Field */}
+        <div className="flex flex-col items-center">
+          <label className="block text-sm font-medium text-white text-center mb-2 w-full">
+            Password
+          </label>
+          <input
+            type="password"
+            placeholder={isLogin ? "Enter your password..." : "Create a password..."}
+            value={getFieldValue('password')}
+            onChange={handleInputChange('password')}
+            className="w-4/5 px-4 py-3 border rounded-lg outline-none transition-all text-center text-black placeholder-gray-500"
+            style={{ 
+              backgroundColor: COLORS.inputBg, 
+              borderColor: getFieldError('password') ? COLORS.error : COLORS.darkText,
+              color: '#000000'
+            }}
+          />
+          {getFieldError('password') && (
+            <p className="text-red-500 text-sm mt-1 text-center">{getFieldError('password')}</p>
+          )}
+        </div>
+
+        {/* Confirm Password Field - only for register */}
+        {!isLogin && (
+          <div className="flex flex-col items-center">
+            <label className="block text-sm font-medium text-white text-center mb-2 w-full">
+              Confirm Password
+            </label>
+            <input
+              type="password"
+              placeholder="Confirm your password..."
+              value={getFieldValue('confirmPassword')}
+              onChange={handleInputChange('confirmPassword')}
+              className="w-4/5 px-4 py-3 border rounded-lg outline-none transition-all text-center text-black placeholder-gray-500"
+              style={{ 
+                backgroundColor: COLORS.inputBg, 
+                borderColor: getFieldError('confirmPassword') ? COLORS.error : COLORS.darkText,
+                color: '#000000'
+              }}
+            />
+            {getFieldError('confirmPassword') && (
+              <p className="text-red-500 text-sm mt-1 text-center">{getFieldError('confirmPassword')}</p>
+            )}
+          </div>
+        )}
+        
         {isLogin && <div className="h-16" />}
       </div>
 
@@ -161,7 +270,9 @@ function AuthForm({ type }: { type: 'login' | 'register' }) {
       <div className="mt-auto w-full max-w-sm">
         <div className="flex gap-3 mb-4 h-12">
           <button 
-            className="flex-1 text-white py-3 px-4 rounded-lg font-semibold transition-all flex items-center justify-center focus:outline-none" 
+            type="submit"
+            disabled={isLoading}
+            className="flex-1 text-white py-3 px-4 rounded-lg font-semibold transition-all flex items-center justify-center focus:outline-none disabled:opacity-50" 
             style={{ 
               backgroundColor: isHovered ? COLORS.loginButtonHover : COLORS.loginButton,
               outline: 'none'
@@ -169,12 +280,12 @@ function AuthForm({ type }: { type: 'login' | 'register' }) {
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
-            {buttonText}
+            {isLoading ? 'Loading...' : buttonText}
           </button>
           <GoogleButton />
         </div>
       </div>
-    </div>
+    </form>
   );
 }
 
@@ -203,7 +314,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         </div>
         <AuthTabs activeTab={activeTab} onTabChange={setActiveTab} />
         <div className="flex-1 flex flex-col">
-          <AuthForm type={activeTab} />
+          <AuthForm type={activeTab} onClose={onClose} />
         </div>
       </div>
     </div>

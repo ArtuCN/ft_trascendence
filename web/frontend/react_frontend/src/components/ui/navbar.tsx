@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import AuthModal from './AuthModal';
 
 interface NavButtonProps {
@@ -51,7 +53,49 @@ function NavLogo({ onClick }: LogoProps) {
 }
 
 function AuthButtons({ onAuthClick }: AuthButtonsProps) {
-  const buttons = [    { 
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  if (isAuthenticated && user) {
+    return (
+      <div className="flex items-center gap-4">
+        <span className="text-white">Ciao, {user.username}!</span>
+        <NavButton
+          onClick={() => navigate('/profile')}
+          className="text-white px-3 py-1.5 rounded transition-all focus:outline-none"
+          style={{ backgroundColor: '#E67923', border: 'none', outline: 'none' }}
+          onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
+            const target = e.target as HTMLButtonElement;
+            target.style.backgroundColor = '#D16A1E';
+          }}
+          onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
+            const target = e.target as HTMLButtonElement;
+            target.style.backgroundColor = '#E67923';
+          }}
+        >
+          Profilo
+        </NavButton>
+        <NavButton
+          onClick={logout}
+          className="text-white px-3 py-1.5 rounded transition-all focus:outline-none"
+          style={{ backgroundColor: '#6B7280', border: 'none', outline: 'none' }}
+          onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
+            const target = e.target as HTMLButtonElement;
+            target.style.backgroundColor = '#4B5563';
+          }}
+          onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
+            const target = e.target as HTMLButtonElement;
+            target.style.backgroundColor = '#6B7280';
+          }}
+        >
+          Logout
+        </NavButton>
+      </div>
+    );
+  }
+
+  const buttons = [    
+    { 
       text: 'Sign up', 
       className: 'text-white px-3 py-1.5 rounded transition-all focus:outline-none', 
       style: { backgroundColor: '#B20000', border: 'none', outline: 'none' },
@@ -66,7 +110,8 @@ function AuthButtons({ onAuthClick }: AuthButtonsProps) {
           key={button.text}
           onClick={onAuthClick}
           className={button.className}
-          style={button.style}          onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
+          style={button.style}
+          onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
             const target = e.target as HTMLButtonElement;
             Object.assign(target.style, button.hoverStyle);
           }}

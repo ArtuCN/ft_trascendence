@@ -2,6 +2,7 @@ import sqlite3 from 'sqlite3';
 import models from '../models/models.js'
 
 const { verbose } = sqlite3;
+// MIGLIORAMENTO: Path database relativo per compatibilità multi-ambiente
 const db = new (verbose()).Database('./data/database.sqlite', (err) => {
   if (err) {
     console.error('error while opening db:', err);
@@ -9,6 +10,8 @@ const db = new (verbose()).Database('./data/database.sqlite', (err) => {
     console.log('DB opened successfully!');
   }
 });
+
+// aggiunti gli altri campi alla risorsa user, prima era solo id(comodo ancghe per i test con curl)
 export function insertUser(user) {
   return new Promise((resolve, reject) => {
     const query = `
@@ -16,22 +19,31 @@ export function insertUser(user) {
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
     db.run(
-      query,
+      query, // migliorati un po' i check forzando i tipi di dato accettati
       [
         user.username,
         user.mail,
         user.psw,
-        user.token,
-        user.wallet,
+        user.token || '',
+        user.wallet || '', 
         user.is_admin ? 1 : 0,
-        user.google_id
+        user.google_id || '' 
       ],
       function (err) {
         if (err) {
           console.error('Error while adding user:', err);
           reject(err);
-        } else {
-          resolve({ id: this.lastID });
+        } else {//ritonrna l'oggetto completo
+          resolve({ 
+            id: this.lastID,
+            username: user.username,
+            mail: user.mail,
+            psw: user.psw,
+            token: user.token || '',
+            wallet: user.wallet || '',
+            is_admin: user.is_admin || false,
+            google_id: user.google_id || ''
+          });
         }
       }
     );
