@@ -9,7 +9,7 @@ services:
     # networks:
     #   - transcendnet
     volumes:
-      - sqlite_data:/var/www/app/data
+      - shared_db_volume:/var/www/app/data
     restart: on-failure
 
   backend:
@@ -24,11 +24,11 @@ services:
       - ./web/backend/srcs:/app/srcs
       - ./web/backend/package.json:/app/package.json
       - backend_node_modules:/app/node_modules
-      - sqlite_data:/app/data
+      - shared_db_volume:/app/data
     ports:
       - "3000:3000"
-    # depends_on:
-    #   - database
+    depends_on:
+      - database
     restart: on-failure
 
   frontend:
@@ -53,9 +53,9 @@ services:
       - "5173:5173"
     networks:
       - transcendnet
-    # depends_on:
-    #   - database
-    #   - backend
+    depends_on:
+      - database
+      - backend
     restart: on-failure
 
   gameplay:
@@ -81,8 +81,8 @@ volumes:
   backend_node_modules:
     name: backend_node_modules
     driver: local
-  sqlite_data:
-    name: sqlite_data
+  shared_db_volume:
+    name: shared_db_volume
     driver: local
   frontend_node_modules:
     name: frontend_node_modules

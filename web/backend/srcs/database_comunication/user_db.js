@@ -2,7 +2,31 @@ import sqlite3 from 'sqlite3';
 import models from '../models/models.js'
 
 const { verbose } = sqlite3;
-const db = new (verbose()).Database('./data/database.sqlite', (err) => {
+import path from 'path';
+
+
+import { exec } from 'child_process';
+
+exec('pwd', (err, stdout, stderr) => {
+  if (err) {
+    console.error('Error running pwd:', err);
+    return;
+  }
+  console.log('Current working directory:', stdout.trim());
+});
+
+exec('ls -l', (err, stdout, stderr) => {
+  if (err) {
+    console.error('Error running ls:', err);
+    return;
+  }
+  console.log('Listing current directory:\n', stdout);
+});
+
+
+const dbPath = path.resolve('/app/data/database.sqlite');
+const db = new (verbose()).Database(dbPath, (err) => {
+
   if (err) {
     console.error('error while opening db:', err);
   } else {

@@ -32,15 +32,12 @@ fastify.listen({ port: 3000, host: '0.0.0.0' }, (err, address) => {
   fastify.log.info(`Server listening at ${address}`);
 });
 
-await fastify.get('/users', async (request, reply) => {
-  {
-    try 
-    {
-      const result = await getAllUsers();
-      reply.send({ success: true, users: result });
-    } catch (err) {
-      request.log.error(err);
-      reply.code(500).send({ error: 'Error searching in the db' });
+fastify.get('/users', async (request, reply) => {
+  try {
+    const result = await getAllUsers();
+    reply.send({ success: true, users: result });
+  } catch (err) {
+    request.log.error(err);
+    reply.code(500).send({ error: 'Error searching in the db' });
   }
-  }
-})
+});
