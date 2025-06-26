@@ -1,29 +1,39 @@
-import { getUserByMail, getUserByUsername } from '../database_comunication/user_db';
-import fastify from '../fastify' 
-const Fastify = new fastify;
+import { error } from 'console';
+import { getUserByMail, getUserByUsername, insertUser } from '../database_comunication/user_db.js';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const bcrypt = require('bcrypt');
 
-Fastify.post('login', async (request, post))
-{
-    const { username,  mail, password } = request.body;
-    user = '';
-    if (mail)
-    {
-        user = await getUserByMail(mail)
-        if (!user)
-            return reply.code(400).send({ error: 'Mail not registered!'});
-    }
-    else if (username)
-    {
-        user = await getUserByUsername(username)
-        if (!user)
-            return reply.code(400).send({ error: 'Username not registered!'});
-    }
-    const valid = await bycrpt.compare(user)
-        
-    const bcrypt = require('bcrypt');
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-    const newUser = await createUser({ mail, username, passwordHash: hashedPassword });
-    const token = fastify.jwt.sign({ id: newUser.id, mail: newUser.mail });
-    reply.send({ token, user: { id: newUser.id, mail: newUser.mail, username: newUser.username } });
+
+export default async function (fastify, opts) {
+    fastify.post('/login', async (request, reply) =>  {
+        try
+        {
+            const { username, password } = request.body;
+            const user = await getUserByMail(username);
+            if (!user)
+                return reply.code(400).send({ error: 'email not registered!'});
+                    const isValid = await bcrypt.compare(password, user.psw);
+            if (!isValid)
+                return reply.code(401).send({ error: 'Invalid password' });
+            const token = fastify.jwt.sign({
+                id: user.id,
+                mail: user.mail,
+                username: user.username
+            });
+            reply.send({
+                token,
+                user: {
+                id: user.id,
+                mail: user.mail,
+                username: user.username
+                }
+            });
+           
+        }
+        catch (err)
+        {
+            return reply.code(404).send({error: 'error '+ err});
+        }
+    })
 }

@@ -4,25 +4,21 @@ import jwt from '@fastify/jwt';
 
 import { getAllUsers, insertUser } from './database_comunication/user_db.js';
 import registerRoute from './controllers/register.js'; // 👈 importa la rotta modulare
-
+import loginRoute from './controllers/login.js'
 const fastify = Fastify({ logger: true });
 
-// CORS
 await fastify.register(cors, {
   origin: '*',
 });
 
-// JWT
 await fastify.register(jwt, {
   secret: 'your_secret_key', // 🔐 metti un valore sicuro in .env
 });
 
 
-
-// Registra la rotta custom
+await fastify.register(loginRoute);
 await fastify.register(registerRoute);
 
-// Avvio del server
 fastify.listen({ port: 3000, host: '0.0.0.0' }, (err, address) => {
   if (err) 
   {

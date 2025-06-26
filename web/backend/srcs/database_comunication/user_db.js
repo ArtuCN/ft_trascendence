@@ -5,25 +5,6 @@ const { verbose } = sqlite3;
 import path from 'path';
 
 
-import { exec } from 'child_process';
-
-exec('pwd', (err, stdout, stderr) => {
-  if (err) {
-    console.error('Error running pwd:', err);
-    return;
-  }
-  console.log('Current working directory:', stdout.trim());
-});
-
-exec('ls -l', (err, stdout, stderr) => {
-  if (err) {
-    console.error('Error running ls:', err);
-    return;
-  }
-  console.log('Listing current directory:\n', stdout);
-});
-
-
 const dbPath = path.resolve('/app/data/database.sqlite');
 const db = new (verbose()).Database(dbPath, (err) => {
 
@@ -109,3 +90,4 @@ export function getUserByUsername(username)
     });
   });
 }
+
