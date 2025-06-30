@@ -1,5 +1,6 @@
 import { PaddleOrientation, canvas, ctx, keysPressed, cornerWallThickness, cornerWallSize } from "./variables.js";
-import { nbrPlayer, playerGoals } from "../script.js";
+import { nbrPlayer, Pebble } from "../script.js";
+import { send } from "process";
 
 export class Paddles {
 	private id: number;
@@ -47,68 +48,100 @@ export class Paddles {
 			this.initialPosition = canvas.width / 2 - this.paddleLength / 2;
 	}
 
-	public movePaddles() {
-		// Left paddle (Player 0, vertical)
-		if (nbrPlayer == 2) {
-			if (this.id === 0 && this.orientation === "vertical") {
-				if ((keysPressed["s"] || keysPressed["S"]) && this.initialPosition <= (canvas.height - this.paddleLength))
-					this.initialPosition += this.speed;
-				if (keysPressed["w"] && this.initialPosition >= 0)
-					this.initialPosition -= this.speed;
-			}
-			// Right paddle (Player 1, vertical)
-			else if (this.id === 1 && this.orientation === "vertical") {
-				if (keysPressed["ArrowDown"] && this.initialPosition <= (canvas.height - this.paddleLength))
-					this.initialPosition += this.speed;
-				if (keysPressed["ArrowUp"] && this.initialPosition >= 0)
-					this.initialPosition -= this.speed;
-			}
-			if (this.initialPosition > (canvas.height - this.paddleLength))
-				this.initialPosition = canvas.height - this.paddleLength;
-			if (this.initialPosition < 0)
-				this.initialPosition = 0;
+	private botMode() {
+		if (this.id === 0 && this.orientation === "vertical") {
+			if (keysPressed["s"] && this.initialPosition <= (canvas.height - this.paddleLength))
+				this.initialPosition += this.speed;
+			if (keysPressed["w"] && this.initialPosition >= 0)
+				this.initialPosition -= this.speed;
 		}
-		else if (nbrPlayer == 4) {
-			if (this.id === 0 && this.orientation === "vertical") {
-				if (keysPressed["s"] && this.initialPosition <= (canvas.height - this.paddleLength - cornerWallThickness))
-					this.initialPosition += this.speed;
-				if (keysPressed["w"] && this.initialPosition >= 0 + cornerWallThickness)
-					this.initialPosition -= this.speed;
-			}
-			// Right paddle (Player 1, vertical)
-			else if (this.id === 1 && this.orientation === "vertical") {
-				if (keysPressed["ArrowDown"] && this.initialPosition <= (canvas.height - this.paddleLength - cornerWallThickness))
-					this.initialPosition += this.speed;
-				if (keysPressed["ArrowUp"] && this.initialPosition >= 0 + cornerWallThickness)
-					this.initialPosition -= this.speed;
-			}
+		if (this.id === 1 && this.orientation === "vertical") {
+			if (keysPressed["ArrowDown"] && this.initialPosition <= (canvas.height - this.paddleLength))
+				this.initialPosition += this.speed;
+			if (keysPressed["ArrowUp"] && this.initialPosition >= 0)
+				this.initialPosition -= this.speed;
+		}
+		if (this.initialPosition > (canvas.height - this.paddleLength))
+			this.initialPosition = canvas.height - this.paddleLength;
+		if (this.initialPosition < 0)
+			this.initialPosition = 0;
+	}
+
+
+	private twoPlayerMode() {
+		if (this.id === 0 && this.orientation === "vertical") {
+			if ((keysPressed["s"] || keysPressed["S"]) && this.initialPosition <= (canvas.height - this.paddleLength))
+				this.initialPosition += this.speed;
+			if (keysPressed["w"] && this.initialPosition >= 0)
+				this.initialPosition -= this.speed;
+		}
+		// Right paddle (Player 1, vertical)
+		else if (this.id === 1 && this.orientation === "vertical") {
+			if (keysPressed["ArrowDown"] && this.initialPosition <= (canvas.height - this.paddleLength))
+				this.initialPosition += this.speed;
+			if (keysPressed["ArrowUp"] && this.initialPosition >= 0)
+				this.initialPosition -= this.speed;
+		}
+		if (this.initialPosition > (canvas.height - this.paddleLength))
+			this.initialPosition = canvas.height - this.paddleLength;
+		if (this.initialPosition < 0)
+			this.initialPosition = 0;
+	}
+
+	private fourPlayerMode() {
+		if (this.id === 0 && this.orientation === "vertical") {
+			if (keysPressed["s"] && this.initialPosition <= (canvas.height - this.paddleLength - cornerWallThickness))
+				this.initialPosition += this.speed;
+			if (keysPressed["w"] && this.initialPosition >= 0 + cornerWallThickness)
+				this.initialPosition -= this.speed;
+		}
+		// Right paddle (Player 1, vertical)
+		else if (this.id === 1 && this.orientation === "vertical") {
+			if (keysPressed["ArrowDown"] && this.initialPosition <= (canvas.height - this.paddleLength - cornerWallThickness))
+				this.initialPosition += this.speed;
+			if (keysPressed["ArrowUp"] && this.initialPosition >= 0 + cornerWallThickness)
+				this.initialPosition -= this.speed;
+		}
 		// Top paddle (Player 2, horizontal)
-			else if (this.id === 2 && this.orientation === "horizontal") {
-				if (keysPressed["d"] && this.initialPosition <= (canvas.width - this.paddleLength - cornerWallThickness))
-					this.initialPosition += this.speed;
-				if (keysPressed["a"] && this.initialPosition >= 0 + cornerWallThickness)
-					this.initialPosition -= this.speed;
-			}
-			// Bottom paddle (Player 3, horizontal)
-			else if (this.id === 3 && this.orientation === "horizontal") {
-				if (keysPressed["ArrowRight"] && this.initialPosition <= (canvas.width - this.paddleLength - cornerWallThickness))
-					this.initialPosition += this.speed;
-				if (keysPressed["ArrowLeft"] && this.initialPosition >= 0 + cornerWallThickness)
-					this.initialPosition -= this.speed;
-			}
-			if (this.orientation === "vertical") {
-				if (this.initialPosition > (canvas.height - this.paddleLength - cornerWallThickness))
-					this.initialPosition = canvas.height - this.paddleLength - cornerWallThickness;
-				if (this.initialPosition < 0 + cornerWallThickness)
-					this.initialPosition = 0 + cornerWallThickness;
-			} else {
-				if (this.initialPosition > (canvas.width - this.paddleLength - cornerWallThickness))
-					this.initialPosition = canvas.width - this.paddleLength - cornerWallThickness;
-				if (this.initialPosition < 0 + cornerWallThickness)
-					this.initialPosition = 0 + cornerWallThickness;
-			}
+		else if (this.id === 2 && this.orientation === "horizontal") {
+			if (keysPressed["d"] && this.initialPosition <= (canvas.width - this.paddleLength - cornerWallThickness))
+				this.initialPosition += this.speed;
+			if (keysPressed["a"] && this.initialPosition >= 0 + cornerWallThickness)
+				this.initialPosition -= this.speed;
+		}
+		// Bottom paddle (Player 3, horizontal)
+		else if (this.id === 3 && this.orientation === "horizontal") {
+			if (keysPressed["ArrowRight"] && this.initialPosition <= (canvas.width - this.paddleLength - cornerWallThickness))
+				this.initialPosition += this.speed;
+			if (keysPressed["ArrowLeft"] && this.initialPosition >= 0 + cornerWallThickness)
+				this.initialPosition -= this.speed;
+		}
+		if (this.orientation === "vertical") {
+			if (this.initialPosition > (canvas.height - this.paddleLength - cornerWallThickness))
+				this.initialPosition = canvas.height - this.paddleLength - cornerWallThickness;
+			if (this.initialPosition < 0 + cornerWallThickness)
+				this.initialPosition = 0 + cornerWallThickness;
+		} else {
+			if (this.initialPosition > (canvas.width - this.paddleLength - cornerWallThickness))
+				this.initialPosition = canvas.width - this.paddleLength - cornerWallThickness;
+			if (this.initialPosition < 0 + cornerWallThickness)
+				this.initialPosition = 0 + cornerWallThickness;
 		}
 	}
+
+	public movePaddles() {
+		// Left paddle (Player 0, vertical)
+		if (nbrPlayer === 1) {
+			this.botMode();
+		}
+		else if (nbrPlayer == 2) {
+			this.twoPlayerMode();
+		}
+		else if (nbrPlayer == 4) {
+			this.fourPlayerMode();
+		}
+	}
+
 	public drawPaddles() {
 		
 		if (this.orientation === "vertical") {

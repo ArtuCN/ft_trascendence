@@ -3,7 +3,7 @@ import { nbrPlayer, playerGoals, showMenu, resetGoalscore } from '../script.js';
 export function drawScore(nbrPlayer) {
     ctx.font = "bold 36px Arial";
     ctx.fillStyle = "white";
-    if (nbrPlayer == 2) {
+    if (nbrPlayer >= 1) {
         ctx.textAlign = "left";
         ctx.textBaseline = "top";
         ctx.fillText(playerGoals[0].toString(), canvas.width / 2 - 100, 20); // Left player
@@ -40,7 +40,7 @@ export class Ball {
         this.speed = 6;
         this.lastTouchedPlayer = -1; // -1 means no player touched the ball yet
         let angle;
-        if (nbrPlayer === 2) {
+        if (nbrPlayer <= 2) {
             if (Math.random() < 0.5) {
                 // Right: -π/4 to π/4
                 angle = (Math.random() - 0.5) * (Math.PI / 4);
@@ -62,7 +62,7 @@ export class Ball {
         this.ballY = canvas.height / 2;
         this.speed = 6;
         let angle;
-        if (nbrPlayer === 2) {
+        if (nbrPlayer <= 2) {
             if (Math.random() < 0.5) {
                 // Right: -π/4 to π/4
                 angle = (Math.random() - 0.5) * (Math.PI / 4);
@@ -111,7 +111,7 @@ export class Ball {
             this.resetGame(players);
             return;
         }
-        if (nbrPlayer == 2) {
+        if (nbrPlayer <= 2) {
             // Bounce off top wall
             if (this.ballY - this.ballSize / 2 <= 0) {
                 this.ballY = this.ballSize / 2;
@@ -157,7 +157,7 @@ export class Ball {
         this.ballX += this.vx;
         this.ballY += this.vy;
         this.checkScore(players);
-        if (nbrPlayer == 2) {
+        if (nbrPlayer <= 2) {
             // Left paddle (Player 0)
             const leftPaddle = players[0].getPaddle();
             if (this.ballX - this.ballSize / 2 <= 20 + leftPaddle.getPaddleThickness() &&
@@ -342,5 +342,14 @@ export class Ball {
         ctx.fillStyle = "white";
         ctx.fill();
         ctx.closePath();
+    }
+    getBallX() {
+        return this.ballX;
+    }
+    getBallY() {
+        return this.ballY;
+    }
+    getBallSize() {
+        return this.ballSize;
     }
 }

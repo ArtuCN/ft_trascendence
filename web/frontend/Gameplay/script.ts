@@ -2,6 +2,7 @@ import { canvas, ctx, canvas_container, cornerWallSize, cornerWallThickness } fr
 import { Player } from "./typescriptFile/classPlayer.js";
 import { Ball, drawScore } from "./typescriptFile/classBall.js";
 
+
 const button2P = document.getElementById("Play2P") as HTMLButtonElement;
 const button4P = document.getElementById("Play4P") as HTMLButtonElement;
 const buttonAi = document.getElementById("PlayAI") as HTMLButtonElement;
@@ -56,7 +57,7 @@ function drawMiddleLine() {
 	ctx.lineWidth = 4;
 
 	// Vertical line
-	if (nbrPlayer >= 2) {
+	if (nbrPlayer >= 1) {
 		for (let yPos = 0; yPos < canvas.height; yPos += dashHeight + gap) {
 			ctx.beginPath();
 			ctx.moveTo(x, yPos);
@@ -79,7 +80,7 @@ function drawMiddleLine() {
 let players: Player[] = [];
 
 
-let Pebble: Ball;
+export let Pebble: Ball;
 
 function draw() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -123,14 +124,34 @@ button4P.addEventListener("click", () => {
 	if (isNaN(nbrPlayer))
 		nbrPlayer = 4;
 	playerGoals = [0, 0, 0, 0];
-	canvas.height = canvas.width;
+	canvas.height = canvas.width = 800;
 	Pebble = new Ball();
 
 	players = [];
 	players.push(new Player("Matteo", 0, "vertical"));
 	players.push(new Player("Arturo", 1, "vertical"));
-	players.push(new Player("Khadim", 2, "horizontal"));
+	players.push(new Player("Petre", 2, "horizontal"));
 	players.push(new Player("Tjaz", 3, "horizontal"));
+
+	draw();
+});
+
+buttonAi.addEventListener("click", () => {
+	buttonAi.style.display = "none";
+	button2P.style.display = "none";
+	button4P.style.display = "none";
+	textPong.style.display = "none";
+	canvas_container.style.display = "block";
+	canvas.style.display = "block";
+	nbrPlayer = parseInt(buttonAi.value);
+	if (isNaN(nbrPlayer))
+		nbrPlayer = 1;
+	playerGoals = [0, 0];
+	Pebble = new Ball();
+
+	players = [];
+	players.push(new Player("Matteo", 0, "vertical"));
+	players.push(new Player("AI", 1, "vertical"));
 
 	draw();
 });

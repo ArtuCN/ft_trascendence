@@ -15,6 +15,24 @@ export function showMenu() {
     canvas_container.style.display = "none";
     canvas.style.display = "none";
 }
+export let sendData = async (ball_y, paddle_y) => {
+    let response = await fetch('http://localhost:5501/ai', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            ballY: ball_y,
+            paddleY: paddle_y
+        })
+    });
+    let data = await response.json();
+    if (data.error) {
+        console.error("Error from AI:", data.error);
+        return { key: "none" };
+    }
+    return data;
+};
 function drawCornerWalls() {
     if (nbrPlayer !== 4)
         return;
@@ -45,7 +63,7 @@ function drawMiddleLine() {
     ctx.strokeStyle = "white";
     ctx.lineWidth = 4;
     // Vertical line
-    if (nbrPlayer >= 2) {
+    if (nbrPlayer >= 1) {
         for (let yPos = 0; yPos < canvas.height; yPos += dashHeight + gap) {
             ctx.beginPath();
             ctx.moveTo(x, yPos);
@@ -65,14 +83,17 @@ function drawMiddleLine() {
 }
 // Create 4 players
 let players = [];
-let Pebble;
-function draw() {
+export let Pebble;
+async function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawMiddleLine();
     drawCornerWalls();
     Pebble.moveBall(players);
     Pebble.drawBall();
-    players.forEach(player => player.drawAndMove());
+    for (const player of players) {
+        await player.getPaddle().movePaddles();
+        player.getPaddle().drawPaddles();
+    }
     drawScore(nbrPlayer);
     requestAnimationFrame(draw);
 }
@@ -104,12 +125,29 @@ button4P.addEventListener("click", () => {
     if (isNaN(nbrPlayer))
         nbrPlayer = 4;
     playerGoals = [0, 0, 0, 0];
-    canvas.height = canvas.width;
+    canvas.height = canvas.width = 800;
     Pebble = new Ball();
     players = [];
     players.push(new Player("Matteo", 0, "vertical"));
     players.push(new Player("Arturo", 1, "vertical"));
-    players.push(new Player("Khadim", 2, "horizontal"));
+    players.push(new Player("Petre", 2, "horizontal"));
     players.push(new Player("Tjaz", 3, "horizontal"));
+    draw();
+});
+buttonAi.addEventListener("click", () => {
+    buttonAi.style.display = "none";
+    button2P.style.display = "none";
+    button4P.style.display = "none";
+    textPong.style.display = "none";
+    canvas_container.style.display = "block";
+    canvas.style.display = "block";
+    nbrPlayer = parseInt(buttonAi.value);
+    if (isNaN(nbrPlayer))
+        nbrPlayer = 1;
+    playerGoals = [0, 0];
+    Pebble = new Ball();
+    players = [];
+    players.push(new Player("Matteo", 0, "vertical"));
+    players.push(new Player("AI", 1, "vertical"));
     draw();
 });
