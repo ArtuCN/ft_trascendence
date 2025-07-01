@@ -1,5 +1,5 @@
 // routes/register.js
-import { getUserByMail, getUserByUsername, insertUser } from '../database_comunication/user_db.js';
+import { getUserByMail, getUserByUsername, insertUser, saveToken } from '../database_comunication/user_db.js';
 
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
@@ -24,7 +24,7 @@ export default async function (fastify, opts) {
       const newUser = await insertUser({ username, mail, psw: hashedPassword });
   
       const token = fastify.jwt.sign({ id: newUser.id, mail: newUser.mail });
-  
+      saveToken(newUser.username, token);
       reply.send({
         token,
         user: {

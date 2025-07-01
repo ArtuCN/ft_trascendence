@@ -1,5 +1,4 @@
-import { error } from 'console';
-import { getUserByMail, getUserByUsername, insertUser } from '../database_comunication/user_db.js';
+import { getUserByMail, saveToken, getTokenByUsername, tokenExists } from '../database_comunication/user_db.js';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const bcrypt = require('bcrypt');
@@ -16,20 +15,26 @@ export default async function (fastify, opts) {
                     const isValid = await bcrypt.compare(password, user.psw);
             if (!isValid)
                 return reply.code(401).send({ error: 'Invalid password' });
-            const token = fastify.jwt.sign({
-                id: user.id,
-                mail: user.mail,
-                username: user.username
-            });
+            let token = '';
+            if (await tokenExists(user.username) == true)
+                token = await getTokenByUsername(username);
+            else
+            {
+                token = fastify.jwt.sign({
+                    id: user.id,
+                    mail: user.mail,
+                    username: user.username
+                });
+                await saveToken(username, token);
+            }
             reply.send({
                 token,
                 user: {
-                id: user.id,
-                mail: user.mail,
-                username: user.username
+                    id: user.id,
+                    mail: user.mail,
+                    username: user.username
                 }
             });
-           
         }
         catch (err)
         {

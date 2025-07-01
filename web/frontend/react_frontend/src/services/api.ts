@@ -51,11 +51,9 @@ class ApiService {
     });
 
     const data = await response.json();
-
     if (!response.ok) {
       throw new Error(data.error || data.message || 'Login failed');
     }
-
     return data;
   }
 

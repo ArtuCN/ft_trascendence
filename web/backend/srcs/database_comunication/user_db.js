@@ -2,7 +2,8 @@ import sqlite3 from 'sqlite3';
 import models from '../models/models.js'
 
 const { verbose } = sqlite3;
-import path from 'path';
+import path, { resolve } from 'path';
+import { rejects } from 'assert';
 
 
 const dbPath = path.resolve('/app/data/database.sqlite');
@@ -83,7 +84,7 @@ export function getUserByUsername(username)
     db.all('SELECT * FROM user WHERE username = ?', [username], (err, rows) => {
       if (err) {
         console.error('Error during SELECT by username:', err);
-        reject(err);
+        rejects(err);
       } else {
         resolve(rows);
       }
@@ -91,3 +92,68 @@ export function getUserByUsername(username)
   });
 }
 
+export function saveToken(username, token)
+{
+  return new Promise((resolve, rejects) =>
+  {
+    db.all('UPDATE user SET token = ? WHERE username = ? AND token is NULL' , [token, username], (err, rows) => {
+      if (err) {
+        console.error('Error while adding token: ', err);
+        rejects(err);
+      } else {
+        resolve(rows);
+      }
+    })
+  })
+}
+
+export function removeToken(username)
+{
+  return new Promise((resolve, rejects)=>
+  {
+    db.all('UPDATE user SET token = NULL WHERE username = ?' , [token, username], (err, rows) => {
+      if (err) {
+        console.error('Error while removing token: ', err);
+        rejects(err);
+      } else {
+        resolve(rows);
+      }
+    })
+  })
+}
+
+export function getTokenByUsername(username)
+{
+  return new Promise((resolve, rejects)=>
+  {
+    db.all('SELECT token FROM user WHERE username = ?', [username], (err, rows) => {
+      if (err) {
+        console.error('Error during SELECT by username:', err);
+        rejects(err);
+      } else {
+        resolve(rows);
+      }
+    });
+  })
+}
+
+export async function tokenExists(username)
+{
+  const token = await getTokenByUsername(username);
+  if (!token)
+    return false;
+  return true;
+}
+export async function searchByToken(token) {
+  return new Promise((resolve, rejects) =>
+  db.all('SELECT * FROM user WHERE token = ?', [token], (err, rows) =>
+  {
+   if (err) {
+        console.error('Error during SELECT by username:', err);
+        rejects(err);
+      } else {
+        resolve(rows);
+      }      
+  })
+  );  
+}
