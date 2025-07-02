@@ -1,0 +1,36 @@
+
+version: '3.8'
+
+services:
+  ai:
+    container_name: ai
+    build:
+      context: ./AI
+      dockerfile: Dockerfile
+    volumes:
+      - ./AI:/code
+    ports:
+      - "8001:8001"
+    networks:
+      - gameplay_network
+  gameplay:
+    container_name: gameplay
+    build:
+      context: ./Gameplay
+      dockerfile: Dockerfile
+    volumes:
+      - ./Gameplay:/code
+    ports:
+      - "8000:8000"
+    networks:
+      - gameplay_network
+
+networks:
+  gameplay_network:
+    driver: bridge 
+
+volumes:
+  gameplay_data:
+    driver: local
+  ai_data:
+    driver: local

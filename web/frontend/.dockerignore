@@ -3,7 +3,5 @@ node_modules/**
 dist
 .vscode
 .git
-Dockerfile
-docker-compose.yml
 *.log
 
