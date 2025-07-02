@@ -1,6 +1,6 @@
 import { PaddleOrientation, canvas, ctx, keysPressed, cornerWallThickness, cornerWallSize } from "./variables.js";
-import { nbrPlayer, Pebble } from "../script.js";
-import { send } from "process";
+import { nbrPlayer, sendData, Pebble } from "../script.js";
+
 
 export class Paddles {
 	private id: number;
@@ -9,6 +9,7 @@ export class Paddles {
 	private paddleThickness: number;
 	private speed: number = 4;
 	private initialPosition: number;
+	private botKey: string = "";
 
 	public constructor(i: number, orientation: PaddleOrientation) {
 
@@ -48,6 +49,12 @@ export class Paddles {
 			this.initialPosition = canvas.width / 2 - this.paddleLength / 2;
 	}
 
+	public startBotPolling() {
+		setInterval(async () => {
+			this.botKey = await sendData(Pebble.getBallY(), this.initialPosition);
+		}, 50); // Poll every 50ms (adjust as needed)
+	}
+
 	private botMode() {
 		if (this.id === 0 && this.orientation === "vertical") {
 			if (keysPressed["s"] && this.initialPosition <= (canvas.height - this.paddleLength))
@@ -56,9 +63,9 @@ export class Paddles {
 				this.initialPosition -= this.speed;
 		}
 		if (this.id === 1 && this.orientation === "vertical") {
-			if (keysPressed["ArrowDown"] && this.initialPosition <= (canvas.height - this.paddleLength))
+			if (this.botKey === "ArrowDown" && this.initialPosition <= (canvas.height - this.paddleLength))
 				this.initialPosition += this.speed;
-			if (keysPressed["ArrowUp"] && this.initialPosition >= 0)
+			if (this.botKey === "ArrowUp" && this.initialPosition >= 0)
 				this.initialPosition -= this.speed;
 		}
 		if (this.initialPosition > (canvas.height - this.paddleLength))
@@ -129,7 +136,7 @@ export class Paddles {
 		}
 	}
 
-	public movePaddles() {
+	public  movePaddles() {
 		// Left paddle (Player 0, vertical)
 		if (nbrPlayer === 1) {
 			this.botMode();

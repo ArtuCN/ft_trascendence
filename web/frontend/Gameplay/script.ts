@@ -11,6 +11,25 @@ const textPong = document.getElementById("PongGame") as HTMLHeadingElement;
  export let nbrPlayer: number;
  export let playerGoals: number[];
 
+export async function sendData(ball_y: number, paddle_y: number): Promise<string> {
+
+	const response = await fetch("http://localhost:8001/ai", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json"
+		},
+		body: JSON.stringify({ ball_y, paddle_y })
+	});
+	if (!response.ok) {
+		return "";
+	}
+	const data = await response.json();
+	if (data.error) {
+		return "";
+	}
+	return data.key;
+}
+
 export function showMenu() {
     button2P.style.display = "inline-block";
     button4P.style.display = "inline-block";
@@ -83,12 +102,16 @@ let players: Player[] = [];
 export let Pebble: Ball;
 
 function draw() {
+	
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	drawMiddleLine();
 	drawCornerWalls();
 	Pebble.moveBall(players);
 	Pebble.drawBall();
-	players.forEach(player => player.drawAndMove());
+	for (const player of players) {
+    	player.getPaddle().movePaddles();
+   		player.getPaddle().drawPaddles();
+	}
 	drawScore(nbrPlayer);
 	requestAnimationFrame(draw);
 }
@@ -153,5 +176,6 @@ buttonAi.addEventListener("click", () => {
 	players.push(new Player("Matteo", 0, "vertical"));
 	players.push(new Player("AI", 1, "vertical"));
 
+	players[1].getPaddle().startBotPolling();
 	draw();
 });
