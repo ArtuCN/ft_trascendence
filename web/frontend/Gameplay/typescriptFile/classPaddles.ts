@@ -52,7 +52,7 @@ export class Paddles {
 	public startBotPolling() {
 		setInterval(async () => {
 			this.botKey = await sendData(Pebble.getBallY(), this.initialPosition);
-		}, 50); // Poll every 50ms (adjust as needed)
+		}, 1000); // Poll every 50ms (adjust as needed)
 	}
 
 	private botMode() {

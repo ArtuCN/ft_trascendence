@@ -5,10 +5,10 @@ services:
   ai:
     container_name: ai
     build:
-      context: ./AI
+      context: ./web/frontend/AI
       dockerfile: Dockerfile
     volumes:
-      - ./AI:/code
+      - ./web/frontend/AI:/code
     ports:
       - "8001:8001"
     networks:
@@ -16,10 +16,10 @@ services:
   gameplay:
     container_name: gameplay
     build:
-      context: ./Gameplay
+      context: ./web/frontend/Gameplay
       dockerfile: Dockerfile
     volumes:
-      - ./Gameplay:/code
+      - ./web/frontend/Gameplay:/code
     ports:
       - "8000:8000"
     networks:

@@ -13,7 +13,7 @@ const textPong = document.getElementById("PongGame") as HTMLHeadingElement;
 
 export async function sendData(ball_y: number, paddle_y: number): Promise<string> {
 
-	const response = await fetch("http://localhost:8001/ai", {
+	let response = await fetch("http://localhost:8001/ai", {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json"
@@ -23,7 +23,7 @@ export async function sendData(ball_y: number, paddle_y: number): Promise<string
 	if (!response.ok) {
 		return "";
 	}
-	const data = await response.json();
+	let data = await response.json();
 	if (data.error) {
 		return "";
 	}
