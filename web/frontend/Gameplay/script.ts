@@ -8,8 +8,9 @@ const button4P = document.getElementById("Play4P") as HTMLButtonElement;
 const buttonAi = document.getElementById("PlayAI") as HTMLButtonElement;
 const textPong = document.getElementById("PongGame") as HTMLHeadingElement;
 
- export let nbrPlayer: number;
- export let playerGoals: number[];
+export let nbrPlayer: number;
+export let playerGoals: number[];
+let animationFrameId: number | null = null;
 
 export async function sendData(ball_y: number, paddle_y: number): Promise<string> {
 
@@ -31,6 +32,15 @@ export async function sendData(ball_y: number, paddle_y: number): Promise<string
 }
 
 export function showMenu() {
+	if (animationFrameId !== null) {
+		cancelAnimationFrame(animationFrameId);
+		animationFrameId = null;
+	}
+
+	for (const player of players) {
+		player.getPaddle().stopBotPolling();
+	}
+	players = [];
     button2P.style.display = "inline-block";
     button4P.style.display = "inline-block";
     buttonAi.style.display = "inline-block";
@@ -113,7 +123,7 @@ function draw() {
    		player.getPaddle().drawPaddles();
 	}
 	drawScore(nbrPlayer);
-	requestAnimationFrame(draw);
+	animationFrameId = requestAnimationFrame(draw);
 }
 
 button2P.addEventListener("click", () => {

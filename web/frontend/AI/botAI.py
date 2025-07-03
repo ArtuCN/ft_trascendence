@@ -20,11 +20,12 @@ class AIRequest(BaseModel):
 @app.post("/ai")
 async def ai_decision(data: AIRequest):
     ball_y = data.ball_y
-    paddle_y = data.paddle_y
+    paddle_center = data.paddle_y
+    death_zone = 20  # Define a death zone threshold
 
-    if ball_y > paddle_y + 10:
+    if ball_y > paddle_center + death_zone:
         return {"key": "ArrowDown"}
-    elif ball_y < paddle_y:
+    elif ball_y < paddle_center - death_zone:
         return {"key": "ArrowUp"}
     else:
-        return {"key": None}
+        return {"key": ""}

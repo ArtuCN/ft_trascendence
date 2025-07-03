@@ -176,7 +176,7 @@ export class Ball {
 				this.ballY + this.ballSize / 2 >= leftPaddle.getInitialPosition() &&
 				this.ballY - this.ballSize / 2 <= leftPaddle.getInitialPosition() + leftPaddle.getPaddleLength()
 			) {
-				this.speed = 6;
+				this.speed = 7;
 				this.ballX = 20 + leftPaddle.getPaddleThickness() + this.ballSize / 2;
 				this.calculateBounce(leftPaddle, "vertical");
 				this.lastTouchedPlayer = 0; // Left player touched the ball
@@ -188,7 +188,7 @@ export class Ball {
 				this.ballY + this.ballSize / 2 >= rightPaddle.getInitialPosition() &&
 				this.ballY - this.ballSize / 2 <= rightPaddle.getInitialPosition() + rightPaddle.getPaddleLength()
 			) {
-				this.speed = 6;
+				this.speed = 7;
 				this.ballX = canvas.width - 20 - rightPaddle.getPaddleThickness() - this.ballSize / 2;
 				this.calculateBounce(rightPaddle, "vertical", true);
 				this.lastTouchedPlayer = 1; // Right player touched the ball
@@ -204,7 +204,7 @@ export class Ball {
 				this.ballY + this.ballSize / 2 >= leftPaddle.getInitialPosition() &&
 				this.ballY - this.ballSize / 2 <= leftPaddle.getInitialPosition() + leftPaddle.getPaddleLength()
 			) {
-				this.speed = 6;
+				this.speed = 7;
 				this.ballX = 20 + leftPaddle.getPaddleThickness() + this.ballSize / 2;
 				this.calculateBounce(leftPaddle, "vertical");
 				this.lastTouchedPlayer = 0; // Left player touched the ball
@@ -216,7 +216,7 @@ export class Ball {
 				this.ballY + this.ballSize / 2 >= rightPaddle.getInitialPosition() &&
 				this.ballY - this.ballSize / 2 <= rightPaddle.getInitialPosition() + rightPaddle.getPaddleLength()
 			) {
-				this.speed = 6;
+				this.speed = 7;
 				this.ballX = canvas.width - 20 - rightPaddle.getPaddleThickness() - this.ballSize / 2;
 				this.calculateBounce(rightPaddle, "vertical", true);
 				this.lastTouchedPlayer = 1; // Right player touched the ball
@@ -228,7 +228,7 @@ export class Ball {
 				this.ballX + this.ballSize / 2 >= topPaddle.getInitialPosition() &&
 				this.ballX - this.ballSize / 2 <= topPaddle.getInitialPosition() + topPaddle.getPaddleLength()
 			) {
-				this.speed = 6;
+				this.speed = 7;
 				this.ballY = 20 + topPaddle.getPaddleThickness() + this.ballSize / 2;
 				this.calculateBounce(topPaddle, "horizontal");
 				this.lastTouchedPlayer = 2; // Top player touched the ball
@@ -240,7 +240,7 @@ export class Ball {
 				this.ballX + this.ballSize / 2 >= bottomPaddle.getInitialPosition() &&
 				this.ballX - this.ballSize / 2 <= bottomPaddle.getInitialPosition() + bottomPaddle.getPaddleLength()
 			) {
-				this.speed = 6;
+				this.speed = 7;
 				this.ballY = canvas.height - 20 - bottomPaddle.getPaddleThickness() - this.ballSize / 2;
 				this.calculateBounce(bottomPaddle, "horizontal", true);
 				this.lastTouchedPlayer = 3; // Bottom player touched the ball
