@@ -6,8 +6,8 @@ services:
     image: db-sqlite:0.1
     container_name: database
     env_file: .env
-    # networks:
-    #   - transcendnet
+    networks:
+      - transcendnet
     volumes:
       - shared_db_volume:/var/www/app/data
     restart: on-failure
@@ -57,17 +57,6 @@ services:
       - backend
     restart: on-failure
 
-  ai:
-    container_name: ai
-    build:
-      context: ./game_logic/AI
-      dockerfile: Dockerfile
-    volumes:
-      - ./game_logic/AI:/code
-    ports:
-      - "8001:8001"
-    networks:
-      - gameplay_network
   gameplay:
     container_name: gameplay
     build:
@@ -78,7 +67,24 @@ services:
     ports:
       - "8000:8000"
     networks:
-      - gameplay_network
+      - netplay
+    restart: on-failure
+  ai:
+    container_name: ai
+    build:
+      context: ./game_logic/AI
+      dockerfile: Dockerfile
+    volumes:
+      - ./game_logic/AI:/code
+      - ai_data:/code/data
+    ports:
+      - "8001:8001"
+    depends_on:
+      - gameplay
+    networks:
+      - netplay
+    restart: on-failure
+  
 
 volumes:
   backend_node_modules:
@@ -90,9 +96,6 @@ volumes:
   frontend_node_modules:
     name: frontend_node_modules
     driver: local
-  gameplay_data:
-    name: gameplay_data
-    driver: local
   ai_data:
     name: ai_data
     driver: local
@@ -101,7 +104,8 @@ networks:
   transcendnet:
     name: transcendnet
     driver: bridge
-  gameplay_network:
+  netplay:
+    name: netplay
     driver: bridge 
 
   
