@@ -7,7 +7,7 @@ export function drawScore(nbrPlayer: number) {
     ctx.font = "bold 36px Arial";
     ctx.fillStyle = "white";
 
-    if (nbrPlayer == 2) {
+    if (nbrPlayer <= 2) {
         ctx.textAlign = "left";
         ctx.textBaseline = "top";
         ctx.fillText(playerGoals[0].toString(), canvas.width / 2 - 100, 20); // Left player
@@ -42,27 +42,45 @@ export class Ball {
 	private ballX: number = canvas.width / 2;
 	private ballY: number = canvas.height / 2;
 	private ballSize: number = 12;
-	private speed: number = 6;
-	private vx: number = this.speed * (Math.random() > 0.5 ? 1 : -1);
-	private vy: number = this.speed * (Math.random() * 2 - 1);
+	private speed: number = 4;
+	private vx: number;
+	private vy: number;
 	private lastTouchedPlayer: number = -1; // -1 means no player touched the ball yet
 
 	public getBallSpeed(): number {
 		return this.speed;
 	}
 
+	public constructor() {
+		let angle: number;
+		if (nbrPlayer <= 2) {
+			if (Math.random() < 0.5) {
+				// Right: -π/4 to π/4
+				angle = (Math.random() - 0.5) * (Math.PI / 4);
+			} else {
+				// Left: 3π/4 to 5π/4
+				angle = Math.PI + (Math.random() - 0.5) * (Math.PI / 4);
+			}
+		} else {
+			// Any direction for 4 players
+			angle = Math.random() * Math.PI * 2;
+		}
+		this.vx = this.speed * Math.cos(angle);
+		this.vy = this.speed * Math.sin(angle);
+	}
+
 	private resetGame(players: Player[]) {
 		this.ballX = canvas.width / 2;
 		this.ballY = canvas.height / 2;
-		this.speed = 6;
+		this.speed = 4;
 		let angle: number;
-		if (nbrPlayer === 2) {
+		if (nbrPlayer <= 2) {
 			if (Math.random() < 0.5) {
 				// Right: -π/4 to π/4
-				angle = (Math.random() - 0.5) * (Math.PI / 2);
+				angle = (Math.random() - 0.5) * (Math.PI / 4);
 			} else {
 				// Left: 3π/4 to 5π/4
-				angle = Math.PI + (Math.random() - 0.5) * (Math.PI / 2);
+				angle = Math.PI + (Math.random() - 0.5) * (Math.PI / 4);
 			}
 		} else {
 			// Any direction for 4 players
@@ -102,7 +120,7 @@ export class Ball {
 			this.resetGame(players);
 			return;
 		}
-		if (nbrPlayer == 2) {
+		if (nbrPlayer <= 2) {
 			// Bounce off top wall
 			if (this.ballY - this.ballSize / 2 <= 0) {
 				this.ballY = this.ballSize / 2;
@@ -150,7 +168,7 @@ export class Ball {
 
 		this.checkScore(players);
 
-		if (nbrPlayer == 2) {
+		if (nbrPlayer <= 2) {
 			// Left paddle (Player 0)
 			const leftPaddle = players[0].getPaddle();
 			if (
@@ -158,6 +176,7 @@ export class Ball {
 				this.ballY + this.ballSize / 2 >= leftPaddle.getInitialPosition() &&
 				this.ballY - this.ballSize / 2 <= leftPaddle.getInitialPosition() + leftPaddle.getPaddleLength()
 			) {
+				this.speed = 6;
 				this.ballX = 20 + leftPaddle.getPaddleThickness() + this.ballSize / 2;
 				this.calculateBounce(leftPaddle, "vertical");
 				this.lastTouchedPlayer = 0; // Left player touched the ball
@@ -169,6 +188,7 @@ export class Ball {
 				this.ballY + this.ballSize / 2 >= rightPaddle.getInitialPosition() &&
 				this.ballY - this.ballSize / 2 <= rightPaddle.getInitialPosition() + rightPaddle.getPaddleLength()
 			) {
+				this.speed = 6;
 				this.ballX = canvas.width - 20 - rightPaddle.getPaddleThickness() - this.ballSize / 2;
 				this.calculateBounce(rightPaddle, "vertical", true);
 				this.lastTouchedPlayer = 1; // Right player touched the ball
@@ -184,6 +204,7 @@ export class Ball {
 				this.ballY + this.ballSize / 2 >= leftPaddle.getInitialPosition() &&
 				this.ballY - this.ballSize / 2 <= leftPaddle.getInitialPosition() + leftPaddle.getPaddleLength()
 			) {
+				this.speed = 6;
 				this.ballX = 20 + leftPaddle.getPaddleThickness() + this.ballSize / 2;
 				this.calculateBounce(leftPaddle, "vertical");
 				this.lastTouchedPlayer = 0; // Left player touched the ball
@@ -195,6 +216,7 @@ export class Ball {
 				this.ballY + this.ballSize / 2 >= rightPaddle.getInitialPosition() &&
 				this.ballY - this.ballSize / 2 <= rightPaddle.getInitialPosition() + rightPaddle.getPaddleLength()
 			) {
+				this.speed = 6;
 				this.ballX = canvas.width - 20 - rightPaddle.getPaddleThickness() - this.ballSize / 2;
 				this.calculateBounce(rightPaddle, "vertical", true);
 				this.lastTouchedPlayer = 1; // Right player touched the ball
@@ -206,6 +228,7 @@ export class Ball {
 				this.ballX + this.ballSize / 2 >= topPaddle.getInitialPosition() &&
 				this.ballX - this.ballSize / 2 <= topPaddle.getInitialPosition() + topPaddle.getPaddleLength()
 			) {
+				this.speed = 6;
 				this.ballY = 20 + topPaddle.getPaddleThickness() + this.ballSize / 2;
 				this.calculateBounce(topPaddle, "horizontal");
 				this.lastTouchedPlayer = 2; // Top player touched the ball
@@ -217,6 +240,7 @@ export class Ball {
 				this.ballX + this.ballSize / 2 >= bottomPaddle.getInitialPosition() &&
 				this.ballX - this.ballSize / 2 <= bottomPaddle.getInitialPosition() + bottomPaddle.getPaddleLength()
 			) {
+				this.speed = 6;
 				this.ballY = canvas.height - 20 - bottomPaddle.getPaddleThickness() - this.ballSize / 2;
 				this.calculateBounce(bottomPaddle, "horizontal", true);
 				this.lastTouchedPlayer = 3; // Bottom player touched the ball
@@ -363,5 +387,17 @@ export class Ball {
 		ctx.fillStyle = "white";
 		ctx.fill();
 		ctx.closePath();
+	}
+
+	public getBallX() {
+		return this.ballX;
+	}
+
+	public getBallY() {
+		return this.ballY;
+	}
+
+	public getBallSize() {
+		return this.ballSize;
 	}
 }
