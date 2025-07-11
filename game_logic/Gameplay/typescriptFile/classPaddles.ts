@@ -10,6 +10,7 @@ export class Paddles {
 	private speed: number = 4;
 	private initialPosition: number;
 	private botKey: string = "";
+	private botPollingId: number | null = null;
 
 	public constructor(i: number, orientation: PaddleOrientation) {
 
@@ -50,9 +51,19 @@ export class Paddles {
 	}
 
 	public startBotPolling() {
-		setInterval(async () => {
-			this.botKey = await sendData(Pebble.getBallY(), this.initialPosition);
-		}, 1000); // Poll every 50ms (adjust as needed)
+		if (this.botPollingId !== null) {
+			clearInterval(this.botPollingId);
+		}
+		this.botPollingId = window.setInterval(async () => {
+			this.botKey = await sendData(Pebble.getBallY(), this.initialPosition + this.paddleLength / 2);
+		}, 50); // Poll every 50ms (adjust as needed)
+	}
+
+	public stopBotPolling() {
+		if (this.botPollingId !== null) {
+			clearInterval(this.botPollingId);
+			this.botPollingId = null;
+		}
 	}
 
 	private botMode() {

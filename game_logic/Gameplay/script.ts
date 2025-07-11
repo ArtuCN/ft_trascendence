@@ -7,9 +7,11 @@ const button2P = document.getElementById("Play2P") as HTMLButtonElement;
 const button4P = document.getElementById("Play4P") as HTMLButtonElement;
 const buttonAi = document.getElementById("PlayAI") as HTMLButtonElement;
 const textPong = document.getElementById("PongGame") as HTMLHeadingElement;
+const tournamentButton = document.getElementById("Tournament") as HTMLButtonElement;
 
- export let nbrPlayer: number;
- export let playerGoals: number[];
+export let nbrPlayer: number;
+export let playerGoals: number[];
+let animationFrameId: number | null = null;
 
 export async function sendData(ball_y: number, paddle_y: number): Promise<string> {
 
@@ -31,6 +33,15 @@ export async function sendData(ball_y: number, paddle_y: number): Promise<string
 }
 
 export function showMenu() {
+	if (animationFrameId !== null) {
+		cancelAnimationFrame(animationFrameId);
+		animationFrameId = null;
+	}
+
+	for (const player of players) {
+		player.getPaddle().stopBotPolling();
+	}
+	players = [];
     button2P.style.display = "inline-block";
     button4P.style.display = "inline-block";
     buttonAi.style.display = "inline-block";
@@ -113,7 +124,7 @@ function draw() {
    		player.getPaddle().drawPaddles();
 	}
 	drawScore(nbrPlayer);
-	requestAnimationFrame(draw);
+	animationFrameId = requestAnimationFrame(draw);
 }
 
 button2P.addEventListener("click", () => {
@@ -163,7 +174,7 @@ buttonAi.addEventListener("click", () => {
 	buttonAi.style.display = "none";
 	button2P.style.display = "none";
 	button4P.style.display = "none";
-	textPong.style.display = "none";
+	// textPong.style.display = "none";
 	canvas_container.style.display = "block";
 	canvas.style.display = "block";
 	nbrPlayer = parseInt(buttonAi.value);
@@ -178,4 +189,26 @@ buttonAi.addEventListener("click", () => {
 
 	players[1].getPaddle().startBotPolling();
 	draw();
+});
+
+tournamentButton.addEventListener("click", () => {
+    tournamentButton.style.display = "none";
+    button2P.style.display = "none";
+    button4P.style.display = "none";
+    buttonAi.style.display = "none";
+    textPong.style.display = "none";
+    canvas_container.style.display = "block";
+    canvas.style.display = "block";
+    // nbrPlayer = parseInt(tournamentButton.value);
+    // if (isNaN(nbrPlayer))
+    //     nbrPlayer = 8;
+    // playerGoals = Array(nbrPlayer).fill(0);
+    // Pebble = new Ball();
+    // players = [];
+    // for (let i = 0; i < nbrPlayer; i++) {
+    //     players.push(new Player(`Player ${i + 1}`, i, "horizontal"));
+    // }
+    // alert("Tournament mode started! Each player will have a horizontal paddle.");
+	// players = [];
+    // draw();
 });
