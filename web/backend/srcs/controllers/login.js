@@ -17,7 +17,9 @@ export default async function (fastify, opts) {
                 return reply.code(401).send({ error: 'Invalid password' });
             let token = '';
             if (await tokenExists(user.username) == true)
-                token = await getTokenByUsername(username);
+            {
+                token = await getTokenByUsername(user.username);
+            }
             else
             {
                 token = fastify.jwt.sign({
@@ -25,7 +27,7 @@ export default async function (fastify, opts) {
                     mail: user.mail,
                     username: user.username
                 });
-                await saveToken(username, token);
+                const saveResult = await saveToken(user.username, token);
             }
             reply.send({
                 token,

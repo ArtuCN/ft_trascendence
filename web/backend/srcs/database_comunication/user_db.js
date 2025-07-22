@@ -94,14 +94,17 @@ export function getUserByUsername(username)
 
 export function saveToken(username, token)
 {
-  return new Promise((resolve, rejects) =>
+  return new Promise((resolve, reject) =>
   {
-    db.all('UPDATE user SET token = ? WHERE username = ? AND token is NULL' , [token, username], (err, rows) => {
+    console.log('Attempting to save token for username:', username);
+    console.log('Token length:', token ? token.length : 'null/undefined');
+    db.run('UPDATE user SET token = ? WHERE username = ?' , [token, username], function(err) {
       if (err) {
         console.error('Error while adding token: ', err);
-        rejects(err);
+        reject(err);
       } else {
-        resolve(rows);
+        console.log('Token saved successfully. Rows affected:', this.changes);
+        resolve(this.changes);
       }
     })
   })
@@ -109,14 +112,14 @@ export function saveToken(username, token)
 
 export function removeToken(username)
 {
-  return new Promise((resolve, rejects)=>
+  return new Promise((resolve, reject)=>
   {
-    db.all('UPDATE user SET token = NULL WHERE username = ?' , [token, username], (err, rows) => {
+    db.run('UPDATE user SET token = NULL WHERE username = ?' , [username], function(err) {
       if (err) {
         console.error('Error while removing token: ', err);
-        rejects(err);
+        reject(err);
       } else {
-        resolve(rows);
+        resolve(this.changes);
       }
     })
   })
@@ -124,14 +127,18 @@ export function removeToken(username)
 
 export function getTokenByUsername(username)
 {
-  return new Promise((resolve, rejects)=>
+  return new Promise((resolve, reject)=>
   {
-    db.all('SELECT token FROM user WHERE username = ?', [username], (err, rows) => {
+    db.get('SELECT token FROM user WHERE username = ?', [username], (err, row) => {
       if (err) {
         console.error('Error during SELECT by username:', err);
-        rejects(err);
+        reject(err);
       } else {
-        resolve(rows);
+        if (row) {
+          resolve(row.token); // Restituisce il token anche se è null
+        } else {
+          resolve(null); // Utente non trovato
+        }
       }
     });
   })
@@ -140,20 +147,18 @@ export function getTokenByUsername(username)
 export async function tokenExists(username)
 {
   const token = await getTokenByUsername(username);
-  if (!token)
-    return false;
-  return true;
+  return token !== null && token !== undefined && token !== '';
 }
 export async function searchByToken(token) {
-  return new Promise((resolve, rejects) =>
-  db.all('SELECT * FROM user WHERE token = ?', [token], (err, rows) =>
-  {
-   if (err) {
-        console.error('Error during SELECT by username:', err);
-        rejects(err);
-      } else {
-        resolve(rows);
-      }      
-  })
+  return new Promise((resolve, reject) =>
+    db.all('SELECT * FROM user WHERE token = ?', [token], (err, rows) =>
+    {
+     if (err) {
+          console.error('Error during SELECT by token:', err);
+          reject(err);
+        } else {
+          resolve(rows);
+        }      
+    })
   );  
 }
