@@ -37,10 +37,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const token = apiService.getToken();
     if (token) {
-      // Here you could validate the token with the backend
-      // For now, we'll assume the token is valid if it exists
-      // You might want to decode the JWT to get user info
-      // or make a request to validate the token
+      const response = apiService.makeAuthenticatedRequest("/token");
+      setUser(response);
       setIsLoading(false);
     } else {
       setIsLoading(false);
