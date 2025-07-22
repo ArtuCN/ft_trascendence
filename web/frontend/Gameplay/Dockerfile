@@ -13,7 +13,7 @@ RUN tsc
 RUN npm install -g http-server
 
 
-EXPOSE 8000
+EXPOSE 8081
 
 
-CMD ["http-server", "-p", "8000"]
+CMD ["http-server", "-p", "8081"]

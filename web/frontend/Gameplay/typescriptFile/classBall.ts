@@ -1,7 +1,7 @@
 import { Player } from './classPlayer.js';
 import { Paddles } from './classPaddles.js';
-import { PaddleOrientation, canvas, ctx, cornerWallSize, cornerWallThickness,  } from './variables.js';
-import { nbrPlayer, playerGoals, showMenu, resetGoalscore } from '../script.js';
+import { gameRunning, stopGame, startGame, PaddleOrientation, canvas, ctx, cornerWallSize, cornerWallThickness,  } from './variables.js';
+import { nbrPlayer, playerGoals, showMenu, resetGoalscore, advanceWinner } from '../script.js';
 
 export function drawScore(nbrPlayer: number) {
     ctx.font = "bold 36px Arial";
@@ -97,12 +97,15 @@ export class Ball {
 		if (this.ballX < 0) {
 			if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
 			drawScore(nbrPlayer);
-			if (playerGoals[this.lastTouchedPlayer] >= 5) {
+			if (playerGoals[this.lastTouchedPlayer] >= 1) {
 				alert(players[this.lastTouchedPlayer].getNameTag() +" wins!");
 				playerGoals.fill(0);
 				resetGoalscore();
-				if (typeof showMenu === "function")
-					showMenu();
+				// advanceWinner(players[this.lastTouchedPlayer]);
+				if (typeof showMenu === "function") {
+					stopGame();
+					showMenu(players[this.lastTouchedPlayer]);
+				}
 			}
 			this.resetGame(players);
 			return;
@@ -111,11 +114,14 @@ export class Ball {
 		if (this.ballX > canvas.width) {
 			if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
 			drawScore(nbrPlayer);
-			if (playerGoals[this.lastTouchedPlayer] >= 5) {
+			if (playerGoals[this.lastTouchedPlayer] >= 1) {
 				alert(players[this.lastTouchedPlayer].getNameTag() +" wins!");
 				playerGoals.fill(0);
-				if (typeof showMenu === "function")
-					showMenu();
+				// advanceWinner(players[this.lastTouchedPlayer]);
+				if (typeof showMenu === "function") {
+					stopGame();
+					showMenu(players[this.lastTouchedPlayer]);
+				}
 			}
 			this.resetGame(players);
 			return;
@@ -140,7 +146,7 @@ export class Ball {
 					alert(players[this.lastTouchedPlayer].getNameTag() +" wins!");
 					playerGoals.fill(0);
 					if (typeof showMenu === "function")
-						showMenu();
+						showMenu(players[this.lastTouchedPlayer]);
 				}
 				this.resetGame(players);
 				return;
@@ -154,7 +160,7 @@ export class Ball {
 					alert(players[this.lastTouchedPlayer].getNameTag() +" wins!");
 					playerGoals.fill(0);
 					if (typeof showMenu === "function")
-						showMenu();
+						showMenu(players[this.lastTouchedPlayer]);
 				}
 				return;
 			}
@@ -162,6 +168,7 @@ export class Ball {
 	}
 
 	public moveBall(players: Player[]) {
+		if (!gameRunning) return;
 
 		this.ballX += this.vx;
 		this.ballY += this.vy;

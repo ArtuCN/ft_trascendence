@@ -5,6 +5,16 @@ export const cornerWallSize = 100; // Length of each wall side (square)
 export const cornerWallThickness = 100; // Thickness of the wall
 export type PaddleOrientation = "vertical" | "horizontal";
 export const keysPressed: Record<string, boolean> = {};
+export const bracketContainer = document.getElementById("bracket-container") as HTMLDivElement;
+export let gameRunning: boolean = true; // Flag to indicate if the game is running
+
+export function stopGame() {
+	gameRunning = false;
+}
+
+export function startGame() {
+	gameRunning = true;
+}
 
 document.addEventListener("keydown", (e) => {
 	keysPressed[e.key] = true;
