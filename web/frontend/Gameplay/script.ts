@@ -170,7 +170,7 @@ function drawCornerWalls() {
 	ctx.fillRect(canvas.width - cornerWallSize, canvas.height - cornerWallSize, cornerWallSize, cornerWallSize);
 }
 
-function draw() {
+function drawTournament() {
     if (!gameRunning) return;
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	drawMiddleLine();
@@ -182,7 +182,7 @@ function draw() {
 		player.getPaddle().drawPaddles();
 	}
 	drawScore(nbrPlayer);
-	animationFrameId = requestAnimationFrame(draw);
+	animationFrameId = requestAnimationFrame(drawTournament);
 }
 
 function clonePlayer(original: Player, newID: number): Player {
@@ -198,7 +198,7 @@ function startMatch(player1: Player, player2: Player) {
 	resetGoalscore();
 	players = [clonePlayer(player1, 0), clonePlayer(player2, 1)];
     startGame();
-	draw();
+	drawTournament();
 }
 
 function playCurrentMatch() {
