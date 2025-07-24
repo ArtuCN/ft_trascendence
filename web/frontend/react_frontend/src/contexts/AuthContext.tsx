@@ -35,29 +35,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const isAuthenticated = !!user;
   useEffect(() => {
-    const fetchToken = async ( ) => {
-      const token = apiService.getToken();
-      if (token) {
-        const response = apiService.makeAuthenticatedRequest("/token");
-      const data = await (await response).json();
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      const userString = localStorage.getItem('user');
-      if (userString)
-      {
-        const user = JSON.parse(userString);
-        localStorage.setItem("username", user.username);
-        localStorage.setItem("id", user.id);
-        localStorage.setItem("mail", user.mail);
-        console.log('Token:', localStorage.getItem('token'));
-        console.log('User:', localStorage.getItem('user'));
-        setUser((user));
-        setIsLoading(false);
-      }
-    } else {
+
+    const token = apiService.getToken();
+    const storedUser = localStorage.getItem('user');
+    if (!token || !storedUser) {
       setIsLoading(false);
+      setUser(null);
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      return;
     }
-  }
+    const fetchToken = async () => {
+      const token = apiService.getToken();
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
+
+      const response = await apiService.makeAuthenticatedRequest("/token");
+      const data = await (response).json();
+
+      localStorage.setItem('token', data.token);
+
+      if (data.user) {
+        localStorage.setItem('user', JSON.stringify(data.user));
+        setUser(data.user);
+      } else {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) setUser(JSON.parse(storedUser));
+      }
+
+      setIsLoading(false);
+    };
+
   fetchToken();
   }, []);
 
@@ -66,13 +76,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(true);
       setError(null);
       setSuccessMessage(null);
-      
-      const response = await apiService.login({
-        username: email,
-        password
-      });
-      
+
+      const response = await apiService.login({ username: email, password });
+
       apiService.saveToken(response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+
       setUser(response.user);
       setSuccessMessage('Login successful!');
     } catch (err) {
@@ -89,14 +98,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(true);
       setError(null);
       setSuccessMessage(null);
-      
-      const response = await apiService.register({
-        mail: email,
-        username,
-        psw: password
-      });
-      
+
+      const response = await apiService.register({ mail: email, username, psw: password });
+      console.log("full response", response);
       apiService.saveToken(response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+      console.log("response user ", response.user);
       setUser(response.user);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Registration failed';
@@ -106,6 +113,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(false);
     }
   };
+
+
 
   const logout = (): void => {
     apiService.removeToken();
