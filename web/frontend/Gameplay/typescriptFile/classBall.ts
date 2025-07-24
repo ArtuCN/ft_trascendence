@@ -101,7 +101,6 @@ export class Ball {
 				alert(players[this.lastTouchedPlayer].getNameTag() +" wins!");
 				playerGoals.fill(0);
 				resetGoalscore();
-				// advanceWinner(players[this.lastTouchedPlayer]);
 				if (typeof showMenu === "function") {
 					stopGame();
 					showMenu(players[this.lastTouchedPlayer]);
@@ -117,7 +116,6 @@ export class Ball {
 			if (playerGoals[this.lastTouchedPlayer] >= 1) {
 				alert(players[this.lastTouchedPlayer].getNameTag() +" wins!");
 				playerGoals.fill(0);
-				// advanceWinner(players[this.lastTouchedPlayer]);
 				if (typeof showMenu === "function") {
 					stopGame();
 					showMenu(players[this.lastTouchedPlayer]);

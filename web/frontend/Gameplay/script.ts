@@ -5,8 +5,11 @@ import { Ball, drawScore } from "./typescriptFile/classBall.js";
 
 const buttonTournament = document.getElementById("Tournament") as HTMLButtonElement;
 const buttonPlayGame = document.getElementById("PlayGame") as HTMLButtonElement;
+const buttonNbrPlayer = document.getElementById("nbrPlayer") as HTMLSelectElement;
+const startTournamentButton = document.getElementById("StartTournament") as HTMLButtonElement;
 
-export let nbrPlayer: number = parseInt(buttonTournament.value);
+export let nbrPlayer: number = 0;
+let countPlayers: number = 0;
 export let playerGoals: number[] = [0, 0];
 export let Pebble: Ball = new Ball();
 let players: Player[] = [];
@@ -30,9 +33,35 @@ export let semifinals: BracketMatch[] = [
 ];
 
 let final: BracketMatch = { player1: null, player2: null, matchWinner: null };
+
 let currentRound = "quarterfinals";
 let currentMatchIndex = 0;
 let animationFrameId: number | null = null;
+
+function resetBracket() {
+    quarterfinals = [
+        { player1: null, player2: null, matchWinner: null },
+    	{ player1: null, player2: null, matchWinner: null },
+    	{ player1: null, player2: null, matchWinner: null },
+    	{ player1: null, player2: null, matchWinner: null }
+    ];
+    semifinals = [
+    	{ player1: null, player2: null, matchWinner: null },
+    	{ player1: null, player2: null, matchWinner: null }
+    ];
+
+    final = { player1: null, player2: null, matchWinner: null };
+}
+
+function sendTournamentData() {
+    fetch("http://localhost/API", {
+        method: "POST",
+		headers: {
+			"Content-Type": "application/json"
+		},
+		body: JSON.stringify({ quarterfinals, semifinals, final })
+    })
+}
 
 export function showMenu(winner: Player) {
 	if (animationFrameId) {
@@ -41,10 +70,14 @@ export function showMenu(winner: Player) {
 	}
     if (currentRound === "final") {
         players = [];
-        canvas_container.style.display = "none";    
-        canvas.style.display = "none";
+        canvas_container.style.display = "none";
         bracketContainer.style.display = "none";
         buttonTournament.style.display = "inline-block";
+        Pebble = new Ball();
+        resetGoalscore();
+        players = [];
+        // sendData();
+        resetBracket();
         stopGame();
     }
     else {
@@ -62,8 +95,15 @@ function generateBracket(players: Player[]): string {
     let html = "<h2>Tournament Bracket</h2>";
     html += "<div style='display:flex; flex-direction:column; align-items:flex-start;'>";
     html += "<strong>Quarterfinals:</strong><br>";
-    for (let i = 0; i < 4; i++) {
-        html += `Match ${i+1}: ${players[2*i].getNameTag()} vs ${players[2*i+1].getNameTag()}<br>`;
+    if (nbrPlayer == 8) {
+        for (let i = 0; i < 4; i++) {
+            html += `Match ${i+1}: ${players[2*i].getNameTag()} vs ${players[2*i+1].getNameTag()}<br>`;
+        }
+    }
+    else if (nbrPlayer == 4) {
+        for (let i = 0; i < 2; i++) {
+            html += `Match ${i+1}: ${players[2*i].getNameTag()} vs ${players[2*i+1].getNameTag()}<br>`;
+        }
     }
     html += "<br><strong>Semifinals:</strong><br>";
     html += "Winner Match 1 vs Winner Match 2<br>";
@@ -76,13 +116,15 @@ function generateBracket(players: Player[]): string {
 
 function renderBracket() {
     let html = "<h2>Tournament Bracket</h2><div style='display:flex; flex-direction:column; align-items:flex-start;'>";
-    html += "<strong>Quarterfinals:</strong><br>";
-    quarterfinals.forEach((m, i) => {
-        html += `Match ${i+1}: ${m.player1?.getNameTag()} vs ${m.player2?.getNameTag()}`
-        if (m.matchWinner) html += ` — <b>Winner: ${m.matchWinner.getNameTag()}</b>`;
-        if (currentRound === "quarterfinals" && currentMatchIndex === i) html += " <span style='color:red'>(Playing)</span>";
-        html += "<br>";
-    });
+    if (countPlayers == 8) {
+        html += "<strong>Quarterfinals:</strong><br>";
+        quarterfinals.forEach((m, i) => {
+            html += `Match ${i+1}: ${m.player1?.getNameTag()} vs ${m.player2?.getNameTag()}`
+            if (m.matchWinner) html += ` — <b>Winner: ${m.matchWinner.getNameTag()}</b>`;
+            if (currentRound === "quarterfinals" && currentMatchIndex === i) html += " <span style='color:red'>(Playing)</span>";
+            html += "<br>";
+        });
+    }
     html += "<br><strong>Semifinals:</strong><br>";
     semifinals.forEach((m, i) => {
         html += `Semifinal ${i+1}: ${m.player1?.getNameTag() || "TBD"} vs ${m.player2?.getNameTag() || "TBD"}`;
@@ -152,6 +194,7 @@ function startMatch(player1: Player, player2: Player) {
     alert(`Starting match: ${player1.getNameTag()} vs ${player2.getNameTag()}`);
 	canvas_container.style.display = "block";
 	nbrPlayer = 2;
+    Pebble = new Ball();
 	resetGoalscore();
 	players = [clonePlayer(player1, 0), clonePlayer(player2, 1)];
     startGame();
@@ -161,9 +204,11 @@ function startMatch(player1: Player, player2: Player) {
 function playCurrentMatch() {
     if (currentRound === "quarterfinals") {
         match = quarterfinals[currentMatchIndex];
-    } else if (currentRound === "semifinals") {
+    }
+    else if (currentRound === "semifinals") {
         match = semifinals[currentMatchIndex];
-    } else {
+    }
+    else {
         match = final;
     }
 
@@ -186,7 +231,8 @@ export function advanceWinner(winner: Player) {
             currentRound = "semifinals";
             currentMatchIndex = 0;
         }
-    } else if (currentRound === "semifinals") {
+    }
+    else if (currentRound === "semifinals") {
         semifinals[currentMatchIndex].matchWinner = winner;
         if (currentMatchIndex === 0) {
             final.player1 = winner;
@@ -198,7 +244,8 @@ export function advanceWinner(winner: Player) {
             currentRound = "final";
             currentMatchIndex = 0;
         }
-    } else if (currentRound === "final") {
+    }
+    else if (currentRound === "final") {
         final.matchWinner = winner;
         renderBracket();
         alert(`Tournament Winner: ${winner.getNameTag()}`);
@@ -210,36 +257,62 @@ export function advanceWinner(winner: Player) {
     buttonPlayGame.style.display = "inline-block";
 }
 
-buttonTournament.addEventListener("click", () => {
+function waitForStartButton(): Promise<number> {
+    return new Promise((resolve) => {
+        startTournamentButton.onclick = () => {
+            const num = parseInt(buttonNbrPlayer.value);
+            resolve(num);
+        };
+    });
+}
+
+
+buttonTournament.addEventListener("click", async () => {
 	buttonTournament.style.display = "none";
-    const playerCount = parseInt(buttonTournament.value);
-    if (isNaN(playerCount) || playerCount <= 0) {
-        console.error("Invalid player count:", buttonTournament.value);
+    startTournamentButton.style.display = "inline-block";
+    buttonNbrPlayer.style.display = "inline-block";
+    nbrPlayer = await waitForStartButton();
+    if (isNaN(nbrPlayer) || nbrPlayer <= 0) {
+        console.error("Invalid player count:", buttonNbrPlayer.value);
         return;
     }
+    countPlayers = nbrPlayer;
     players = [];
-    for (let i = 0; i < playerCount; i++) {
+    for (let i = 0; i < nbrPlayer; i++) {
         if (i % 2 == 0) {
             players.push(new Player(`Player ${i + 1}`, 0, "vertical"));
         } else {
             players.push(new Player(`Player ${i + 1}`, 1, "vertical"));
         }
     }
-	quarterfinals = [];
-	for (let i = 0; i < playerCount / 2; i++) {
-		quarterfinals.push({
-			player1: players[2 * i],
-			player2: players[2 * i + 1],
-			matchWinner: null
-		});
-	}
+    if (nbrPlayer == 8) {
+        quarterfinals = [];
+        currentRound = "quarterfinals";
+        for (let i = 0; i < nbrPlayer / 2; i++) {
+            quarterfinals.push({
+                player1: players[2 * i],
+                player2: players[2 * i + 1],
+                matchWinner: null
+            });
+        }
+        semifinals = [
+            { player1: null, player2: null, matchWinner: null },
+            { player1: null, player2: null, matchWinner: null }
+        ];
+    }
+    else if (nbrPlayer == 4) {
+        currentRound = "semifinals";
+        semifinals = [];
+        for (let i = 0; i < nbrPlayer / 2; i++) {
+            semifinals.push({
+                player1: players[2 * i],
+                player2: players[2 * i + 1],
+                matchWinner: null
+            });
+        }
+    }
 
-	semifinals = [
-		{ player1: null, player2: null, matchWinner: null },
-		{ player1: null, player2: null, matchWinner: null }
-	];
 	final = { player1: null, player2: null, matchWinner: null };
-	currentRound = "quarterfinals";
 	currentMatchIndex = 0;
     // Show bracket
     const bracketDiv = document.getElementById("bracket-container");
@@ -247,6 +320,8 @@ buttonTournament.addEventListener("click", () => {
         bracketDiv.innerHTML = generateBracket(players);
         bracketDiv.style.display = "block";
     }
+    startTournamentButton.style.display = "none";
+    buttonNbrPlayer.style.display = "none";
     canvas_container.style.display = "none";
 	renderBracket();
     if (!(currentRound === "final" && final.matchWinner)) {

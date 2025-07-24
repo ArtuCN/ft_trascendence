@@ -42,7 +42,13 @@
 <body>
   <h1 id="PongGame">Pong Game</h1>
   
-  <button id="Tournament" value=8>Tournament</button>
+  <button id="Tournament" >Tournament</button>
+  <label for="nbrPlayer" style="display: none;">Number of Players:</label>
+  <select id="nbrPlayer" style="display: none;">
+    <option value="4">4</option>
+    <option value="8">8</option>
+  </select>
+  <button id="StartTournament" style="display:none;">Start Tournament</button>
   <button id="PlayGame" style="display:none;">Play Game</button>
   <div id="bracket-container" style="display:none; margin-bottom: 20px;"></div>
   <div id="canvas-container">
