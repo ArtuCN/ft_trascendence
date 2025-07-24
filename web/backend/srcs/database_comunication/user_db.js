@@ -15,14 +15,16 @@ const db = new (verbose()).Database(dbPath, (err) => {
     console.log('DB opened successfully!');
   }
 });
+db.run("PRAGMA foreign_keys = ON")
+
 export function insertUser(user) {
   return new Promise((resolve, reject) => {
-    const query = `
+    const insertUserQuery = `
       INSERT INTO user (username, mail, psw, token, wallet, is_admin, google_id)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
     db.run(
-      query,
+      insertUserQuery,
       [
         user.username,
         user.mail,
@@ -37,12 +39,27 @@ export function insertUser(user) {
           console.error('Error while adding user:', err);
           reject(err);
         } else {
-          resolve({ id: this.lastID });
+          const newUserId = this.lastID;
+
+          const insertStatsQuery = `
+            INSERT INTO player_all_time_stats (id_player)
+            VALUES (?)
+          `;
+          db.run(insertStatsQuery, [newUserId], (err2) => {
+            if (err2) {
+              console.error('Error while creating player stats:', err2);
+              reject(err2);
+            } else {
+              resolve({ id: newUserId });
+            }
+          });
         }
       }
     );
   });
 }
+
+
 
 
 export function getAllUsers() {
