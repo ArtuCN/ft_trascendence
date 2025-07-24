@@ -7,7 +7,7 @@ const buttonTournament = document.getElementById("Tournament") as HTMLButtonElem
 const buttonPlayGame = document.getElementById("PlayGame") as HTMLButtonElement;
 
 export let nbrPlayer: number = parseInt(buttonTournament.value);
-export let playerGoals: number[] = [0, 0]; // Array to keep track of goals for each player
+export let playerGoals: number[] = [0, 0];
 export let Pebble: Ball = new Ball();
 let players: Player[] = [];
 type BracketMatch = {
@@ -30,8 +30,8 @@ export let semifinals: BracketMatch[] = [
 ];
 
 let final: BracketMatch = { player1: null, player2: null, matchWinner: null };
-let currentRound = "quarterfinals"; // Track the current round
-let currentMatchIndex = 0; // Track the current match index
+let currentRound = "quarterfinals";
+let currentMatchIndex = 0;
 let animationFrameId: number | null = null;
 
 export function showMenu(winner: Player) {
@@ -39,8 +39,18 @@ export function showMenu(winner: Player) {
 		cancelAnimationFrame(animationFrameId);
 		animationFrameId = null;
 	}
-	canvas_container.style.display = "none";
-    advanceWinner(winner);
+    if (currentRound === "final") {
+        players = [];
+        canvas_container.style.display = "none";    
+        canvas.style.display = "none";
+        bracketContainer.style.display = "none";
+        buttonTournament.style.display = "inline-block";
+        stopGame();
+    }
+    else {
+        canvas_container.style.display = "none";
+        advanceWinner(winner);
+    }
 }
 
 export function resetGoalscore() {
@@ -90,7 +100,7 @@ function renderBracket() {
         bracketDiv.innerHTML = html;
         bracketDiv.style.display = "block";
     }
-    buttonPlayGame.style.display = "inline"; // Hide the play game button during tournament
+    buttonPlayGame.style.display = "inline";
 }
 
 function drawMiddleLine() {
@@ -126,8 +136,6 @@ function draw() {
 	Pebble.moveBall(players);
 	Pebble.drawBall();
 	for (const player of players) {
-        console.log(`Drawing and moving paddle for ${player.getNameTag()}`);
-        console.log(`Paddle ID: ${player.getPaddle().getID()}, Orientation: ${player.getPaddle().getOrientation()}`);
 		player.getPaddle().movePaddles();
 		player.getPaddle().drawPaddles();
 	}
@@ -135,8 +143,8 @@ function draw() {
 	animationFrameId = requestAnimationFrame(draw);
 }
 
-function clonePlayer(original: Player): Player {
-	return new Player(original.getNameTag(), original.getPaddle().getID(), original.getPaddle().getOrientation());
+function clonePlayer(original: Player, newID: number): Player {
+	return new Player(original.getNameTag(), newID, original.getPaddle().getOrientation());
 }
 
 function startMatch(player1: Player, player2: Player) {
@@ -145,7 +153,7 @@ function startMatch(player1: Player, player2: Player) {
 	canvas_container.style.display = "block";
 	nbrPlayer = 2;
 	resetGoalscore();
-	players = [clonePlayer(player1), clonePlayer(player2)];
+	players = [clonePlayer(player1, 0), clonePlayer(player2, 1)];
     startGame();
 	draw();
 }
@@ -159,11 +167,9 @@ function playCurrentMatch() {
         match = final;
     }
 
-    // Here you should start your game logic for match.player1 vs match.player2
 	if (match.player1 && match.player2) {
 		startMatch(match.player1, match.player2);
 	}
-    // When the match ends, call advanceWinner(winner)
 }
 
 export function advanceWinner(winner: Player) {
@@ -200,7 +206,6 @@ export function advanceWinner(winner: Player) {
         return;
     }
     renderBracket();
-    // Do NOT call playCurrentMatch() here!
     buttonPlayGame.disabled = false;
     buttonPlayGame.style.display = "inline-block";
 }
@@ -242,22 +247,21 @@ buttonTournament.addEventListener("click", () => {
         bracketDiv.innerHTML = generateBracket(players);
         bracketDiv.style.display = "block";
     }
-    // Optionally, hide the game canvas until matches are played
     canvas_container.style.display = "none";
 	renderBracket();
     if (!(currentRound === "final" && final.matchWinner)) {
         buttonPlayGame.disabled = false;
-        buttonPlayGame.style.display = "inline-block"; // Show the play game button
+        buttonPlayGame.style.display = "inline-block";
     }
     else {
-        buttonPlayGame.style.display = "none"; // Hide the play game button if tournament is over
+        buttonPlayGame.style.display = "none";
     }
 
 });
 
 buttonPlayGame.addEventListener("click", () => {
     playCurrentMatch();
-    buttonPlayGame.disabled = true; // Disable until match is finished
-    buttonPlayGame.style.display = "none"; // Hide the play game button
-    bracketContainer.style.display = "none"; // Hide the bracket during the match
+    buttonPlayGame.disabled = true;
+    buttonPlayGame.style.display = "none";
+    bracketContainer.style.display = "none";
 });
