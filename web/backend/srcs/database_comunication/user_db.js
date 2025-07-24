@@ -16,6 +16,18 @@ const db = new (verbose()).Database(dbPath, (err) => {
   }
 });
 db.run("PRAGMA foreign_keys = ON")
+db.serialize(() => {
+  db.run(`
+    CREATE TABLE IF NOT EXISTS player_all_time_stats (
+      id_player INTEGER PRIMARY KEY,
+      goal_scored INTEGER DEFAULT 0,
+      goal_taken INTEGER DEFAULT 0,
+      tournament_won INTEGER DEFAULT 0,
+      FOREIGN KEY (id_player) REFERENCES user(id)
+    )
+  `);
+});
+
 
 export function insertUser(user) {
   return new Promise((resolve, reject) => {
@@ -101,13 +113,27 @@ export function getUserByUsername(username)
     db.all('SELECT * FROM user WHERE username = ?', [username], (err, rows) => {
       if (err) {
         console.error('Error during SELECT by username:', err);
-        rejects(err);
+        reject(err);
       } else {
         resolve(rows);
       }
     });
   });
 }
+
+export function getStatsById(id) {
+  return new Promise((resolve, reject) => {
+    db.all('SELECT * FROM player_all_time_stats WHERE id_player = ?', [id], (err, rows) => {
+      if (err) {
+        console.error('Error during SELECT by id of stats', err);
+        reject(err);
+      } else {
+        resolve(rows);
+      }
+    });
+  });
+}
+
 
 export function saveToken(username, token)
 {
