@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pong Game</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: rgb(139, 139, 139);
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    #canvas-container {
+      width: 90%;
+      max-width: 2000px;
+      aspect-ratio: 9 / 6;
+      display: none; /* hide initially */
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      background: #000;
+      border: 4px solid white;
+      display: block;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 18px;
+      margin-bottom: 20px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1 id="PongGame">Pong Game</h1>
+  
+  <button id="Play2P" value=2>2 Player</button>
+  <button id="Play4P" value=4>4 Player</button>
+  <button id="PlayAI" value=1>VS Bot</button>
+  <button id="Tournament" value=8>Tournament</button>
+  <div id="canvas-container">
+    <canvas id="gameCanvas" width="900" height="600"></canvas>
+  </div>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>

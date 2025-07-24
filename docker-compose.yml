@@ -1,5 +1,19 @@
 services:
-
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    volumes:
+      - ./nginx/conf:/etc/nginx/conf.d
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - frontend
+      - backend
+      - gameplay
+    networks:
+      - transcendnet
+      - netplay
   database:
     build:
       context: ./web/database
@@ -9,7 +23,7 @@ services:
     networks:
       - transcendnet
     volumes:
-      - sqlite_data:/var/www/app/data
+      - shared_db_volume:/var/www/app/data
     restart: on-failure
 
   backend:
@@ -24,9 +38,9 @@ services:
       - ./web/backend/srcs:/app/srcs
       - ./web/backend/package.json:/app/package.json
       - backend_node_modules:/app/node_modules
-      - sqlite_data:/app/data
-    ports:
-      - "3000:3000"
+      - shared_db_volume:/app/data
+    expose:
+      - "3000"
     depends_on:
       - database
     restart: on-failure
@@ -47,32 +61,65 @@ services:
       - ./web/frontend/react_frontend/tsconfig.json:/app/tsconfig.json
       - ./web/frontend/react_frontend/tsconfig.app.json:/app/tsconfig.app.json
       - ./web/frontend/react_frontend/vite.config.ts:/app/vite.config.ts
-
       - frontend_node_modules:/app/node_modules
-    ports:
-      - "5173:5173"
+    expose:
+      - "5173"
     networks:
       - transcendnet
     depends_on:
       - database
       - backend
     restart: on-failure
-    
 
+  gameplay:
+    container_name: gameplay
+    build:
+      context: ./game_logic/Gameplay
+      dockerfile: Dockerfile
+    volumes:
+      - ./game_logic/Gameplay:/code
+    expose:
+      - "8000"
+    networks:
+      - netplay
+    restart: on-failure
+  ai:
+    container_name: ai
+    build:
+      context: ./game_logic/AI
+      dockerfile: Dockerfile
+    volumes:
+      - ./game_logic/AI:/code
+      - ai_data:/code/data
+    expose:
+      - "8001"
+    depends_on:
+      - gameplay
+    networks:
+      - netplay
+    restart: on-failure
+  
 
 volumes:
   backend_node_modules:
     name: backend_node_modules
     driver: local
-  sqlite_data:
-    name: sqlite_data
+  shared_db_volume:
+    name: shared_db_volume
     driver: local
   frontend_node_modules:
     name: frontend_node_modules
     driver: local
-
+  ai_data:
+    name: ai_data
+    driver: local
 
 networks:
   transcendnet:
     name: transcendnet
     driver: bridge
+  netplay:
+    name: netplay
+    driver: bridge 
+
+  

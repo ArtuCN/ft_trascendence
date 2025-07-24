@@ -1,5 +1,5 @@
 export class User {
-  constructor({ username = '', mail = '', psw = '', token = '', wallet = '', is_admin = false, google_id = '' }) {
+  constructor({ username = '', mail = '', psw = '', token = '', wallet = '', is_admin = false, google_id = '', avatar = ''}) {
     this.username = username;
     this.mail = mail;
     this.psw = psw;
@@ -7,6 +7,7 @@ export class User {
     this.wallet = wallet;
     this.is_admin = is_admin;
     this.google_id = google_id;
+    this.avatar = avatar;
   }
 }
 

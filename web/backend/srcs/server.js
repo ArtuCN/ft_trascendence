@@ -1,24 +1,28 @@
- // aggiunto il token jwt per l'autenticazione ma va implementatop in un punto.env
-// aggiunto controllo CORS(praticamente per la coerenza lato frontend e backend)
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 
-import { getAllUsers, insertUser } from './database_comunication/user_db.js';
-import registerRoute from './controllers/register.js';
-import loginRoute from './controllers/login.js'; // mancava l'import del controller login
-
+import { getAllUsers} from './database_comunication/user_db.js';
+import registerRoute from './controllers/register.js'; // 👈 importa la rotta modulare
+import loginRoute from './controllers/login.js'
+import logoutRoute from './controllers/logout.js'
+import tokenRoute from './controllers/token.js'
 const fastify = Fastify({ logger: true });
+
 await fastify.register(cors, {
   origin: '*',
 });
 
 await fastify.register(jwt, {
-  secret: 'your_secret_key',
+  secret: 'your_secret_key', // 🔐 metti un valore sicuro in .env
 });
 
-await fastify.register(registerRoute);
+
 await fastify.register(loginRoute);
+await fastify.register(registerRoute);
+await fastify.register(logoutRoute);
+await fastify.register(tokenRoute);
+
 fastify.listen({ port: 3000, host: '0.0.0.0' }, (err, address) => {
   if (err) 
   {
@@ -28,15 +32,12 @@ fastify.listen({ port: 3000, host: '0.0.0.0' }, (err, address) => {
   fastify.log.info(`Server listening at ${address}`);
 });
 
-await fastify.get('/users', async (request, reply) => {
-  {
-    try 
-    {
-      const result = await getAllUsers();
-      reply.send({ success: true, users: result });
-    } catch (err) {
-      request.log.error(err);
-      reply.code(500).send({ error: 'Error searching in the db' });
+fastify.get('/users', async (request, reply) => {
+  try {
+    const result = await getAllUsers();
+    reply.send({ success: true, users: result });
+  } catch (err) {
+    request.log.error(err);
+    reply.code(500).send({ error: 'Error searching in the db' });
   }
-  }
-})
+});

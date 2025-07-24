@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = '/api';
 
 interface LoginRequest {
   username: string;
@@ -25,6 +25,7 @@ class ApiService {
 
   constructor() {
     this.token = localStorage.getItem('token');
+
   }
 
   saveToken(token: string): void {
@@ -51,11 +52,9 @@ class ApiService {
     });
 
     const data = await response.json();
-
     if (!response.ok) {
       throw new Error(data.error || data.message || 'Login failed');
     }
-
     return data;
   }
 
@@ -80,20 +79,18 @@ class ApiService {
   async makeAuthenticatedRequest(url: string, options: RequestInit = {}): Promise<Response> {
     const headers = {
       'Content-Type': 'application/json',
-      ...(this.token && { Authorization: `Bearer ${this.token}` }),
-      ...options.headers,
+      'Authorization': `Bearer ${this.token}`
     };
-
+    console.log("prima della request");
     const response = await fetch(`${API_BASE_URL}${url}`, {
       ...options,
-      headers,
+      headers
     });
-
+    console.log("resonse ", response)
     if (response.status === 401) {
       this.removeToken();
       throw new Error('Session expired');
     }
-
     return response;
   }
 }
