@@ -35,14 +35,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const isAuthenticated = !!user;
   useEffect(() => {
-    const token = apiService.getToken();
-    if (token) {
-      const response = apiService.makeAuthenticatedRequest("/token");
-      setUser(response);
-      setIsLoading(false);
+    const fetchToken = async ( ) => {
+      const token = apiService.getToken();
+      if (token) {
+        const response = apiService.makeAuthenticatedRequest("/token");
+      const data = await (await response).json();
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      const userString = localStorage.getItem('user');
+      if (userString)
+      {
+        const user = JSON.parse(userString);
+        localStorage.setItem("username", user.username);
+        localStorage.setItem("id", user.id);
+        localStorage.setItem("mail", user.mail);
+        console.log('Token:', localStorage.getItem('token'));
+        console.log('User:', localStorage.getItem('user'));
+        setUser((user));
+        setIsLoading(false);
+      }
     } else {
       setIsLoading(false);
     }
+  }
+  fetchToken();
   }, []);
 
   const login = async (email: string, password: string): Promise<void> => {
@@ -82,7 +98,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       apiService.saveToken(response.token);
       setUser(response.user);
-      setSuccessMessage('Registration successful!');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Registration failed';
       setError(errorMessage);

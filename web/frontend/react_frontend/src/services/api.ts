@@ -40,6 +40,10 @@ class ApiService {
   removeToken(): void {
     this.token = null;
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('id');
+    localStorage.removeItem('mail');
+    localStorage.removeItem('username');
   }
 
   async login(credentials: LoginRequest): Promise<AuthResponse> {
