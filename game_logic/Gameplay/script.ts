@@ -314,7 +314,7 @@ export function resetGoalscore() {
 	for (let i = 0; i < playerGoals.length; i++)
 		playerGoals[i] = 0;
 }
-
+// commento per push
 function draw() {
 	if (!gameRunning) return;
 
