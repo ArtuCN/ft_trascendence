@@ -68,6 +68,16 @@ function sendTournamentData() {
     })
 }
 
+function sendMatchData() {
+    fetch("/api/match", {
+        method: "POST",
+		headers: {
+			"Content-Type": "application/json"
+		},
+		body: JSON.stringify({ quarterfinals, semifinals, final })
+    })
+}
+
 function resetCanvas() {
     canvas.width = 900;
     canvas.height = 600;
@@ -97,7 +107,7 @@ export function showMenu(winner: Player) {
             Pebble = new Ball();
             resetGoalscore();
             players = [];
-            // sendData();
+//            sendData();
             resetBracket();
         }
         else {
