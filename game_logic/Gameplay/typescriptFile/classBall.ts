@@ -1,7 +1,7 @@
 import { Player } from './classPlayer.js';
 import { Paddles } from './classPaddles.js';
-import { gameRunning, stopGame, startGame, PaddleOrientation, canvas, ctx, cornerWallSize, cornerWallThickness,  } from './variables.js';
-import { nbrPlayer, playerGoals, showMenu, resetGoalscore, advanceWinner } from '../script.js';
+import { gameRunning, stopGame, PaddleOrientation, canvas, ctx, cornerWallSize, cornerWallThickness,  } from './variables.js';
+import { nbrPlayer, playerGoals, playerGoalsRecived, showMenu } from '../script.js';
 
 export function drawScore(nbrPlayer: number) {
     ctx.font = "bold 36px Arial";
@@ -96,15 +96,16 @@ export class Ball {
 		// Left goal
 		if (this.ballX < 0) {
 			if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
+			playerGoalsRecived[0]++;
+			console.log(`playerGoals: ` + playerGoals);
 			drawScore(nbrPlayer);
-			if (playerGoals[this.lastTouchedPlayer] >= 1) {
-				alert(players[this.lastTouchedPlayer].getNameTag() +" wins!");
-				playerGoals.fill(0);
-				resetGoalscore();
+			if (playerGoals[this.lastTouchedPlayer] == 2) {
+				console.log(players[this.lastTouchedPlayer].getNameTag() +" wins!");
 				if (typeof showMenu === "function") {
 					stopGame();
 					showMenu(players[this.lastTouchedPlayer]);
 				}
+
 			}
 			this.resetGame(players);
 			return;
@@ -113,9 +114,10 @@ export class Ball {
 		if (this.ballX > canvas.width) {
 			if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
 			drawScore(nbrPlayer);
-			if (playerGoals[this.lastTouchedPlayer] >= 1) {
-				alert(players[this.lastTouchedPlayer].getNameTag() +" wins!");
-				playerGoals.fill(0);
+			playerGoalsRecived[1]++;
+			console.log(`playerGoals: ` + playerGoals);
+			if (playerGoals[this.lastTouchedPlayer] == 2) {
+				console.log(players[this.lastTouchedPlayer].getNameTag() +" wins!");
 				if (typeof showMenu === "function") {
 					stopGame();
 					showMenu(players[this.lastTouchedPlayer]);
@@ -139,10 +141,10 @@ export class Ball {
 		else if (nbrPlayer == 4) {
 			if (this.ballY < 0) {
 				if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
+				playerGoalsRecived[2]++;
 				drawScore(nbrPlayer);
 				if (playerGoals[this.lastTouchedPlayer] >= 1) {
 					alert(players[this.lastTouchedPlayer].getNameTag() +" wins!");
-					playerGoals.fill(0);
 					if (typeof showMenu === "function")
 						showMenu(players[this.lastTouchedPlayer]);
 				}
@@ -152,11 +154,11 @@ export class Ball {
 			// Bottom goal
 			if (this.ballY > canvas.height) {
 				if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
+				playerGoalsRecived[3]++;
 				drawScore(nbrPlayer);
 				this.resetGame(players);
 				if (playerGoals[this.lastTouchedPlayer] >= 1) {
 					alert(players[this.lastTouchedPlayer].getNameTag() +" wins!");
-					playerGoals.fill(0);
 					if (typeof showMenu === "function")
 						showMenu(players[this.lastTouchedPlayer]);
 				}

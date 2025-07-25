@@ -15,29 +15,33 @@ const startTournamentButton = document.getElementById("StartTournament") as HTML
 export let nbrPlayer: number = 0;
 let countPlayers: number = 0;
 let Tournament: boolean = false;
-export let playerGoals: number[] = [0, 0];
+let TournamentID: number = 0;
+export let playerGoals: number[] = [];
+export let playerGoalsRecived: number[] = [];
 export let Pebble: Ball = new Ball();
 let players: Player[] = [];
 type BracketMatch = {
 	player1: Player | null;
 	player2: Player | null;
 	matchWinner: Player | null;
+    goalP1: number;
+    goalP2: number;
 };
 
 export let match: BracketMatch;
 
 let quarterfinals: BracketMatch[] = [
-    { player1: null, player2: null, matchWinner: null },
-	{ player1: null, player2: null, matchWinner: null },
-	{ player1: null, player2: null, matchWinner: null },
-	{ player1: null, player2: null, matchWinner: null }
+    { player1: null, player2: null, matchWinner: null, goalP1: 0, goalP2: 0 },
+	{ player1: null, player2: null, matchWinner: null, goalP1: 0, goalP2: 0 },
+	{ player1: null, player2: null, matchWinner: null, goalP1: 0, goalP2: 0 },
+	{ player1: null, player2: null, matchWinner: null, goalP1: 0, goalP2: 0 }
 ];
 export let semifinals: BracketMatch[] = [
-	{ player1: null, player2: null, matchWinner: null },
-	{ player1: null, player2: null, matchWinner: null }
+	{ player1: null, player2: null, matchWinner: null, goalP1: 0, goalP2: 0 },
+	{ player1: null, player2: null, matchWinner: null, goalP1: 0, goalP2: 0 }
 ];
 
-let final: BracketMatch = { player1: null, player2: null, matchWinner: null };
+let final: BracketMatch = { player1: null, player2: null, matchWinner: null, goalP1: 0, goalP2: 0 };
 
 let currentRound = "quarterfinals";
 let currentMatchIndex = 0;
@@ -45,21 +49,21 @@ let animationFrameId: number | null = null;
 
 function resetBracket() {
     quarterfinals = [
-        { player1: null, player2: null, matchWinner: null },
-    	{ player1: null, player2: null, matchWinner: null },
-    	{ player1: null, player2: null, matchWinner: null },
-    	{ player1: null, player2: null, matchWinner: null }
+        { player1: null, player2: null, matchWinner: null, goalP1: 0, goalP2: 0 },
+    	{ player1: null, player2: null, matchWinner: null, goalP1: 0, goalP2: 0 },
+    	{ player1: null, player2: null, matchWinner: null, goalP1: 0, goalP2: 0 },
+    	{ player1: null, player2: null, matchWinner: null, goalP1: 0, goalP2: 0 }
     ];
     semifinals = [
-    	{ player1: null, player2: null, matchWinner: null },
-    	{ player1: null, player2: null, matchWinner: null }
+    	{ player1: null, player2: null, matchWinner: null, goalP1: 0, goalP2: 0 },
+    	{ player1: null, player2: null, matchWinner: null, goalP1: 0, goalP2: 0 }
     ];
 
-    final = { player1: null, player2: null, matchWinner: null };
+    final = { player1: null, player2: null, matchWinner: null, goalP1: 0, goalP2: 0 };
 }
 
 function sendTournamentData() {
-    fetch("/API/", {
+    fetch("/api/tournament", {
         method: "POST",
 		headers: {
 			"Content-Type": "application/json"
@@ -69,13 +73,39 @@ function sendTournamentData() {
 }
 
 function sendMatchData() {
-    fetch("/api/match", {
+    let players_id: number[] = [];
+    for (let i = 0; i < players.length; i++) {
+        players_id[i] = players[i].getUserID();
+        console.log(`players_id: `, players_id[i]);
+
+    }
+    for (let i = 0; i < playerGoals.length; i++) {
+        console.log(`playerGoals: `, playerGoals[i]);
+    }
+    for (let i = 0; i < playerGoalsRecived.length; i++) {
+        console.log(`playerGoalsRecived: `, playerGoalsRecived[i]);
+    }
+    let body = {
+        id_tournament: TournamentID,
+        users_id: players_id,
+        users_goal_scored: playerGoals,
+        users_goal_recived: playerGoalsRecived
+    }
+    console.log(`DATA MATCH: `, body.users_id);
+    console.log(`DATA MATCH: `, body.users_goal_scored);
+    console.log(`DATA MATCH: `, body.users_goal_recived);
+    let response = fetch("/api/match", {
         method: "POST",
 		headers: {
-			"Content-Type": "application/json"
+            "Content-Type": "application/json"
 		},
-		body: JSON.stringify({ quarterfinals, semifinals, final })
+		body: JSON.stringify(body)
     })
+    let data = fetch("/api/users", {
+        method: "GET",
+    })
+    console.log(`DATA MATCH DATA: `, data);
+    console.log(`DATA MATCH SEND: `, body);
 }
 
 function resetCanvas() {
@@ -91,6 +121,7 @@ export function showMenu(winner: Player) {
 		cancelAnimationFrame(animationFrameId);
 		animationFrameId = null;
 	}
+    console.log(`playerGoals: `, playerGoals);
     resetCanvas();
     stopGame();
     if (Tournament == true) {
@@ -105,10 +136,9 @@ export function showMenu(winner: Player) {
             buttonAi.style.display = "inline-block";
             textPong.style.display = "block";
             Pebble = new Ball();
-            resetGoalscore();
-            players = [];
-//            sendData();
+            //            sendData();
             resetBracket();
+            players = [];
         }
         else {
             canvas_container.style.display = "none";
@@ -119,7 +149,6 @@ export function showMenu(winner: Player) {
        	for (const player of players) {
             player.getPaddle().stopBotPolling();
         }
-        players = [];
         button2P.style.display = "inline-block";
         button4P.style.display = "inline-block";
         buttonAi.style.display = "inline-block";
@@ -129,7 +158,8 @@ export function showMenu(winner: Player) {
         textPong.style.display = "block";
         canvas_container.style.display = "none";
         canvas.style.display = "none";
-
+        sendMatchData();
+        players = [];
     }
 }
 
@@ -229,7 +259,7 @@ function drawTournament() {
 }
 
 function clonePlayer(original: Player, newID: number): Player {
-	return new Player(original.getNameTag(), newID, original.getPaddle().getOrientation());
+	return new Player(original.getNameTag(), newID, original.getUserID(), original.getPaddle().getOrientation());
 }
 
 function startMatch(player1: Player, player2: Player) {
@@ -323,6 +353,8 @@ export async function sendData(ball_y: number, paddle_y: number): Promise<string
 export function resetGoalscore() {
 	for (let i = 0; i < playerGoals.length; i++)
 		playerGoals[i] = 0;
+    for (let i = 0; i < playerGoalsRecived.length; i++)
+        playerGoalsRecived[i] = 0;
 }
 // commento per push
 function draw() {
@@ -353,12 +385,13 @@ button2P.addEventListener("click", () => {
 	nbrPlayer = parseInt(button2P.value);
 	if (isNaN(nbrPlayer))
 		nbrPlayer = 2;
-	playerGoals = [0, 0];
+	playerGoals = new Array(nbrPlayer).fill(0);
+    playerGoalsRecived = new Array(nbrPlayer).fill(0);
 	Pebble = new Ball();
     startGame();
 	players = [];
-	players.push(new Player("Matteo", 0, "vertical"));
-	players.push(new Player("Arturo", 1, "vertical"));
+	players.push(new Player("Matteo", 0, 12, "vertical"));
+	players.push(new Player("Arturo", 1, 13, "vertical"));
 
 	draw();
 });
@@ -374,15 +407,16 @@ button4P.addEventListener("click", () => {
 	nbrPlayer = parseInt(button4P.value);
 	if (isNaN(nbrPlayer))
 		nbrPlayer = 4;
-	playerGoals = [0, 0, 0, 0];
+	playerGoals = new Array(nbrPlayer).fill(0);
+    playerGoalsRecived = new Array(nbrPlayer).fill(0);
 	canvas.height = canvas.width = 800;
 	Pebble = new Ball();
     startGame();
 	players = [];
-	players.push(new Player("Matteo", 0, "vertical"));
-	players.push(new Player("Arturo", 1, "vertical"));
-	players.push(new Player("Petre", 2, "horizontal"));
-	players.push(new Player("Tjaz", 3, "horizontal"));
+	players.push(new Player("Matteo", 0, 12, "vertical"));
+	players.push(new Player("Arturo", 1, 13, "vertical"));
+	players.push(new Player("Petre", 2, 14, "horizontal"));
+	players.push(new Player("Tjaz", 3, 15, "horizontal"));
 
 	draw();
 });
@@ -398,12 +432,12 @@ buttonAi.addEventListener("click", () => {
 	nbrPlayer = parseInt(buttonAi.value);
 	if (isNaN(nbrPlayer))
 		nbrPlayer = 1;
-	playerGoals = [0, 0];
+	playerGoals = new Array(2).fill(0);
 	Pebble = new Ball();
     startGame();
 	players = [];
-	players.push(new Player("Matteo", 0, "vertical"));
-	players.push(new Player("AI", 1, "vertical"));
+	players.push(new Player("Matteo", 0, 12, "vertical"));
+	players.push(new Player("AI", 1, 13, "vertical"));
 
 	players[1].getPaddle().startBotPolling();
 	draw();
@@ -427,6 +461,7 @@ buttonTournament.addEventListener("click", async () => {
     textPong.style.display = "none";
     startTournamentButton.style.display = "inline-block";
     buttonNbrPlayer.style.display = "inline-block";
+    TournamentID= 1234; // Example ID, replace with actual logic if needed
     nbrPlayer = await waitForStartButton();
     if (isNaN(nbrPlayer) || nbrPlayer <= 0) {
         console.error("Invalid player count:", buttonNbrPlayer.value);
@@ -436,9 +471,9 @@ buttonTournament.addEventListener("click", async () => {
     players = [];
     for (let i = 0; i < nbrPlayer; i++) {
         if (i % 2 == 0) {
-            players.push(new Player(`Player ${i + 1}`, 0, "vertical"));
+            players.push(new Player(`Player ${i + 1}`, 0, 12 + i, "vertical"));
         } else {
-            players.push(new Player(`Player ${i + 1}`, 1, "vertical"));
+            players.push(new Player(`Player ${i + 1}`, 1, 13 + i, "vertical"));
         }
     }
     if (nbrPlayer == 8) {
@@ -448,12 +483,14 @@ buttonTournament.addEventListener("click", async () => {
             quarterfinals.push({
                 player1: players[2 * i],
                 player2: players[2 * i + 1],
-                matchWinner: null
+                matchWinner: null,
+                goalP1: 0,
+                goalP2: 0
             });
         }
         semifinals = [
-            { player1: null, player2: null, matchWinner: null },
-            { player1: null, player2: null, matchWinner: null }
+            { player1: null, player2: null, matchWinner: null, goalP1: 0, goalP2: 0 },
+            { player1: null, player2: null, matchWinner: null, goalP1: 0, goalP2: 0 }
         ];
     }
     else if (nbrPlayer == 4) {
@@ -463,12 +500,14 @@ buttonTournament.addEventListener("click", async () => {
             semifinals.push({
                 player1: players[2 * i],
                 player2: players[2 * i + 1],
-                matchWinner: null
+                matchWinner: null,
+                goalP1: 0,
+                goalP2: 0
             });
         }
     }
 
-	final = { player1: null, player2: null, matchWinner: null };
+	final = { player1: null, player2: null, matchWinner: null, goalP1: 0, goalP2: 0 };
 	currentMatchIndex = 0;
     // Show bracket
     const bracketDiv = document.getElementById("bracket-container");
