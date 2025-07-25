@@ -10,6 +10,7 @@ import loginRoute from './controllers/login.js';
 import logoutRoute from './controllers/logout.js';
 import tokenRoute from './controllers/token.js';
 import statsRoute from './controllers/stats.js';
+import friendRoute from './controllers/friendship.js';
 
 const fastify = Fastify({ logger: true });
 
@@ -25,6 +26,7 @@ await fastify.register(registerRoute);
 await fastify.register(logoutRoute);
 await fastify.register(tokenRoute);
 await fastify.register(statsRoute);
+await fastify.register(friendRoute);
 
 // Endpoint semplice per debug
 fastify.get('/users', async (request, reply) => {

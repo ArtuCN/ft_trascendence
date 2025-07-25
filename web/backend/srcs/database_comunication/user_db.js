@@ -121,6 +121,20 @@ export function getUserByUsername(username)
   });
 }
 
+export function getUserById(id)
+{
+  return new Promise((resolve, reject)=> {
+    db.all('SELECT * FROM user WHERE id = ?', [id], (err, rows) => {
+      if (err) {
+        console.error('Error during SELECT by id:', err);
+        reject(err);
+      } else {
+        resolve(rows);
+      }
+    });
+  });
+}
+
 export function getStatsById(id) {
   return new Promise((resolve, reject) => {
     db.all('SELECT * FROM player_all_time_stats WHERE id_player = ?', [id], (err, rows) => {
