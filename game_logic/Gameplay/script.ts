@@ -15,7 +15,7 @@ let animationFrameId: number | null = null;
 
 export async function sendData(ball_y: number, paddle_y: number): Promise<string> {
 
-	let response = await fetch("http://localhost:8001/ai", {
+	let response = await fetch("http://localhost:8001", {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json"

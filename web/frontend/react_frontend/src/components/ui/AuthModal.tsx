@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+  showCloseButton?: boolean;
 }
 
 const COLORS = {
@@ -163,7 +164,6 @@ function AuthForm({ type, onClose }: { type: 'login' | 'register'; onClose: () =
       )}
       
       <div className="flex flex-col gap-6 flex-grow w-full max-w-sm">
-        {/* Email Field */}
         <div className="flex flex-col items-center">
           <label className="block text-sm font-medium text-white text-center mb-2 w-full">
             Email Address
@@ -184,8 +184,6 @@ function AuthForm({ type, onClose }: { type: 'login' | 'register'; onClose: () =
             <p className="text-red-500 text-sm mt-1 text-center">{getFieldError('email')}</p>
           )}
         </div>
-
-        {/* Username Field - only for register */}
         {!isLogin && (
           <div className="flex flex-col items-center">
             <label className="block text-sm font-medium text-white text-center mb-2 w-full">
@@ -196,20 +194,13 @@ function AuthForm({ type, onClose }: { type: 'login' | 'register'; onClose: () =
               placeholder="Enter your username..."
               value={getFieldValue('username')}
               onChange={handleInputChange('username')}
-              className="w-4/5 px-4 py-3 border rounded-lg outline-none transition-all text-center text-black placeholder-gray-500"
-              style={{ 
-                backgroundColor: COLORS.inputBg, 
-                borderColor: getFieldError('username') ? COLORS.error : COLORS.darkText,
-                color: '#000000'
-              }}
+              className={`w-4/5 px-4 py-3 border rounded-lg outline-none transition-all text-center text-black placeholder-gray-500 ${getFieldError('username') ? 'border-red-500' : 'border-gray-700'} bg-gray-100`}
             />
             {getFieldError('username') && (
               <p className="text-red-500 text-sm mt-1 text-center">{getFieldError('username')}</p>
             )}
           </div>
         )}
-
-        {/* Password Field */}
         <div className="flex flex-col items-center">
           <label className="block text-sm font-medium text-white text-center mb-2 w-full">
             Password
@@ -219,19 +210,12 @@ function AuthForm({ type, onClose }: { type: 'login' | 'register'; onClose: () =
             placeholder={isLogin ? "Enter your password..." : "Create a password..."}
             value={getFieldValue('password')}
             onChange={handleInputChange('password')}
-            className="w-4/5 px-4 py-3 border rounded-lg outline-none transition-all text-center text-black placeholder-gray-500"
-            style={{ 
-              backgroundColor: COLORS.inputBg, 
-              borderColor: getFieldError('password') ? COLORS.error : COLORS.darkText,
-              color: '#000000'
-            }}
+            className={`w-4/5 px-4 py-3 border rounded-lg outline-none transition-all text-center text-black placeholder-gray-500 ${getFieldError('password') ? 'border-red-500' : 'border-gray-700'} bg-gray-100`}
           />
           {getFieldError('password') && (
             <p className="text-red-500 text-sm mt-1 text-center">{getFieldError('password')}</p>
           )}
         </div>
-
-        {/* Confirm Password Field - only for register */}
         {!isLogin && (
           <div className="flex flex-col items-center">
             <label className="block text-sm font-medium text-white text-center mb-2 w-full">
@@ -242,12 +226,7 @@ function AuthForm({ type, onClose }: { type: 'login' | 'register'; onClose: () =
               placeholder="Confirm your password..."
               value={getFieldValue('confirmPassword')}
               onChange={handleInputChange('confirmPassword')}
-              className="w-4/5 px-4 py-3 border rounded-lg outline-none transition-all text-center text-black placeholder-gray-500"
-              style={{ 
-                backgroundColor: COLORS.inputBg, 
-                borderColor: getFieldError('confirmPassword') ? COLORS.error : COLORS.darkText,
-                color: '#000000'
-              }}
+              className={`w-4/5 px-4 py-3 border rounded-lg outline-none transition-all text-center text-black placeholder-gray-500 ${getFieldError('confirmPassword') ? 'border-red-500' : 'border-gray-700'} bg-gray-100`}
             />
             {getFieldError('confirmPassword') && (
               <p className="text-red-500 text-sm mt-1 text-center">{getFieldError('confirmPassword')}</p>
@@ -289,28 +268,30 @@ function AuthForm({ type, onClose }: { type: 'login' | 'register'; onClose: () =
   );
 }
 
-export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
+export default function AuthModal({ isOpen, onClose, showCloseButton = true }: AuthModalProps) {
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
   
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50" onClick={onClose}>
+    <div className="fixed inset-0 flex items-center justify-center z-50" onClick={showCloseButton ? onClose : undefined}>
       <div 
         className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 h-[500px] overflow-hidden flex flex-col" 
         style={{ backgroundColor: COLORS.dark }} 
         onClick={(e) => e.stopPropagation()}
       >
         <div className="relative px-6 pt-4 pb-4">
-          <button 
-            onClick={onClose} 
-            className="absolute top-4 right-4 hover:opacity-70 transition-opacity focus:outline-none" 
-            style={{ color: COLORS.primary }}
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          {showCloseButton && (
+            <button 
+              onClick={onClose} 
+              className="absolute top-4 right-4 hover:opacity-70 transition-opacity focus:outline-none" 
+              style={{ color: COLORS.primary }}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
         </div>
         <AuthTabs activeTab={activeTab} onTabChange={setActiveTab} />
         <div className="flex-1 flex flex-col">
@@ -320,3 +301,5 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     </div>
   );
 }
+
+export { COLORS };

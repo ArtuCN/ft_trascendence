@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import AuthModal from './AuthModal';
+import Profile from '../../app/profile/profile';
+import Social from '../../app/social/Social';
 
 interface NavButtonProps {
   onClick: () => void;
@@ -10,10 +11,6 @@ interface NavButtonProps {
   onMouseEnter?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   onMouseLeave?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   children: React.ReactNode;
-}
-
-interface AuthButtonsProps {
-  onAuthClick: () => void;
 }
 
 interface LogoProps {
@@ -37,118 +34,113 @@ function NavButton({ onClick, className, style, onMouseEnter, onMouseLeave, chil
 
 function NavLogo({ onClick }: LogoProps) {
   return (
-    <div>
+    <div className="mb-8">
       <NavButton 
         onClick={onClick || (() => {})}
-        className="text-white font-semibold text-lg flex items-center gap-2 hover:text-orange-300 transition-colors"
+        className="text-white font-semibold text-lg flex flex-col items-center gap-2 hover:text-orange-300 transition-colors w-full p-4"
         style={{color: '#E67923'}}
       >
-        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+        <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
           <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
         </svg>
-        Home
+        <span className="text-sm">Home</span>
       </NavButton>
     </div>
   );
 }
 
-function AuthButtons({ onAuthClick }: AuthButtonsProps) {
-  const { isAuthenticated, user, logout } = useAuth();
+function AuthButtons() {
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [isProfileOpen, setProfileOpen] = useState(false);
+  const [isSocialOpen, setSocialOpen] = useState(false);
 
-  if (isAuthenticated && user) {
-    return (
-      <div className="flex items-center gap-4">
-        <span className="text-white">Ciao, {user.username}!</span>
-        <NavButton
-          onClick={() => navigate('/profile')}
-          className="text-white px-3 py-1.5 rounded transition-all focus:outline-none"
-          style={{ backgroundColor: '#E67923', border: 'none', outline: 'none' }}
-          onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
-            const target = e.target as HTMLButtonElement;
-            target.style.backgroundColor = '#D16A1E';
-          }}
-          onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
-            const target = e.target as HTMLButtonElement;
-            target.style.backgroundColor = '#E67923';
-          }}
-        >
-          Profilo
-        </NavButton>
-        <NavButton
-          onClick={logout}
-          className="text-white px-3 py-1.5 rounded transition-all focus:outline-none"
-          style={{ backgroundColor: '#6B7280', border: 'none', outline: 'none' }}
-          onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
-            const target = e.target as HTMLButtonElement;
-            target.style.backgroundColor = '#4B5563';
-          }}
-          onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
-            const target = e.target as HTMLButtonElement;
-            target.style.backgroundColor = '#6B7280';
-          }}
-        >
-          Logout
-        </NavButton>
-      </div>
-    );
-  }
-
-  const buttons = [    
-    { 
-      text: 'Sign up', 
-      className: 'text-white px-3 py-1.5 rounded transition-all focus:outline-none', 
-      style: { backgroundColor: '#B20000', border: 'none', outline: 'none' },
-      hoverStyle: { backgroundColor: '#D32F2F', border: 'none', outline: 'none' }
-    }
-  ];
-
+  // Only show user info and logout when authenticated
   return (
-    <div className="flex items-center">
-      {buttons.map((button) => (
-        <NavButton
-          key={button.text}
-          onClick={onAuthClick}
-          className={button.className}
-          style={button.style}
-          onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
-            const target = e.target as HTMLButtonElement;
-            Object.assign(target.style, button.hoverStyle);
-          }}
-          onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
-            const target = e.target as HTMLButtonElement;
-            Object.assign(target.style, button.style);
-          }}
-        >
-          {button.text}
-        </NavButton>
-      ))}
+    <div className="flex flex-col gap-4 w-full">
+      <div className="text-white text-center text-sm mb-4 px-2">
+        Ciao, {user?.username}!
+      </div>
+      <NavButton
+        onClick={() => setProfileOpen(true)}
+        className="text-white px-3 py-2 rounded transition-all focus:outline-none w-full text-center"
+        style={{ backgroundColor: '#E67923', border: 'none', outline: 'none' }}
+        onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
+          const target = e.target as HTMLButtonElement;
+          target.style.backgroundColor = '#D16A1E';
+        }}
+        onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
+          const target = e.target as HTMLButtonElement;
+          target.style.backgroundColor = '#E67923';
+        }}
+      >
+        Profilo
+      </NavButton>
+      <NavButton
+        onClick={() => navigate('/play')}
+        className="text-white px-3 py-2 rounded-md transition-all w-full text-center bg-orange-500 hover:bg-orange-600 focus:outline-none"
+      >
+        Play
+      </NavButton>
+      <NavButton
+        onClick={() => setSocialOpen(true)}
+        className="text-white px-3 py-2 rounded-md transition-all w-full text-center bg-orange-500 hover:bg-orange-600 focus:outline-none"
+      >
+        Social
+      </NavButton>
+      <NavButton
+        onClick={logout}
+        className="text-white px-3 py-2 rounded transition-all focus:outline-none w-full text-center"
+        style={{ backgroundColor: '#6B7280', border: 'none', outline: 'none' }}
+        onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
+          const target = e.target as HTMLButtonElement;
+          target.style.backgroundColor = '#4B5563';
+        }}
+        onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
+          const target = e.target as HTMLButtonElement;
+          target.style.backgroundColor = '#6B7280';
+        }}
+      >
+        Logout
+      </NavButton>
+      <Profile
+        isOpen={isProfileOpen}
+        onClose={() => setProfileOpen(false)}
+        stats={{
+          matchesPlayed: 10,
+          matchesWon: 5,
+          matchesLost: 5,
+          goalsScored: 20,
+          tournamentsWon: 2,
+          rank: 1
+        }}
+      />
+      <Social
+        isOpen={isSocialOpen}
+        onClose={() => setSocialOpen(false)}
+      />
     </div>
   );
-}
+}export default function Navbar() {
+  const navigate = useNavigate();
 
-export default function Navbar() {
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-
-  const handleAuthClick = () => setIsAuthModalOpen(true);
-  const handleCloseModal = () => setIsAuthModalOpen(false);
   const handleHomeClick = () => {
-    console.log('Navigate to home');
-  };  return (
+    navigate('/');
+  };
+
+  return (
     <>
-      <nav className="py-3 px-4" style={{ backgroundColor: '#3B2E27' }}>
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <NavLogo onClick={handleHomeClick} />
-          <AuthButtons onAuthClick={handleAuthClick} />
+      <nav 
+        className="fixed left-0 top-0 h-full w-44 py-6 px-4 flex flex-col shadow-lg z-50" 
+        style={{ backgroundColor: '#3B2E27' }}
+      >
+        <NavLogo onClick={handleHomeClick} />
+        <div className="flex-1 flex flex-col justify-center">
+          <AuthButtons />
         </div>
       </nav>
-
-      <AuthModal 
-        isOpen={isAuthModalOpen} 
-        onClose={handleCloseModal} 
-      />
     </>
   );
 
-		//da implementare la logica per il login e la registrazione e il cambio	di stato della nabvar(cambio icone/bottoni successive al	login)
+  //da implementare la logica per il login e la registrazione e il cambio di stato della navbar(cambio icone/bottoni successive al login)
 }
