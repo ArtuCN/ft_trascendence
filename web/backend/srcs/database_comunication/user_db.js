@@ -15,14 +15,28 @@ const db = new (verbose()).Database(dbPath, (err) => {
     console.log('DB opened successfully!');
   }
 });
+db.run("PRAGMA foreign_keys = ON")
+db.serialize(() => {
+  db.run(`
+    CREATE TABLE IF NOT EXISTS player_all_time_stats (
+      id_player INTEGER PRIMARY KEY,
+      goal_scored INTEGER DEFAULT 0,
+      goal_taken INTEGER DEFAULT 0,
+      tournament_won INTEGER DEFAULT 0,
+      FOREIGN KEY (id_player) REFERENCES user(id)
+    )
+  `);
+});
+
+
 export function insertUser(user) {
   return new Promise((resolve, reject) => {
-    const query = `
+    const insertUserQuery = `
       INSERT INTO user (username, mail, psw, token, wallet, is_admin, google_id)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
     db.run(
-      query,
+      insertUserQuery,
       [
         user.username,
         user.mail,
@@ -37,12 +51,27 @@ export function insertUser(user) {
           console.error('Error while adding user:', err);
           reject(err);
         } else {
-          resolve({ id: this.lastID });
+          const newUserId = this.lastID;
+
+          const insertStatsQuery = `
+            INSERT INTO player_all_time_stats (id_player)
+            VALUES (?)
+          `;
+          db.run(insertStatsQuery, [newUserId], (err2) => {
+            if (err2) {
+              console.error('Error while creating player stats:', err2);
+              reject(err2);
+            } else {
+              resolve({ id: newUserId });
+            }
+          });
         }
       }
     );
   });
 }
+
+
 
 
 export function getAllUsers() {
@@ -84,13 +113,27 @@ export function getUserByUsername(username)
     db.all('SELECT * FROM user WHERE username = ?', [username], (err, rows) => {
       if (err) {
         console.error('Error during SELECT by username:', err);
-        rejects(err);
+        reject(err);
       } else {
         resolve(rows);
       }
     });
   });
 }
+
+export function getStatsById(id) {
+  return new Promise((resolve, reject) => {
+    db.all('SELECT * FROM player_all_time_stats WHERE id_player = ?', [id], (err, rows) => {
+      if (err) {
+        console.error('Error during SELECT by id of stats', err);
+        reject(err);
+      } else {
+        resolve(rows);
+      }
+    });
+  });
+}
+
 
 export function saveToken(username, token)
 {

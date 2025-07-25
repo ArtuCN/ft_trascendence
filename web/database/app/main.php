@@ -23,7 +23,7 @@ $db->exec("CREATE TABLE IF NOT EXISTS user (
 $db->exec("CREATE TABLE IF NOT EXISTS tournament (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     tournament_name TEXT,
-    started BOOLEAN DEFAULT FALSE,
+    activate BOOLEAN DEFAULT FALSE,
     finished BOOLEAN DEFAULT FALSE
 )");
 
