@@ -68,17 +68,17 @@ async function insertPlayerMatchStats(id_user, id_match, goal_scored, goal_taken
     })
 }
 
-export async function insertTournament(tournament_name, active, finished)
+async function insertTournament_db(tournament_name, id_winner)
 {
     return new Promise((resolve, reject) =>
     {
         const query = `
-        INSERT INTO tournament (tournament_name, active, finished)
-        VALUES (?, ?, ?) `;
+        INSERT INTO tournament (tournament_name, id_winner)
+        VALUES (?, ?) `;
 
         db.run(
             query,
-            [tournament_name, active, finished],
+            [tournament_name, id_winner],
             function (err)
             {
                 if (err) {
@@ -91,6 +91,9 @@ export async function insertTournament(tournament_name, active, finished)
         )
     })
 }
+
+
+
 
 async function updateStatsAfterMatch(id_player, goal_scored, goal_taken, tournament_won)
 {
@@ -113,6 +116,21 @@ async function updateStatsAfterMatch(id_player, goal_scored, goal_taken, tournam
       }
     });
   });
+}
+
+export async function insertTournament(tournament_name, id_winner)
+{
+  try
+  {
+    const tournament = await insertTournament_db(tournament_name, id_winner);
+    await updateStatsAfterMatch(id_winner, 0, 0, 1);
+    return tournament.id;
+  }
+  catch(error)
+  {
+    console.log(error);
+    throw error;
+  }
 }
 
 export async function insertMatch(id_tournament, users_ids, users_goal_scored, users_goal_taken)
