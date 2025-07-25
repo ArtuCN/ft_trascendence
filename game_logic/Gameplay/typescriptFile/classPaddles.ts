@@ -58,8 +58,7 @@ export class Paddles {
 			this.initialPosition = canvas.width / 2 - this.paddleLength / 2;
 	}
 
-	public startBotPolling() {
-		
+		public startBotPolling() {
 		if (this.botPollingId !== null) {
 			clearInterval(this.botPollingId);
 		}
@@ -152,6 +151,7 @@ export class Paddles {
 	}
 
 	public  movePaddles() {
+
 		if (nbrPlayer === 1) {
 			this.botMode();
 		}

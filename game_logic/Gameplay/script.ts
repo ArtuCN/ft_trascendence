@@ -3,19 +3,18 @@ import { Player } from "./typescriptFile/classPlayer.js";
 import { Ball, drawScore } from "./typescriptFile/classBall.js";
 
 
+const button2P = document.getElementById("Play2P") as HTMLButtonElement;
+const button4P = document.getElementById("Play4P") as HTMLButtonElement;
+const buttonAi = document.getElementById("PlayAI") as HTMLButtonElement;
+const textPong = document.getElementById("PongGame") as HTMLHeadingElement;
 const buttonTournament = document.getElementById("Tournament") as HTMLButtonElement;
 const buttonPlayGame = document.getElementById("PlayGame") as HTMLButtonElement;
 const buttonNbrPlayer = document.getElementById("nbrPlayer") as HTMLSelectElement;
 const startTournamentButton = document.getElementById("StartTournament") as HTMLButtonElement;
 
-const button2P = document.getElementById("Play2P") as HTMLButtonElement;
-const button4P = document.getElementById("Play4P") as HTMLButtonElement;
-const buttonAi = document.getElementById("PlayAI") as HTMLButtonElement;
-const textPong = document.getElementById("PongGame") as HTMLHeadingElement;
-
-let Tournament: boolean = false;
 export let nbrPlayer: number = 0;
 let countPlayers: number = 0;
+let Tournament: boolean = false;
 export let playerGoals: number[] = [0, 0];
 export let Pebble: Ball = new Ball();
 let players: Player[] = [];
@@ -44,61 +43,6 @@ let currentRound = "quarterfinals";
 let currentMatchIndex = 0;
 let animationFrameId: number | null = null;
 
-function drawCornerWalls() {
-    if (nbrPlayer !== 4) return;
-    ctx.fillStyle = "#888";
-
-    // Top-left
-    ctx.fillRect(0, 0, cornerWallSize, cornerWallThickness); // horizontal
-    ctx.fillRect(0, 0, cornerWallThickness, cornerWallSize); // vertical
-
-    // Top-right
-    ctx.fillRect(canvas.width - cornerWallSize, 0, cornerWallSize, cornerWallThickness);
-    ctx.fillRect(canvas.width - cornerWallThickness, 0, cornerWallThickness, cornerWallSize);
-
-    // Bottom-left
-    ctx.fillRect(0, canvas.height - cornerWallThickness, cornerWallSize, cornerWallThickness);
-    ctx.fillRect(0, canvas.height - cornerWallSize, cornerWallThickness, cornerWallSize);
-
-    // Bottom-right
-    ctx.fillRect(canvas.width - cornerWallSize, canvas.height - cornerWallThickness, cornerWallSize, cornerWallThickness);
-    ctx.fillRect(canvas.width - cornerWallThickness, canvas.height - cornerWallSize, cornerWallThickness, cornerWallSize);
-}
-
-export function resetGoalscore() {
-	for (let i = 0; i < playerGoals.length; i++)
-		playerGoals[i] = 0;
-}
-
-function drawMiddleLine() {
-	const dashHeight = 20;
-	const gap = 15;
-	const x = canvas.width / 2;
-	const y = canvas.height / 2;
-
-	ctx.strokeStyle = "white";
-	ctx.lineWidth = 4;
-
-	// Vertical line
-	if (nbrPlayer >= 1) {
-		for (let yPos = 0; yPos < canvas.height; yPos += dashHeight + gap) {
-			ctx.beginPath();
-			ctx.moveTo(x, yPos);
-			ctx.lineTo(x, yPos + dashHeight);
-			ctx.stroke();
-		}
-	}
-   if (nbrPlayer == 4) {
-		// Horizontal line
-		for (let xPos = 0; xPos < canvas.width; xPos += dashHeight + gap) {
-			ctx.beginPath();
-			ctx.moveTo(xPos, y);
-			ctx.lineTo(xPos + dashHeight, y);
-			ctx.stroke();
-		}
-	}
-}
-
 function resetBracket() {
     quarterfinals = [
         { player1: null, player2: null, matchWinner: null },
@@ -115,7 +59,7 @@ function resetBracket() {
 }
 
 function sendTournamentData() {
-    fetch("http://localhost/API", {
+    fetch("/API/", {
         method: "POST",
 		headers: {
 			"Content-Type": "application/json"
@@ -124,11 +68,20 @@ function sendTournamentData() {
     })
 }
 
+function resetCanvas() {
+    canvas.width = 900;
+    canvas.height = 600;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
 export function showMenu(winner: Player) {
 	if (animationFrameId) {
 		cancelAnimationFrame(animationFrameId);
 		animationFrameId = null;
 	}
+    resetCanvas();
     stopGame();
     if (Tournament == true) {
         Tournament = false;
@@ -140,6 +93,7 @@ export function showMenu(winner: Player) {
             button2P.style.display = "inline-block";
             button4P.style.display = "inline-block";
             buttonAi.style.display = "inline-block";
+            textPong.style.display = "block";
             Pebble = new Ball();
             resetGoalscore();
             players = [];
@@ -149,20 +103,23 @@ export function showMenu(winner: Player) {
         else {
             canvas_container.style.display = "none";
             advanceWinner(winner);
-        }
+        }    
     }
-    else{
-        for (const player of players) {
-	    	player.getPaddle().stopBotPolling();
-	    }
-	    players = [];
+    else {
+       	for (const player of players) {
+            player.getPaddle().stopBotPolling();
+        }
+        players = [];
         button2P.style.display = "inline-block";
         button4P.style.display = "inline-block";
         buttonAi.style.display = "inline-block";
         buttonTournament.style.display = "inline-block";
+        buttonPlayGame.style.display = "none";
+        bracketContainer.style.display = "none";
         textPong.style.display = "block";
         canvas_container.style.display = "none";
         canvas.style.display = "none";
+
     }
 }
 
@@ -219,6 +176,31 @@ function renderBracket() {
         bracketDiv.style.display = "block";
     }
     buttonPlayGame.style.display = "inline";
+}
+
+function drawMiddleLine() {
+	const dashedLineLength = 20;
+	const gapLength = 10;
+	const x = canvas.width / 2;
+	const y = canvas.height / 2;
+
+	ctx.strokeStyle = "white";
+	ctx.lineWidth = 4;
+
+	for (let yPos = 0; yPos < canvas.height; yPos += dashedLineLength + gapLength) {
+		ctx.beginPath();
+		ctx.moveTo(x, yPos);
+		ctx.lineTo(x, yPos + dashedLineLength);
+		ctx.stroke();
+	}
+}
+
+function drawCornerWalls() {
+	ctx.fillStyle = "gray";
+	ctx.fillRect(0, 0, cornerWallSize, cornerWallSize);
+	ctx.fillRect(0, canvas.height - cornerWallSize, cornerWallSize, cornerWallSize);
+	ctx.fillRect(canvas.width - cornerWallSize, 0, cornerWallSize, cornerWallSize);
+	ctx.fillRect(canvas.width - cornerWallSize, canvas.height - cornerWallSize, cornerWallSize, cornerWallSize);
 }
 
 function drawTournament() {
@@ -327,13 +309,19 @@ export async function sendData(ball_y: number, paddle_y: number): Promise<string
 	return data.key;
 }
 
+// Reset goalscore
+export function resetGoalscore() {
+	for (let i = 0; i < playerGoals.length; i++)
+		playerGoals[i] = 0;
+}
+
 function draw() {
-	
-    if (!gameRunning) return;
+	if (!gameRunning) return;
 
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	drawMiddleLine();
-	drawCornerWalls();
+    if (nbrPlayer == 4)
+	    drawCornerWalls();
 	Pebble.moveBall(players);
 	Pebble.drawBall();
 	for (const player of players) {
@@ -392,9 +380,9 @@ button4P.addEventListener("click", () => {
 buttonAi.addEventListener("click", () => {
 	buttonAi.style.display = "none";
 	button2P.style.display = "none";
-	button4P.style.display = "none";
+    button4P.style.display = "none";
     buttonTournament.style.display = "none";
-	// textPong.style.display = "none";
+	textPong.style.display = "none";
 	canvas_container.style.display = "block";
 	canvas.style.display = "block";
 	nbrPlayer = parseInt(buttonAi.value);
@@ -420,14 +408,8 @@ function waitForStartButton(): Promise<number> {
     });
 }
 
-buttonPlayGame.addEventListener("click", () => {
-    playCurrentMatch();
-    buttonPlayGame.disabled = true;
-    buttonPlayGame.style.display = "none";
-    bracketContainer.style.display = "none";
-});
-
 buttonTournament.addEventListener("click", async () => {
+    Tournament = true;
 	buttonTournament.style.display = "none";
     button2P.style.display = "none";
     button4P.style.display = "none";
@@ -435,7 +417,6 @@ buttonTournament.addEventListener("click", async () => {
     textPong.style.display = "none";
     startTournamentButton.style.display = "inline-block";
     buttonNbrPlayer.style.display = "inline-block";
-    Tournament = true;
     nbrPlayer = await waitForStartButton();
     if (isNaN(nbrPlayer) || nbrPlayer <= 0) {
         console.error("Invalid player count:", buttonNbrPlayer.value);
@@ -497,4 +478,11 @@ buttonTournament.addEventListener("click", async () => {
         buttonPlayGame.style.display = "none";
     }
 
+});
+
+buttonPlayGame.addEventListener("click", () => {
+    playCurrentMatch();
+    buttonPlayGame.disabled = true;
+    buttonPlayGame.style.display = "none";
+    bracketContainer.style.display = "none";
 });
