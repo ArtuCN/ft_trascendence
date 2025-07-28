@@ -98,10 +98,8 @@ export class Ball {
 		if (this.ballX < 0) {
 			if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
 			playerGoalsRecived[0]++;
-			console.log(`playerGoals: ` + playerGoals);
 			drawScore(nbrPlayer);
 			if (playerGoals[this.lastTouchedPlayer] == 5) {
-				console.log(players[this.lastTouchedPlayer].getNameTag() +" wins!");
 				if (typeof showMenu === "function") {
 					stopGame();
 					showVictoryScreen(players[this.lastTouchedPlayer]);
@@ -116,9 +114,7 @@ export class Ball {
 			if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
 			drawScore(nbrPlayer);
 			playerGoalsRecived[1]++;
-			console.log(`playerGoals: ` + playerGoals);
 			if (playerGoals[this.lastTouchedPlayer] == 5) {
-				console.log(players[this.lastTouchedPlayer].getNameTag() +" wins!");
 				if (typeof showMenu === "function") {
 					stopGame();
 					showVictoryScreen(players[this.lastTouchedPlayer]);

@@ -1,6 +1,5 @@
-import { gameRunning, stopGame, startGame, canvas, ctx, canvas_container, cornerWallSize, cornerWallThickness, bracketContainer } from "./typescriptFile/variables.js";
+import { canvas, ctx, canvas_container, cornerWallSize } from "./typescriptFile/variables.js";
 import { Player } from "./typescriptFile/classPlayer.js";
-import { Ball, drawScore } from "./typescriptFile/classBall.js";
 import { showMenu, players, nbrPlayer, buttonPlayGame, quarterfinals, semifinals, final, currentMatchIndex, currentRound, countPlayers, playerGoals, playerGoalsRecived, TournamentID } from "./script.js";
 
 export function resetCanvas() {
@@ -115,37 +114,40 @@ export async function sendData(ball_y: number, paddle_y: number): Promise<string
 }
 
 export function sendTournamentData() {
+    console.log(`Sending tournament data...`);
+
+    console.log(`Quarterfinals: `, quarterfinals);
+    console.log(`Semifinals: `, semifinals);
+    console.log(`Final: `, final);
+    console.log(`Tournament ID: `, TournamentID);
+    let body = {
+        id_tournament: TournamentID,
+        quarterfinals: quarterfinals,
+        semifinals: semifinals,
+        final: final
+    };
+    console.log(`Tournament Data: `, body);
     fetch("/api/tournament", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({ quarterfinals, semifinals, final })
+        body: JSON.stringify(body)
     })
 }
 
 export function sendMatchData() {
+    console.log(`Sending match data...`);
     let players_id: number[] = [];
-    for (let i = 0; i < players.length; i++) {
+    for (let i = 0; i < players.length; i++)
         players_id[i] = players[i].getUserID();
-        console.log(`players_id: `, players_id[i]);
 
-    }
-    for (let i = 0; i < playerGoals.length; i++) {
-        console.log(`playerGoals: `, playerGoals[i]);
-    }
-    for (let i = 0; i < playerGoalsRecived.length; i++) {
-        console.log(`playerGoalsRecived: `, playerGoalsRecived[i]);
-    }
     let body = {
         id_tournament: TournamentID,
         users_id: players_id,
         users_goal_scored: playerGoals,
         users_goal_recived: playerGoalsRecived
     }
-    console.log(`DATA MATCH: `, body.users_id);
-    console.log(`DATA MATCH: `, body.users_goal_scored);
-    console.log(`DATA MATCH: `, body.users_goal_recived);
     let response = fetch("/api/match", {
         method: "POST",
         headers: {
@@ -153,11 +155,6 @@ export function sendMatchData() {
         },
         body: JSON.stringify(body)
     })
-    let data = fetch("/api/users", {
-        method: "GET",
-    })
-    console.log(`DATA MATCH DATA: `, data);
-    console.log(`DATA MATCH SEND: `, body);
 }
 
 export function showVictoryScreen(winner: Player) {
