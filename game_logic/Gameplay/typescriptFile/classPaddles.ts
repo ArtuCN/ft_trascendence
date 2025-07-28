@@ -1,6 +1,6 @@
 import { PaddleOrientation, canvas, ctx, keysPressed, cornerWallThickness, cornerWallSize } from "./variables.js";
-import { nbrPlayer, Pebble, sendData } from "../script.js";
-
+import { nbrPlayer, Pebble } from "../script.js";
+import { sendData } from "../utilities.js";
 
 export class Paddles {
 	private id: number;
