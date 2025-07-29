@@ -1,13 +1,13 @@
 import { PaddleOrientation, canvas, ctx, keysPressed, cornerWallThickness, cornerWallSize } from "./variables.js";
 import { nbrPlayer, Pebble } from "../script.js";
-import { sendData } from "../utilities.js";
+import { sendBotData } from "../utilities.js";
 
 export class Paddles {
 	private id: number;
 	private orientation: PaddleOrientation;
 	private paddleLength: number;
 	private paddleThickness: number;
-	private speed: number = 4;
+	private speed: number = 6;
 	private initialPosition: number;
 	private botKey: string = "";
 	private botPollingId: number | null = null;
@@ -63,8 +63,8 @@ export class Paddles {
 			clearInterval(this.botPollingId);
 		}
 		this.botPollingId = window.setInterval(async () => {
-			this.botKey = await sendData(Pebble.getBallY(), this.initialPosition + this.paddleLength / 2);
-		}, 50); // Poll every 50ms (adjust as needed)
+			this.botKey = await sendBotData(Pebble.getBallY(), this.initialPosition + this.paddleLength / 2);
+		}, 50);
 	}
 
 	public stopBotPolling() {
@@ -152,15 +152,12 @@ export class Paddles {
 
 	public  movePaddles() {
 
-		if (nbrPlayer === 1) {
+		if (nbrPlayer === 1)
 			this.botMode();
-		}
-		else if (nbrPlayer == 2) {
+		else if (nbrPlayer == 2)
 			this.twoPlayerMode();
-		}
-		else if (nbrPlayer == 4) {
+		else if (nbrPlayer == 4)
 			this.fourPlayerMode();
-		}
 	}
 
 	public drawPaddles() {

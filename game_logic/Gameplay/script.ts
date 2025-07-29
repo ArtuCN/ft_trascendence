@@ -3,15 +3,17 @@ import { Player } from "./typescriptFile/classPlayer.js";
 import { Ball, drawScore } from "./typescriptFile/classBall.js";
 import { resetCanvas, generateBracket, renderBracket, drawCornerWalls, drawMiddleLine, clonePlayer, sendMatchData, sendTournamentData } from "./utilities.js";
 
-
-export const button2P = document.getElementById("Play2P") as HTMLButtonElement;
-export const button4P = document.getElementById("Play4P") as HTMLButtonElement;
-export const buttonAi = document.getElementById("PlayAI") as HTMLButtonElement;
-export const textPong = document.getElementById("PongGame") as HTMLHeadingElement;
-export const buttonTournament = document.getElementById("Tournament") as HTMLButtonElement;
+const buttonLocalPlay = document.getElementById("LocalPlay") as HTMLButtonElement;
+const buttonRemotePlay = document.getElementById("RemotePlay") as HTMLButtonElement;
+const button2P = document.getElementById("Play2P") as HTMLButtonElement;
+const button4P = document.getElementById("Play4P") as HTMLButtonElement;
+const buttonAi = document.getElementById("PlayAI") as HTMLButtonElement;
+const textPong = document.getElementById("PongGame") as HTMLHeadingElement;
+const buttonTournament = document.getElementById("Tournament") as HTMLButtonElement;
+const buttonNbrPlayer = document.getElementById("nbrPlayer") as HTMLSelectElement;
+const buttonMainMenu = document.getElementById("returnMenu") as HTMLButtonElement;
+const startTournamentButton = document.getElementById("StartTournament") as HTMLButtonElement;
 export const buttonPlayGame = document.getElementById("PlayGame") as HTMLButtonElement;
-export const buttonNbrPlayer = document.getElementById("nbrPlayer") as HTMLSelectElement;
-export const startTournamentButton = document.getElementById("StartTournament") as HTMLButtonElement;
 
 export let nbrPlayer: number = 0;
 export let countPlayers: number = 0;
@@ -77,7 +79,6 @@ export function advanceWinner(winner: Player) {
 		quarterfinals[currentMatchIndex].matchWinner = winner;
 		quarterfinals[currentMatchIndex].users_goal = playerGoals;
 		quarterfinals[currentMatchIndex].users_goal_recived = playerGoalsRecived;
-		console.log(`Quarterfinals: `, quarterfinals[currentMatchIndex]);
 		const semiIdx = Math.floor(currentMatchIndex / 2);
 		if (currentMatchIndex % 2 === 0) {
 			semifinals[semiIdx].player1 = winner;
@@ -94,7 +95,6 @@ export function advanceWinner(winner: Player) {
 		semifinals[currentMatchIndex].matchWinner = winner;
 		semifinals[currentMatchIndex].users_goal = playerGoals;
 		semifinals[currentMatchIndex].users_goal_recived = playerGoalsRecived;
-		console.log(`Semifinals: `, semifinals[currentMatchIndex]);
 		if (currentMatchIndex === 0) {
 			final.player1 = winner;
 		} else {
@@ -110,7 +110,6 @@ export function advanceWinner(winner: Player) {
 		final.matchWinner = winner;
 		final.users_goal = playerGoals;
 		final.users_goal_recived = playerGoalsRecived;
-		console.log(`Final: `, final);
 		currentRound = "finished";
 		renderBracket();
 		alert(`Tournament Winner: ${winner.getNameTag()}`);
@@ -135,7 +134,6 @@ export function showMenu(winner: Player) {
 		Tournament = false;
 		canvas_container.style.display = "none";
 		advanceWinner(winner);
-		console.log(`Tournament finished, winner: ${final.matchWinner?.getNameTag()}`);
 		if (currentRound === "finished") {
 			for (const player of players)
 				player.getPaddle().stopBotPolling();
@@ -227,10 +225,39 @@ function playCurrentMatch() {
 	}
 }
 
+buttonLocalPlay.addEventListener("click", () => {
+	buttonLocalPlay.style.display = "none";
+	buttonRemotePlay.style.display = "none";
+	button2P.style.display = "inline-block";
+	buttonAi.style.display = "inline-block";
+	buttonTournament.style.display = "inline-block";
+	buttonMainMenu.style.display = "inline-block";
+});
+
+buttonRemotePlay.addEventListener("click", () => {
+	buttonLocalPlay.style.display = "none";
+	buttonRemotePlay.style.display = "none";
+	button2P.style.display = "inline-block";
+	button4P.style.display = "inline-block";
+	buttonTournament.style.display = "inline-block";
+	buttonMainMenu.style.display = "inline-block";
+});
+
+buttonMainMenu.addEventListener("click", () => {
+	buttonLocalPlay.style.display = "inline-block";
+	buttonRemotePlay.style.display = "inline-block";
+	button2P.style.display = "none";
+	button4P.style.display = "none";
+	buttonAi.style.display = "none";
+	buttonTournament.style.display = "none";
+	buttonMainMenu.style.display = "none";
+});
+
 button2P.addEventListener("click", () => {
 	button2P.style.display = "none";
 	button4P.style.display = "none";
 	buttonAi.style.display = "none";
+	buttonMainMenu.style.display = "none";
 	buttonTournament.style.display = "none";
 	textPong.style.display = "none";
 	canvas_container.style.display = "block";
@@ -253,6 +280,7 @@ button4P.addEventListener("click", () => {
 	button4P.style.display = "none";
 	button2P.style.display = "none";
 	buttonAi.style.display = "none";
+	buttonMainMenu.style.display = "none";
 	buttonTournament.style.display = "none";
 	textPong.style.display = "none";
 	canvas_container.style.display = "block";
@@ -276,6 +304,7 @@ button4P.addEventListener("click", () => {
 
 buttonAi.addEventListener("click", () => {
 	buttonAi.style.display = "none";
+	buttonMainMenu.style.display = "none";
 	button2P.style.display = "none";
 	button4P.style.display = "none";
 	buttonTournament.style.display = "none";
@@ -313,6 +342,7 @@ buttonTournament.addEventListener("click", async () => {
 	button2P.style.display = "none";
 	button4P.style.display = "none";
 	buttonAi.style.display = "none";
+	buttonMainMenu.style.display = "none";
 	textPong.style.display = "none";
 	startTournamentButton.style.display = "inline-block";
 	buttonNbrPlayer.style.display = "inline-block";

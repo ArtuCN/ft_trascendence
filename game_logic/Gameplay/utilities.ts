@@ -94,7 +94,7 @@ export function clonePlayer(original: Player, newID: number): Player {
     return new Player(original.getNameTag(), newID, original.getUserID(), original.getPaddle().getOrientation());
 }
 
-export async function sendData(ball_y: number, paddle_y: number): Promise<string> {
+export async function sendBotData(ball_y: number, paddle_y: number): Promise<string> {
 
 	let response = await fetch("/ai/", {
 		method: "POST",
@@ -114,20 +114,14 @@ export async function sendData(ball_y: number, paddle_y: number): Promise<string
 }
 
 export function sendTournamentData() {
-    console.log(`Sending tournament data...`);
 
-    console.log(`Quarterfinals: `, quarterfinals);
-    console.log(`Semifinals: `, semifinals);
-    console.log(`Final: `, final);
-    console.log(`Tournament ID: `, TournamentID);
     let body = {
         id_tournament: TournamentID,
         quarterfinals: quarterfinals,
         semifinals: semifinals,
         final: final
     };
-    console.log(`Tournament Data: `, body);
-    fetch("/api/tournament", {
+    fetch("/api/tournament/", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -137,7 +131,7 @@ export function sendTournamentData() {
 }
 
 export function sendMatchData() {
-    console.log(`Sending match data...`);
+
     let players_id: number[] = [];
     for (let i = 0; i < players.length; i++)
         players_id[i] = players[i].getUserID();
@@ -148,7 +142,7 @@ export function sendMatchData() {
         users_goal_scored: playerGoals,
         users_goal_recived: playerGoalsRecived
     }
-    let response = fetch("/api/match", {
+    let response = fetch("/api/match/", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"

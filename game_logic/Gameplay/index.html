@@ -8,57 +8,104 @@
     html, body {
       margin: 0;
       padding: 0;
-      background: rgb(139, 139, 139);
       height: 100%;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to bottom, #a2d4f5, #e0f7ff);
       display: flex;
-      align-items: center;
-      justify-content: center;
       flex-direction: column;
+      align-items: center;
     }
 
+    /* Title styling */
+    #PongGame {
+      text-align: center;
+      padding: 30px 0;
+      margin: 0;
+      font-size: 48px;
+      color: #004d66;
+      text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.6);
+    }
+
+    /* Centered menu buttons */
+    #menu-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Glossy, round, Aero-style buttons */
+    button {
+      width: 200px;
+      height: 50px;
+      font-size: 18px;
+      font-weight: bold;
+      padding: 10px 20px;
+      margin: 10px;
+      border: none;
+      border-radius: 25px;
+      background: linear-gradient(to bottom, #5dd39e, #3fbf7f);
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      background: linear-gradient(to bottom, #76e7b6, #4fd18d);
+      transform: translateY(-2px);
+    }
+
+    /* Canvas container */
     #canvas-container {
-      width: 90%;
-      max-width: 2000px;
-      aspect-ratio: 9 / 6;
-      display: none; /* hide initially */
+      width: 100%;
+      max-width: 900px;
+      aspect-ratio: 3 / 2;
+      margin: 0 auto;            /* Center horizontally */
+      display: none;
+      justify-content: center;   /* Just in case of flex children */
+      align-items: center;
     }
 
     canvas {
       width: 100%;
-      height: 100%;
-      background: #000;
+      height: auto;
+      background: black;
       border: 4px solid white;
       display: block;
     }
 
-    button {
-      padding: 10px 20px;
-      font-size: 18px;
-      margin-bottom: 20px;
-      cursor: pointer;
-    }
+
   </style>
 </head>
-<body>
+  <body>
   <h1 id="PongGame">Pong Game</h1>
-  
-  <button id="Play2P" value=2>2 Player</button>
-  <button id="Play4P" value=4>4 Player</button>
-  <button id="PlayAI" value=1>VS Bot</button>
-  <button id="Tournament" >Tournament</button>
-  <label for="nbrPlayer" style="display: none;">Number of Players:</label>
-  <select id="nbrPlayer" style="display: none;">
-    <option value="4">4</option>
-    <option value="8">8</option>
-  </select>
-  <button id="StartTournament" style="display:none;">Start Tournament</button>
-  <button id="PlayGame" style="display:none;">Play Game</button>
-  <button id="btnBackToMenu" style="display:none;">Back to Menu</button>
-  <div id="bracket-container" style="display:none; margin-bottom: 20px;"></div>
-  <div id="canvas-container">
-    <canvas id="gameCanvas" width="900" height="600"></canvas>
+
+  <div id="menu-container">
+    <button id="LocalPlay" value="1">Local</button>
+    <button id="RemotePlay" value="2">Remote</button>
+    <button id="Play2P" value="2" style="display: none;">2 Player</button>
+    <button id="Play4P" value="4" style="display: none;">4 Player</button>
+    <button id="PlayAI" value="1" style="display: none;">VS Bot</button>
+    <button id="Tournament" style="display: none;">Tournament</button>
+    <button id="returnMenu" style="display: none;">Main Menu</button>
+    <label for="nbrPlayer" style="display: none;">Number of Players:</label>
+    <select id="nbrPlayer" style="display: none;">
+      <option value="4">4</option>
+      <option value="8">8</option>
+    </select>
+    <button id="StartTournament" style="display:none;">Start Tournament</button>
+    <button id="PlayGame" style="display:none;">Play Game</button>
+    <button id="btnBackToMenu" style="display:none;">Back to Menu</button>
+    <div id="bracket-container" style="display:none; margin-bottom: 20px;"></div>
+    
+    <div id="canvas-container">
+      <canvas id="gameCanvas" width="900" height="600"></canvas>
+    </div>
   </div>
 
   <script type="module" src="script.js" defer></script>
 </body>
+
 </html>
