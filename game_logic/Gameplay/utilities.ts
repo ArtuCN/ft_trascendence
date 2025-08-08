@@ -1,6 +1,6 @@
 import { canvas, ctx, canvas_container, cornerWallSize } from "./typescriptFile/variables.js";
 import { Player } from "./typescriptFile/classPlayer.js";
-import { showMenu, players, nbrPlayer, buttonPlayGame, quarterfinals, semifinals, final, currentMatchIndex, currentRound, countPlayers, playerGoals, playerGoalsRecived, TournamentID } from "./script.js";
+import { BracketMatch, showMenu, players, nbrPlayer, buttonPlayGame, quarterfinals, semifinals, final, currentMatchIndex, currentRound, countPlayers, playerGoals, playerGoalsRecived, TournamentID } from "./script.js";
 
 export function resetCanvas() {
     canvas.width = 900;
@@ -10,60 +10,163 @@ export function resetCanvas() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
-export function generateBracket(players: Player[]): string {
+export function generateBracket(players: Player[], nbrPlayer: number): string {
+  function renderMatch(label: string, p1: Player | null, p2: Player | null): string {
+    const name1 = p1 ? p1.getNameTag() : "TBD";
+    const name2 = p2 ? p2.getNameTag() : "TBD";
+    return `
+      <div class="match-wrapper">
+        <div class="match-label">${label}</div>
+        <div class="match">
+          <div class="player">${name1}</div>
+          <div class="vs">vs</div>
+          <div class="player">${name2}</div>
+        </div>
+      </div>
+    `;
+  }
+  let html = "";
+  if (nbrPlayer == 8) {
 
-    let html = "<h2>Tournament Bracket</h2>";
-    html += "<div style='display:flex; flex-direction:column; align-items:flex-start;'>";
-    html += "<strong>Quarterfinals:</strong><br>";
-    if (nbrPlayer == 8) {
-        for (let i = 0; i < 4; i++) {
-            html += `Match ${i+1}: ${players[2*i].getNameTag()} vs ${players[2*i+1].getNameTag()}<br>`;
-        }
-    }
-    else if (nbrPlayer == 4) {
-        for (let i = 0; i < 2; i++) {
-            html += `Match ${i+1}: ${players[2*i].getNameTag()} vs ${players[2*i+1].getNameTag()}<br>`;
-        }
-    }
-    html += "<br><strong>Semifinals:</strong><br>";
-    html += "Winner Match 1 vs Winner Match 2<br>";
-    html += "Winner Match 3 vs Winner Match 4<br>";
-    html += "<br><strong>Final:</strong><br>";
-    html += "Winner SF1 vs Winner SF2<br>";
-    html += "</div>";
-    return html;
+    html = `
+      <div class="bracket">
+        <!-- Left Side -->
+        <div class="column">
+          <div class="round-title">Quarterfinals</div>
+          ${renderMatch("QF1", players[0], players[1])}
+          ${renderMatch("QF2", players[2], players[3])}
+        </div>
+        <div class="column">
+          <div class="round-title">Semifinal</div>
+          ${renderMatch("SF1", null, null)}
+        </div>
+  
+        <!-- Final -->
+        <div class="column center">
+          <div class="round-title">Final</div>
+          ${renderMatch("Final", null, null)}
+        </div>
+  
+        <!-- Right Side -->
+        <div class="column">
+          <div class="round-title">Semifinal</div>
+          ${renderMatch("SF2", null, null)}
+        </div>
+        <div class="column">
+          <div class="round-title">Quarterfinals</div>
+          ${renderMatch("QF3", players[4], players[5])}
+          ${renderMatch("QF4", players[6], players[7])}
+        </div>
+      </div>
+    `;
+  }
+  else if (nbrPlayer == 4) {
+    html = `        
+        <div class="column">
+          <div class="round-title">Semifinal</div>
+          ${renderMatch("SF1", players[0], players[1])}
+        </div>
+  
+        <!-- Final -->
+        <div class="column center">
+          <div class="round-title">Final</div>
+          ${renderMatch("Final", null, null)}
+        </div>
+  
+        <!-- Right Side -->
+        <div class="column">
+          <div class="round-title">Semifinal</div>
+          ${renderMatch("SF2", players[2], players[3])}
+        </div>`
+  }
+  return html;
 }
+
 
 export function renderBracket() {
-    let html = "<h2>Tournament Bracket</h2><div style='display:flex; flex-direction:column; align-items:flex-start;'>";
-    if (countPlayers == 8) {
-        html += "<strong>Quarterfinals:</strong><br>";
-        quarterfinals.forEach((m, i) => {
-            html += `Match ${i+1}: ${m.player1?.getNameTag()} vs ${m.player2?.getNameTag()}`
-            if (m.matchWinner) html += ` — <b>Winner: ${m.matchWinner.getNameTag()}</b>`;
-            if (currentRound === "quarterfinals" && currentMatchIndex === i) html += " <span style='color:red'>(Playing)</span>";
-            html += "<br>";
-        });
-    }
-    html += "<br><strong>Semifinals:</strong><br>";
-    semifinals.forEach((m, i) => {
-        html += `Semifinal ${i+1}: ${m.player1?.getNameTag() || "TBD"} vs ${m.player2?.getNameTag() || "TBD"}`;
-        if (m.matchWinner) html += ` — <b>Winner: ${m.matchWinner.getNameTag()}</b>`;
-        if (currentRound === "semifinals" && currentMatchIndex === i) html += " <span style='color:red'>(Playing)</span>";
-        html += "<br>";
-    });
-    html += "<br><strong>Final:</strong><br>";
-    html += `${final.player1?.getNameTag() || "TBD"} vs ${final.player2?.getNameTag() || "TBD"}`;
-    if (final.matchWinner) html += ` — <b>Winner: ${final.matchWinner.getNameTag()}</b>`;
-    if (currentRound === "final") html += " <span style='color:red'>(Playing)</span>";
-    html += "<br></div>";
-    const bracketDiv = document.getElementById("bracket-container");
-    if (bracketDiv) {
-        bracketDiv.innerHTML = html;
-        bracketDiv.style.display = "block";
-    }
-    buttonPlayGame.style.display = "inline";
+  function renderMatch(match: BracketMatch, label: string, index: number, roundName: string): string {
+    const p1 = match.player1?.getNameTag() || "TBD";
+    const p2 = match.player2?.getNameTag() || "TBD";
+    const winner = match.matchWinner ? `<div class="winner">Winner: ${match.matchWinner.getNameTag()}</div>` : "";
+    const playing = (currentRound === roundName && currentMatchIndex === index)
+      ? `<div class="playing-indicator">(Playing)</div>` : "";
+
+    return `
+      <div class="match-wrapper">
+        <div class="match-label">${label}</div>
+        <div class="match">
+          <div class="player">${p1}</div>
+          <div class="vs">vs</div>
+          <div class="player">${p2}</div>
+          ${winner}
+          ${playing}
+        </div>
+      </div>
+    `;
+  }
+
+  let html = `<h2>Tournament Name</h2><div class="bracket">`;
+
+  if (countPlayers === 8) {
+    // Left side (QF1, QF2 → SF1)
+    html += `<div class="column">
+      <div class="round-title">Quarterfinals</div>
+      ${renderMatch(quarterfinals[0], "QF1", 0, "quarterfinals")}
+      ${renderMatch(quarterfinals[1], "QF2", 1, "quarterfinals")}
+    </div>
+    <div class="column">
+      <div class="round-title">Semifinal</div>
+      ${renderMatch(semifinals[0], "SF1", 0, "semifinals")}
+    </div>`;
+
+    // Center Final
+    html += `<div class="column center">
+      <div class="round-title">Final</div>
+      ${renderMatch(final, "Final", 0, "final")}
+    </div>`;
+
+    // Right side (SF2 ← QF3, QF4)
+    html += `<div class="column">
+      <div class="round-title">Semifinal</div>
+      ${renderMatch(semifinals[1], "SF2", 1, "semifinals")}
+    </div>
+    <div class="column">
+      <div class="round-title">Quarterfinals</div>
+      ${renderMatch(quarterfinals[2], "QF3", 2, "quarterfinals")}
+      ${renderMatch(quarterfinals[3], "QF4", 3, "quarterfinals")}
+    </div>`;
+  } else if (countPlayers === 4) {
+    html += `<div class="column">
+      <div class="round-title">Semifinal</div>
+        ${renderMatch(semifinals[0], "SF1", 0, "semifinals")}
+      </div>`;
+
+    // Center Final
+    html += `
+      <div class="column center">
+        <div class="round-title">Final</div>
+        ${renderMatch(final, "Final", 0, "final")}
+      </div>`;
+
+    // Right side (SF2 ← QF3, QF4)
+    html += `<div class="column">
+      <div class="round-title">Semifinal</div>
+      ${renderMatch(semifinals[1], "SF2", 1, "semifinals")}
+    </div>`;
+  }
+
+  html += `</div>`; // close .bracket
+
+  const bracketDiv = document.getElementById("bracket-container");
+  if (bracketDiv) {
+    bracketDiv.innerHTML = html;
+    bracketDiv.style.display = "block";
+  }
+
+  buttonPlayGame.style.display = "inline"; // assumes this button exists
 }
+
+
 
 export function drawMiddleLine() {
 	const dashedLineLength = 20;

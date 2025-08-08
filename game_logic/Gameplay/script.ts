@@ -29,22 +29,23 @@ export type BracketMatch = {
 	matchWinner: Player | null;
 	users_goal: number[];
 	users_goal_recived: number[];
+	round: string;
 };
 
 export let match: BracketMatch;
 
 export let quarterfinals: BracketMatch[] = [
-	{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0] },
-	{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0] },
-	{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0] },
-	{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0] }
+	{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0], round: "" },
+	{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0], round: "" },
+	{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0], round: "" },
+	{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0], round: "" }
 ];
 export let semifinals: BracketMatch[] = [
-	{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0] },
-	{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0] }
+	{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0], round: "" },
+	{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0], round: "" }
 ];
 
-export let final: BracketMatch = { player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0] };
+export let final: BracketMatch = { player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0], round: ""};
 
 export let currentRound = "quarterfinals";
 export let currentMatchIndex = 0;
@@ -60,17 +61,17 @@ export function resetGoalscore() {
 
 function resetBracket() {
 	quarterfinals = [
-		{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0] },
-		{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0] },
-		{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0] },
-		{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0] }
+		{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0], round: "" },
+		{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0], round: "" },
+		{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0], round: "" },
+		{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0], round: "" }
 	];
 	semifinals = [
-		{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0] },
-		{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0] }
+		{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0], round: "" },
+		{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0], round: "" }
 	];
 
-	final = { player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0] };
+	final = { player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0], round: "" };
 }
 
 export function advanceWinner(winner: Player) {
@@ -370,12 +371,13 @@ buttonTournament.addEventListener("click", async () => {
 				player2: players[2 * i + 1],
 				matchWinner: null,
 				users_goal: [0, 0],
-				users_goal_recived: [0, 0]
+				users_goal_recived: [0, 0],
+				round: ""
 			});
 		}
 		semifinals = [
-			{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0] },
-			{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0] }
+			{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0], round: "" },
+			{ player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0], round: "" }
 		];
 	}
 	else if (nbrPlayer == 4) {
@@ -387,17 +389,18 @@ buttonTournament.addEventListener("click", async () => {
 				player2: players[2 * i + 1],
 				matchWinner: null,
 				users_goal: [0, 0],
-				users_goal_recived: [0, 0]
+				users_goal_recived: [0, 0],
+				round: ""
 			});
 		}
 	}
 
-	final = { player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0] };
+	final = { player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0], round: ""};
 	currentMatchIndex = 0;
 	// Show bracket
 	const bracketDiv = document.getElementById("bracket-container");
 	if (bracketDiv) {
-		bracketDiv.innerHTML = generateBracket(players);
+		bracketDiv.innerHTML = generateBracket(players, nbrPlayer);
 		bracketDiv.style.display = "block";
 	}
 	startTournamentButton.style.display = "none";

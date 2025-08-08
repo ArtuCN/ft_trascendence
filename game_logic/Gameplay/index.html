@@ -5,15 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Pong Game</title>
   <style>
-    html, body {
+    html {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(to bottom, #a2d4f5, #e0f7ff);
+    }
+
+    body {
       margin: 0;
       padding: 0;
       height: 100%;
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to bottom, #a2d4f5, #e0f7ff);
+      width: auto;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      align-items: center;
+      align-items: center;     /* centers content horizontally */
+      justify-content: flex-start;
+      font-family: 'Segoe UI', sans-serif;
+      box-sizing: border-box;
+    }
+
+    h2 {
+      text-align: center;
+      color: #000000;
     }
 
     /* Title styling */
@@ -33,6 +47,10 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
+    
+      width: 100%;
+      box-sizing: border-box;
+      padding: 0 20px;       /* optional padding for side spacing */
     }
 
     /* Glossy, round, Aero-style buttons */
@@ -76,6 +94,71 @@
       display: block;
     }
 
+  .bracket {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 40px;
+  }
+  
+  .column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+  
+  .match-wrapper {
+    background-color: #1e293b;
+    border: 2px solid #334155;
+    border-radius: 6px;
+    padding: 10px;
+    min-width: 180px;
+    text-align: center;
+  }
+  
+  .match-label {
+    font-weight: bold;
+    color: #38bdf8;
+    margin-bottom: 5px;
+  }
+  
+  .match {
+    color: white;
+  }
+  
+  .player {
+    font-weight: bold;
+    padding: 5px 0;
+  }
+  
+  .vs {
+    color: #94a3b8;
+    font-style: italic;
+  }
+  
+  .winner {
+    color: #22c55e;
+    font-size: 0.85em;
+    margin-top: 5px;
+  }
+  
+  .playing-indicator {
+    color: #3b82f6;
+    font-size: 0.85em;
+    margin-top: 4px;
+  }
+  
+  .round-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #38bdf8;
+    margin-bottom: 10px;
+  }
+  
+  .center {
+    margin: 0 20px;
+  }
 
   </style>
 </head>
@@ -96,9 +179,9 @@
       <option value="8">8</option>
     </select>
     <button id="StartTournament" style="display:none;">Start Tournament</button>
-    <button id="PlayGame" style="display:none;">Play Game</button>
     <button id="btnBackToMenu" style="display:none;">Back to Menu</button>
     <div id="bracket-container" style="display:none; margin-bottom: 20px;"></div>
+    <button id="PlayGame" style="display:none;">Play Game</button>
     
     <div id="canvas-container">
       <canvas id="gameCanvas" width="900" height="600"></canvas>
