@@ -1,0 +1,8 @@
+services:
+  icm-relayer:
+    image: avaplatform/icm-relayer:latest
+    container_name: relayer
+    restart: on-failure
+    command: ["icm-relayer", "--config-file", "./relayer-config.json"]
+    volumes:
+      - ./relayer-config.json:./relayer-config.json

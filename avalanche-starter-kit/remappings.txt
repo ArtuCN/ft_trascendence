@@ -1,0 +1,8 @@
+ds-test/=lib/forge-std/lib/ds-test/src/
+forge-std/=lib/forge-std/src/
+
+@openzeppelin/contracts@4.8.1/=lib/openzeppelin-contracts/contracts/
+@avalabs/subnet-evm-contracts@1.2.0=lib/icm-contracts/lib/subnet-evm/contracts/
+@teleporter/=lib/icm-contracts/contracts/teleporter/
+@teleporter-mocks/=lib/icm-contracts/contracts/mocks/
+@avalanche-interchain-token-transfer/=lib/icm-contracts/contracts/ictt/
