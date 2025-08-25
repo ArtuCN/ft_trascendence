@@ -183,13 +183,12 @@ export function insertGoogleUser(user) {
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
     
-    // Per utenti Google, non c'è password (usare valore vuoto o NULL)
     db.run(
       query,
       [
         user.username,
         user.mail,
-        '', // Password vuota per utenti Google
+        '',
         user.token || null,
         user.wallet || '',
         user.is_admin ? 1 : 0,

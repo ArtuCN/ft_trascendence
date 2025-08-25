@@ -13,7 +13,6 @@ export default async function (fastify, opts) {
             if (!user)
                 return reply.code(400).send({ error: 'email not registered!'});
             
-            // Verifica se l'utente è registrato tramite Google
             if (user.google_id && user.google_id.trim() !== '') {
                 return reply.code(400).send({ error: 'This account is linked to Google. Please use Google Sign In.' });
             }
