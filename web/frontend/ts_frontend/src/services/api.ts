@@ -61,6 +61,24 @@ export class ApiService {
     return data;
   }
 
+  async googleAuth(credential: string): Promise<AuthResponse> {
+    const response = await fetch(`${API_BASE_URL}/auth/google`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ credential }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || data.message || 'Google authentication failed');
+    }
+
+    return data;
+  }
+
   async makeAuthenticatedRequest(url: string, options: RequestInit = {}): Promise<Response> {
     const headers = {
       'Content-Type': 'application/json',

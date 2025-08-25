@@ -12,7 +12,13 @@ export default async function (fastify, opts) {
             const user = await getUserByMail(username);
             if (!user)
                 return reply.code(400).send({ error: 'email not registered!'});
-                    const isValid = await bcrypt.compare(password, user.psw);
+            
+            // Verifica se l'utente è registrato tramite Google
+            if (user.google_id && user.google_id.trim() !== '') {
+                return reply.code(400).send({ error: 'This account is linked to Google. Please use Google Sign In.' });
+            }
+            
+            const isValid = await bcrypt.compare(password, user.psw);
             if (!isValid)
                 return reply.code(401).send({ error: 'Invalid password' });
             let token = '';

@@ -109,6 +109,35 @@ export class AuthState {
     }
   }
 
+  async googleAuth(credential: string): Promise<void> {
+    try {
+      this.isLoading = true;
+      this.error = null;
+      this.successMessage = null;
+      this.notifyListeners();
+      
+      const response = await apiService.googleAuth(credential);
+      
+      apiService.saveToken(response.token);
+      this.user = response.user;
+      this.successMessage = 'Google login successful!';
+      
+      // Salva dati utente nel localStorage
+      localStorage.setItem('user', JSON.stringify(response.user));
+      localStorage.setItem("username", response.user.username);
+      localStorage.setItem("id", response.user.id.toString());
+      localStorage.setItem("mail", response.user.mail);
+      
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Google authentication failed';
+      this.error = errorMessage;
+      throw err;
+    } finally {
+      this.isLoading = false;
+      this.notifyListeners();
+    }
+  }
+
   logout(): void {
     apiService.removeToken();
     this.user = null;

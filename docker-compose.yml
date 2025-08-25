@@ -1,9 +1,9 @@
 services:
   nginx:
-    image: nginx:alpine
+    build:
+      context: ./nginx
+    image: nginx-ssl:latest
     container_name: nginx
-    volumes:
-      - ./nginx/conf:/etc/nginx/conf.d
     ports:
       - "80:80"
       - "443:443"

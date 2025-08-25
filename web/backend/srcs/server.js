@@ -7,6 +7,7 @@ import registerRoute from './controllers/register.js'; // 👈 importa la rotta 
 import loginRoute from './controllers/login.js'
 import logoutRoute from './controllers/logout.js'
 import tokenRoute from './controllers/token.js'
+import googleAuthRoute from './controllers/google-auth.js'
 const fastify = Fastify({ logger: true });
 
 await fastify.register(cors, {
@@ -22,6 +23,7 @@ await fastify.register(loginRoute);
 await fastify.register(registerRoute);
 await fastify.register(logoutRoute);
 await fastify.register(tokenRoute);
+await fastify.register(googleAuthRoute);
 
 fastify.listen({ port: 3000, host: '0.0.0.0' }, (err, address) => {
   if (err) 
