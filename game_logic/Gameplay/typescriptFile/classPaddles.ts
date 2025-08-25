@@ -1,13 +1,13 @@
 import { PaddleOrientation, canvas, ctx, keysPressed, cornerWallThickness, cornerWallSize } from "./variables.js";
-import { nbrPlayer, sendData, Pebble } from "../script.js";
-
+import { nbrPlayer, Pebble } from "../script.js";
+import { sendBotData } from "../utilities.js";
 
 export class Paddles {
 	private id: number;
 	private orientation: PaddleOrientation;
 	private paddleLength: number;
 	private paddleThickness: number;
-	private speed: number = 4;
+	private speed: number = 6;
 	private initialPosition: number;
 	private botKey: string = "";
 	private botPollingId: number | null = null;
@@ -43,6 +43,14 @@ export class Paddles {
 		return this.speed;
 	}
 
+	public getID() {
+		return this.id;
+	}
+
+	public getOrientation(): PaddleOrientation {
+		return this.orientation;
+	}
+
 	public reset() {
 		if (this.orientation === "vertical")
 			this.initialPosition = canvas.height / 2 - this.paddleLength / 2;
@@ -50,13 +58,13 @@ export class Paddles {
 			this.initialPosition = canvas.width / 2 - this.paddleLength / 2;
 	}
 
-	public startBotPolling() {
+		public startBotPolling() {
 		if (this.botPollingId !== null) {
 			clearInterval(this.botPollingId);
 		}
 		this.botPollingId = window.setInterval(async () => {
-			this.botKey = await sendData(Pebble.getBallY(), this.initialPosition + this.paddleLength / 2);
-		}, 50); // Poll every 50ms (adjust as needed)
+			this.botKey = await sendBotData(Pebble.getBallY(), this.initialPosition + this.paddleLength / 2);
+		}, 50);
 	}
 
 	public stopBotPolling() {
@@ -85,7 +93,6 @@ export class Paddles {
 			this.initialPosition = 0;
 	}
 
-
 	private twoPlayerMode() {
 		if (this.id === 0 && this.orientation === "vertical") {
 			if ((keysPressed["s"] || keysPressed["S"]) && this.initialPosition <= (canvas.height - this.paddleLength))
@@ -93,7 +100,6 @@ export class Paddles {
 			if (keysPressed["w"] && this.initialPosition >= 0)
 				this.initialPosition -= this.speed;
 		}
-		// Right paddle (Player 1, vertical)
 		else if (this.id === 1 && this.orientation === "vertical") {
 			if (keysPressed["ArrowDown"] && this.initialPosition <= (canvas.height - this.paddleLength))
 				this.initialPosition += this.speed;
@@ -113,21 +119,18 @@ export class Paddles {
 			if (keysPressed["w"] && this.initialPosition >= 0 + cornerWallThickness)
 				this.initialPosition -= this.speed;
 		}
-		// Right paddle (Player 1, vertical)
 		else if (this.id === 1 && this.orientation === "vertical") {
 			if (keysPressed["ArrowDown"] && this.initialPosition <= (canvas.height - this.paddleLength - cornerWallThickness))
 				this.initialPosition += this.speed;
 			if (keysPressed["ArrowUp"] && this.initialPosition >= 0 + cornerWallThickness)
 				this.initialPosition -= this.speed;
 		}
-		// Top paddle (Player 2, horizontal)
 		else if (this.id === 2 && this.orientation === "horizontal") {
 			if (keysPressed["d"] && this.initialPosition <= (canvas.width - this.paddleLength - cornerWallThickness))
 				this.initialPosition += this.speed;
 			if (keysPressed["a"] && this.initialPosition >= 0 + cornerWallThickness)
 				this.initialPosition -= this.speed;
 		}
-		// Bottom paddle (Player 3, horizontal)
 		else if (this.id === 3 && this.orientation === "horizontal") {
 			if (keysPressed["ArrowRight"] && this.initialPosition <= (canvas.width - this.paddleLength - cornerWallThickness))
 				this.initialPosition += this.speed;
@@ -148,16 +151,13 @@ export class Paddles {
 	}
 
 	public  movePaddles() {
-		// Left paddle (Player 0, vertical)
-		if (nbrPlayer === 1) {
+
+		if (nbrPlayer === 1)
 			this.botMode();
-		}
-		else if (nbrPlayer == 2) {
+		else if (nbrPlayer == 2)
 			this.twoPlayerMode();
-		}
-		else if (nbrPlayer == 4) {
+		else if (nbrPlayer == 4)
 			this.fourPlayerMode();
-		}
 	}
 
 	public drawPaddles() {

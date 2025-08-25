@@ -17,7 +17,7 @@ class AIRequest(BaseModel):
     ball_y: float
     paddle_y: float
 
-@app.post("/ai")
+@app.post("/")
 async def ai_decision(data: AIRequest):
     ball_y = data.ball_y
     paddle_y = data.paddle_y
