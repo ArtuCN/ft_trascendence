@@ -71,25 +71,27 @@ export class Navbar {
       className: 'text-white text-center text-sm mb-4 px-2',
       innerHTML: `Ciao, ${user.username}!`
     });
-
-    const profileButton = createButton(
-      'Profilo',
-      'text-white px-3 py-2 rounded transition-all focus:outline-none w-full text-center',
-      () => this.profileModal.show()
-    );
-    profileButton.style.backgroundColor = '#E67923';
-    profileButton.addEventListener('mouseenter', () => {
-      profileButton.style.backgroundColor = '#D16A1E';
-    });
-    profileButton.addEventListener('mouseleave', () => {
-      profileButton.style.backgroundColor = '#E67923';
-    });
-
+    
     const playButton = createButton(
       'Play',
-      'text-white px-3 py-2 rounded-md transition-all w-full text-center bg-orange-500 hover:bg-orange-600 focus:outline-none',
+      'text-white px-3 py-2 rounded transition-all focus:outline-none w-full text-center',
       () => router.navigate('/play')
     );
+     playButton.style.backgroundColor = '#E67923';
+    playButton.addEventListener('mouseenter', () => {
+      playButton.style.backgroundColor = '#D16A1E';
+    });
+    playButton.addEventListener('mouseleave', () => {
+      playButton.style.backgroundColor = '#E67923';
+    });
+
+    const profileButton = createButton(
+      'Profile',
+      'text-white px-3 py-2 rounded-md transition-all w-full text-center bg-orange-500 hover:bg-orange-600 focus:outline-none',
+      () => this.profileModal.show()
+    );
+   
+
 
     const socialButton = createButton(
       'Social',
@@ -114,8 +116,8 @@ export class Navbar {
     });
 
     container.appendChild(greeting);
-    container.appendChild(profileButton);
     container.appendChild(playButton);
+    container.appendChild(profileButton);
     container.appendChild(socialButton);
     container.appendChild(logoutButton);
 
