@@ -1,4 +1,0 @@
-/* Main index file that imports all styles */
-@import "tailwindcss";
-@import "./globals.css";
-@import "./components.css";
