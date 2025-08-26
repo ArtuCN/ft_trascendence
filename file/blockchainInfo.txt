@@ -1,0 +1,21 @@
+subnet id: 29rdnbcg5c7Mvkk2YDReqUcr3Tv4WXMXxwrSV7ayWupAUaaq8A
+chain id: 2tWTfgixvFfLEiM3SyU7dWErq7LidvBAy1gxZduQaBXK5WJDgw
+
+raspeberry IP: 100.112.156.65
+full ssh command: ssh -p 4242 thiew@100.112.156.65
+
+data to save to blockchain:
+user ids [max 4],
+usernames [max 4],
+user wallets [max 4] [user_id: user_wallet],
+game_match id,
+tournament id,
+result [user_id: score]
+
+tokens for users:
+place in tournament/match,
+picture of medal,
+other participant wallets,
+other participants usernames,
+
+

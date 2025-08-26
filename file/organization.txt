@@ -1,1 +1,16 @@
 porta 80 x http 443 https
+
+• Web
+◦ Major module: Use a framework to build the backend.
+◦ Minor module: Use a framework or a toolkit to build the frontend.
+◦ Minor module: Use a database for the backend.
+◦ Major module: Store the score of a tournament in the Blockchain.
+
+Gameplay and user experience
+◦ Major module: Multiplayer (more than 2 players in the same game).
+
+• AI-Algo
+◦ Major module: Introduce an AI opponent.
+
+Devops
+◦ Major module: Designing the backend as microservices.
