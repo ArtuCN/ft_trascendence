@@ -27,15 +27,15 @@ export class ProfileImageUpload {
     }) as HTMLImageElement;
 
     const defaultIcon = createElement('div', {
-      className: 'text-white font-bold text-2xl',
-      innerHTML: 'PG',
-      style: currentImageUrl ? 'display: none;' : 'display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;'
+      className: 'text-white font-bold text-2xl flex items-center justify-center w-full h-full',
+      innerHTML: 'IMG',
+      style: currentImageUrl ? 'display: none;' : 'display: flex;'
     });
 
     const hoverOverlay = createElement('div', {
       className: 'absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity',
       innerHTML: `<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9l9-9 9 9H3zM21 15l-3.086-3.086a2 2 0 00-2.828 0L6 21M9 9a2 2 0 11-4 0 2 2 0 014 0z" />
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
       </svg>`
     });
 
@@ -46,7 +46,6 @@ export class ProfileImageUpload {
     }) as HTMLInputElement;
     
     this.fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
-
     container.addEventListener('click', () => this.fileInput.click());
 
     container.appendChild(this.imagePreview);
@@ -117,7 +116,7 @@ export class ProfileImageUpload {
     this.imagePreview.src = imageUrl;
     this.imagePreview.style.display = 'block';
     
-    const defaultIcon = this.element.querySelector('div[innerHTML*="PG"]') as HTMLElement;
+    const defaultIcon = this.element.querySelector('div[innerHTML*="IMG"]') as HTMLElement;
     if (defaultIcon) {
       defaultIcon.style.display = 'none';
     }
@@ -139,7 +138,7 @@ export class ProfileImageUpload {
     const overlay = this.element.querySelector('.opacity-100') as HTMLElement;
     if (overlay) {
       overlay.innerHTML = `<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9l9-9 9 9H3zM21 15l-3.086-3.086a2 2 0 00-2.828 0L6 21M9 9a2 2 0 11-4 0 2 2 0 014 0z" />
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
       </svg>`;
       overlay.classList.remove('opacity-100');
       overlay.classList.add('opacity-0');

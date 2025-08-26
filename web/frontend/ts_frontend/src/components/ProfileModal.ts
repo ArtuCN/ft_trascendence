@@ -91,7 +91,7 @@ export class ProfileModal {
     const profileImageUpload = new ProfileImageUpload(
       user?.profileImage,
       (imageUrl) => {
-        console.log('Profile image updated:', imageUrl);
+        // Image updated successfully
       }
     );
 

@@ -80,18 +80,16 @@ export class ApiService {
   }
 
   async makeAuthenticatedRequest(url: string, options: RequestInit = {}): Promise<Response> {
-    const headers = {
+    const headers: HeadersInit = {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${this.token}`
     };
     
-    console.log("prima della request");
     const response = await fetch(`${API_BASE_URL}${url}`, {
       ...options,
       headers: { ...headers, ...options.headers }
     });
     
-    console.log("resonse ", response);
     if (response.status === 401) {
       this.removeToken();
       throw new Error('Session expired');

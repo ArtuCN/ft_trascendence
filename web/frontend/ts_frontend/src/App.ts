@@ -10,39 +10,45 @@ export class App {
   private navbar: Navbar;
   private authGuard: AuthGuard;
   private mainContent: HTMLElement;
+  private layout: HTMLElement;
   private currentPage?: { destroy(): void };
   private unsubscribe?: () => void;
 
   constructor() {
-    this.mainContent = this.initializeDOM();
     this.navbar = new Navbar();
+    const { layout, mainContent } = this.initializeDOM();
+    this.layout = layout;
+    this.mainContent = mainContent;
     this.authGuard = new AuthGuard(this.mainContent);
     this.setupRoutes();
     this.bindAuthState();
     
-    document.body.appendChild(this.navbar.getElement());
-    
     router.start();
   }
 
-  private initializeDOM(): HTMLElement {
+  private initializeDOM(): { layout: HTMLElement; mainContent: HTMLElement } {
     const app = document.getElementById('app');
     if (!app) {
       throw new Error('App element not found');
     }
 
+    // Layout principale con flexbox orizzontale
     const layout = createElement('div', {
-      className: 'min-h-screen bg-gray-100'
+      className: 'min-h-screen bg-gray-100 flex'
     });
 
+    // Container per il contenuto principale (senza margin-left)
     const mainContent = createElement('div', {
-      className: 'ml-44 p-8 min-h-screen'
+      className: 'flex-1 p-8 min-h-screen'
     });
 
+    // Aggiungiamo la navbar e il contenuto principale al layout
+    layout.appendChild(this.navbar.getElement());
     layout.appendChild(mainContent);
+    
     renderTo(layout, app);
 
-    return mainContent;
+    return { layout, mainContent };
   }
 
   private setupRoutes(): void {
@@ -56,8 +62,10 @@ export class App {
       
       if (isAuthenticated) {
         this.mainContent.style.display = 'block';
+        this.navbar.getElement().style.display = 'flex';
       } else {
         this.mainContent.style.display = 'none';
+        this.navbar.getElement().style.display = 'none';
       }
     });
   }

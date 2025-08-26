@@ -27,17 +27,23 @@ export class SocialModal {
   private newMessage: string = '';
   
   private friends: Friend[] = [
-    { id: 1, username: 'gesù', status: 'online' },
-    { id: 2, username: 'mario', status: 'offline' },
+    { id: 1, username: 'alice', status: 'online' },
+    { id: 2, username: 'bob', status: 'offline' },
+    { id: 3, username: 'charlie', status: 'online' },
   ];
 
   private messages: { [key: number]: Message[] } = {
     1: [
-      { id: 1, sender: 'Mario', content: 'dio merda?', timestamp: new Date() },
-      { id: 2, sender: 'Tu', content: 'ovvio', timestamp: new Date() },
+      { id: 1, sender: 'alice', content: 'Ciao! Come va?', timestamp: new Date(Date.now() - 300000) },
+      { id: 2, sender: 'Tu', content: 'Tutto bene, grazie! Tu?', timestamp: new Date(Date.now() - 240000) },
+      { id: 3, sender: 'alice', content: 'Perfetto! Hai voglia di fare una partita?', timestamp: new Date(Date.now() - 180000) },
     ],
     2: [
-      { id: 3, sender: 'mario', content: 'come va?', timestamp: new Date() },
+      { id: 4, sender: 'bob', content: 'Hey, sei disponibile per giocare?', timestamp: new Date(Date.now() - 600000) },
+    ],
+    3: [
+      { id: 5, sender: 'charlie', content: 'Ottima partita!', timestamp: new Date(Date.now() - 120000) },
+      { id: 6, sender: 'Tu', content: 'Grazie, anche tu hai giocato benissimo!', timestamp: new Date(Date.now() - 60000) },
     ],
   };
 

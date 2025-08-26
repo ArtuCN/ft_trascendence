@@ -1,5 +1,6 @@
 import { User } from '../types/index.js';
 import { apiService } from '../services/api.js';
+import { router } from '../router/router.js';
 
 export class AuthState {
   private user: User | null = null;
@@ -27,9 +28,10 @@ export class AuthState {
           localStorage.setItem("username", user.username);
           localStorage.setItem("id", user.id);
           localStorage.setItem("mail", user.mail);
-          console.log('Token:', localStorage.getItem('token'));
-          console.log('User:', localStorage.getItem('user'));
           this.user = user;
+          
+          // Se l'utente è già autenticato, naviga alla home
+          router.navigate('/');
         }
       } catch (error) {
         console.error('Auth initialization failed:', error);
@@ -74,6 +76,9 @@ export class AuthState {
       apiService.saveToken(response.token);
       this.user = response.user;
       this.successMessage = 'Login successful!';
+      
+      // Redirect alla home page dopo il login
+      router.navigate('/');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
       this.error = errorMessage;
@@ -99,6 +104,9 @@ export class AuthState {
       
       apiService.saveToken(response.token);
       this.user = response.user;
+      
+      // Redirect alla home page dopo la registrazione
+      router.navigate('/');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Registration failed';
       this.error = errorMessage;
@@ -127,6 +135,9 @@ export class AuthState {
       localStorage.setItem("username", response.user.username);
       localStorage.setItem("id", response.user.id.toString());
       localStorage.setItem("mail", response.user.mail);
+      
+      // Redirect alla home page dopo il login Google
+      router.navigate('/');
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Google authentication failed';

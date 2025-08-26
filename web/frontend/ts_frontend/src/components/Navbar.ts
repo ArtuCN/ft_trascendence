@@ -25,7 +25,7 @@ export class Navbar {
 
   private createNavbar(): HTMLElement {
     const nav = createElement('nav', {
-      className: 'fixed left-0 top-0 h-full w-44 py-6 px-4 flex flex-col shadow-lg z-50',
+      className: 'min-h-screen w-44 py-6 px-4 flex flex-col shadow-lg',
       style: 'background-color: #3B2E27;'
     });
 
