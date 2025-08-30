@@ -219,3 +219,46 @@ export async function searchByToken(token) {
     })
   );  
 }
+
+export function getUserByGoogleId(googleId) {
+  return new Promise((resolve, reject) => {
+    db.get('SELECT * FROM user WHERE google_id = ?', [googleId], (err, row) => {
+      if (err) {
+        console.error('Error during SELECT by google_id:', err);
+        reject(err);
+      } else {
+        resolve(row || null);
+      }
+    });
+  });
+}
+
+export function insertGoogleUser(user) {
+  return new Promise((resolve, reject) => {
+    const query = `
+      INSERT INTO user (username, mail, psw, token, wallet, is_admin, google_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+    
+    db.run(
+      query,
+      [
+        user.username,
+        user.mail,
+        '',
+        user.token || null,
+        user.wallet || '',
+        user.is_admin ? 1 : 0,
+        user.google_id
+      ],
+      function (err) {
+        if (err) {
+          console.error('Error while adding Google user:', err);
+          reject(err);
+        } else {
+          resolve({ id: this.lastID });
+        }
+      }
+    );
+  });
+}

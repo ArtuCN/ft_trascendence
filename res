@@ -17,7 +17,7 @@ gameplay  |
 gameplay  | http-server version: 14.1.1
 gameplay  | 
 gameplay  | http-server settings: 
-gameplay  | CORS: disabled
+gameplay  | CORS: enabled
 gameplay  | Cache: 3600 seconds
 gameplay  | Connection Timeout: 120 seconds
 gameplay  | Directory Listings: visible

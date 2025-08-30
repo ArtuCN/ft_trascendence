@@ -5,3 +5,4 @@ node_modules
 
 
 __pycache__/
+game_logic/AI/__pycache__/

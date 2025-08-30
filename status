@@ -1,0 +1,94 @@
+Sul branch t
+Hai dei percorsi non sottoposti a merge.
+  (risolvi i conflitti ed esegui "git commit")
+  (usa "git merge --abort" per interrompere il merge)
+
+Modifiche di cui verrà eseguito il commit:
+	eliminato:              README.md
+	modificato:             docker-compose.yml
+	modificato:             nginx/Dockerfile
+	modificato:             nginx/conf/default.conf
+	nuovo file:             package-lock.json
+	nuovo file:             package.json
+	modificato:             res
+	nuovo file:             web/backend/data/database.sqlite
+	nuovo file:             web/backend/init-db.js
+	nuovo file:             web/backend/package-lock.json
+	modificato:             web/backend/package.json
+	nuovo file:             web/backend/srcs/controllers/google-auth.js
+	modificato:             web/backend/srcs/controllers/login.js
+	modificato:             web/backend/srcs/database_comunication/user_db.js
+	modificato:             web/backend/srcs/server.js
+	modificato:             web/frontend/Dockerfile
+	eliminato:              web/frontend/react_frontend/.gitignore
+	eliminato:              web/frontend/react_frontend/README.md
+	eliminato:              web/frontend/react_frontend/eslint.config.js
+	eliminato:              web/frontend/react_frontend/index.html
+	eliminato:              web/frontend/react_frontend/package-lock.json
+	eliminato:              web/frontend/react_frontend/package.json
+	eliminato:              web/frontend/react_frontend/src/App.css
+	eliminato:              web/frontend/react_frontend/src/App.tsx
+	eliminato:              web/frontend/react_frontend/src/app/auth/login.tsx
+	eliminato:              web/frontend/react_frontend/src/app/auth/register.tsx
+	eliminato:              web/frontend/react_frontend/src/app/profile/profile.tsx
+	eliminato:              web/frontend/react_frontend/src/assets/react.svg
+	eliminato:              web/frontend/react_frontend/src/components/getalluser.tsx
+	eliminato:              web/frontend/react_frontend/src/components/login.tsx
+	eliminato:              web/frontend/react_frontend/src/components/register.tsx
+	eliminato:              web/frontend/react_frontend/src/components/ui/AuthModal.tsx
+	eliminato:              web/frontend/react_frontend/src/components/ui/navbar.tsx
+	eliminato:              web/frontend/react_frontend/src/index.css
+	eliminato:              web/frontend/react_frontend/src/main.tsx
+	eliminato:              web/frontend/react_frontend/src/router/AppRouter.tsx
+	eliminato:              web/frontend/react_frontend/src/router/index.tsx
+	eliminato:              web/frontend/react_frontend/src/src.zip
+	eliminato:              web/frontend/react_frontend/src/styles/App.css
+	eliminato:              web/frontend/react_frontend/src/styles/components.css
+	eliminato:              web/frontend/react_frontend/src/styles/index.css
+	eliminato:              web/frontend/react_frontend/src/types/index.ts
+	eliminato:              web/frontend/react_frontend/src/vite-env.d.ts
+	eliminato:              web/frontend/react_frontend/tsconfig.app.json
+	eliminato:              web/frontend/react_frontend/tsconfig.json
+	eliminato:              web/frontend/react_frontend/tsconfig.node.json
+	eliminato:              web/frontend/react_frontend/vite.config.ts
+	nuovo file:             web/frontend/ts_frontend/.dockerignore
+	nuovo file:             web/frontend/ts_frontend/dist/assets/index-D1uOumpC.js
+	nuovo file:             web/frontend/ts_frontend/dist/assets/index-D1uOumpC.js.map
+	nuovo file:             web/frontend/ts_frontend/dist/assets/index-DNURx5qw.css
+	nuovo file:             web/frontend/ts_frontend/dist/index.html
+	rinominato:             web/frontend/react_frontend/public/vite.svg -> web/frontend/ts_frontend/dist/vite.svg
+	nuovo file:             web/frontend/ts_frontend/index.html
+	nuovo file:             web/frontend/ts_frontend/package-lock.json
+	nuovo file:             web/frontend/ts_frontend/package.json
+	nuovo file:             web/frontend/ts_frontend/public/vite.svg
+	nuovo file:             web/frontend/ts_frontend/src/App.ts
+	nuovo file:             web/frontend/ts_frontend/src/components/AuthGuard.ts
+	nuovo file:             web/frontend/ts_frontend/src/components/AuthModal.ts
+	nuovo file:             web/frontend/ts_frontend/src/components/Navbar.ts
+	nuovo file:             web/frontend/ts_frontend/src/components/ProfileImageUpload.ts
+	nuovo file:             web/frontend/ts_frontend/src/components/ProfileModal.ts
+	nuovo file:             web/frontend/ts_frontend/src/components/SocialModal.ts
+	nuovo file:             web/frontend/ts_frontend/src/main.ts
+	nuovo file:             web/frontend/ts_frontend/src/pages/HomePage.ts
+	nuovo file:             web/frontend/ts_frontend/src/pages/PlayPage.ts
+	nuovo file:             web/frontend/ts_frontend/src/router/router.ts
+	rinominato:             web/frontend/react_frontend/src/services/api.ts -> web/frontend/ts_frontend/src/services/api.ts
+	nuovo file:             web/frontend/ts_frontend/src/services/googleAuth.ts
+	nuovo file:             web/frontend/ts_frontend/src/services/imageUpload.ts
+	nuovo file:             web/frontend/ts_frontend/src/state/auth.ts
+	rinominato:             web/frontend/react_frontend/src/styles/globals.css -> web/frontend/ts_frontend/src/styles.css
+	nuovo file:             web/frontend/ts_frontend/src/types/index.ts
+	nuovo file:             web/frontend/ts_frontend/src/utils/dom.ts
+	nuovo file:             web/frontend/ts_frontend/tailwind.config.ts
+	nuovo file:             web/frontend/ts_frontend/tsconfig.json
+	nuovo file:             web/frontend/ts_frontend/vite.config.ts
+
+Percorsi non sottoposti a merge:
+  (usa "git add/rm <file>..." come appropriato per contrassegnare il conflitto come risolto)
+	entrambi modificati: game_logic/AI/__pycache__/botAI.cpython-39.pyc
+	eliminato da loro:   web/frontend/react_frontend/src/contexts/AuthContext.tsx
+
+File non tracciati:
+  (usa "git add <file>..." per includere l'elemento fra quelli di cui verrà eseguito il commit)
+	status
+

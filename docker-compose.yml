@@ -1,9 +1,9 @@
 services:
   nginx:
-    image: nginx:alpine
+    build:
+      context: ./nginx
+    image: nginx-ssl:latest
     container_name: nginx
-    volumes:
-      - ./nginx/conf:/etc/nginx/conf.d
     ports:
       - "80:80"
       - "443:443"
@@ -48,19 +48,17 @@ services:
   frontend:
     build:
       context: ./web/frontend
-    image: frontend-react:0.1
+    image: frontend-ts:0.1
     container_name: frontend
     env_file: .env
     volumes:
-      - ./web/frontend/react_frontend/src:/app/src
-      - ./web/frontend/react_frontend/public:/app/public
-
-      - ./web/frontend/react_frontend/package.json:/app/package.json
-      - ./web/frontend/react_frontend/package-lock.json:/app/package-lock.json
-
-      - ./web/frontend/react_frontend/tsconfig.json:/app/tsconfig.json
-      - ./web/frontend/react_frontend/tsconfig.app.json:/app/tsconfig.app.json
-      - ./web/frontend/react_frontend/vite.config.ts:/app/vite.config.ts
+      - ./web/frontend/ts_frontend/src:/app/src
+      - ./web/frontend/ts_frontend/public:/app/public
+      - ./web/frontend/ts_frontend/package.json:/app/package.json
+      - ./web/frontend/ts_frontend/package-lock.json:/app/package-lock.json
+      - ./web/frontend/ts_frontend/tsconfig.json:/app/tsconfig.json
+      - ./web/frontend/ts_frontend/vite.config.ts:/app/vite.config.ts
+      - ./web/frontend/ts_frontend/index.html:/app/index.html
       - frontend_node_modules:/app/node_modules
     expose:
       - "5173"

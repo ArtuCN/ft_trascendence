@@ -12,6 +12,7 @@ import tokenRoute from './controllers/token.js';
 import statsRoute from './controllers/stats.js';
 import friendRoute from './controllers/friendship.js';
 
+import googleAuthRoute from './controllers/google-auth.js'
 const fastify = Fastify({ logger: true });
 
 // Abilita CORS (per il frontend React o altro)
@@ -25,6 +26,7 @@ await fastify.register(loginRoute);
 await fastify.register(registerRoute);
 await fastify.register(logoutRoute);
 await fastify.register(tokenRoute);
+await fastify.register(googleAuthRoute);
 await fastify.register(statsRoute);
 await fastify.register(friendRoute);
 
