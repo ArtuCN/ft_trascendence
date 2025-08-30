@@ -7,7 +7,6 @@ import { getAllUsers } from './database_comunication/user_db.js';
 // Rotte modulari
 import registerRoute from './controllers/register.js';
 import loginRoute from './controllers/login.js';
-import logoutRoute from './controllers/logout.js';
 import tokenRoute from './controllers/token.js';
 import statsRoute from './controllers/stats.js';
 import friendRoute from './controllers/friendship.js';
@@ -24,7 +23,6 @@ await fastify.register(jwt, { secret: 'your_secret_key' });
 // Registra le rotte modulari
 await fastify.register(loginRoute);
 await fastify.register(registerRoute);
-await fastify.register(logoutRoute);
 await fastify.register(tokenRoute);
 await fastify.register(googleAuthRoute);
 await fastify.register(statsRoute);
