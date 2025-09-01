@@ -1,4 +1,4 @@
-import { PaddleOrientation, canvas, ctx, keysPressed, cornerWallThickness, cornerWallSize } from "./variables.js";
+import { PaddleOrientation, canvas, ctx, keysPressed, cornerWallThickness, cornerWallSize, gameRunning } from "./variables.js";
 import { nbrPlayer, Pebble } from "../script.js";
 import { sendBotData } from "../utilities.js";
 
@@ -62,9 +62,10 @@ export class Paddles {
 		if (this.botPollingId !== null) {
 			clearInterval(this.botPollingId);
 		}
+		if (gameRunning === false) return;
 		this.botPollingId = window.setInterval(async () => {
 			this.botKey = await sendBotData(Pebble.getBallY(), this.initialPosition + this.paddleLength / 2);
-		}, 50);
+		}, 80);
 	}
 
 	public stopBotPolling() {

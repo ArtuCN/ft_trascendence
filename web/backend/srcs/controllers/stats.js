@@ -17,7 +17,7 @@ export default async function (fastify, opts) {
         reply.code(500).send({ error: ('Internal Server Error' + error)});
     }
   })
-  fastify.post('/match', async (request, reply) => {
+  fastify.post('/tournament', async (request, reply) => {
     {
       try
       {

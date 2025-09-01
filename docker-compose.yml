@@ -3,7 +3,9 @@ services:
     image: nginx:alpine
     container_name: nginx
     volumes:
-      - ./nginx/conf:/etc/nginx/conf.d
+      - ./nginx/conf:/etc/nginx/conf.d:ro
+      - ./nginx/certs/server.crt:/etc/ssl/nginx.crt:ro
+      - ./nginx/certs/server.key:/etc/ssl/nginx.key:ro
     ports:
       - "80:80"
       - "443:443"

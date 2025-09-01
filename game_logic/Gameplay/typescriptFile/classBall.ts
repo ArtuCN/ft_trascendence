@@ -103,6 +103,11 @@ export class Ball {
 				if (typeof showMenu === "function") {
 					stopGame();
 					showVictoryScreen(players[this.lastTouchedPlayer]);
+					for (let i = 0; i < players.length; i++) {
+						if (i !== this.lastTouchedPlayer) {
+							players[i].getPaddle().stopBotPolling();
+						}
+					}
 				}
 
 			}
@@ -118,6 +123,11 @@ export class Ball {
 				if (typeof showMenu === "function") {
 					stopGame();
 					showVictoryScreen(players[this.lastTouchedPlayer]);
+					for (let i = 0; i < players.length; i++) {
+						if (i !== this.lastTouchedPlayer) {
+							players[i].getPaddle().stopBotPolling();
+						}
+					}
 				}
 			}
 			this.resetGame(players);
@@ -141,6 +151,11 @@ export class Ball {
 				playerGoalsRecived[2]++;
 				drawScore(nbrPlayer);
 				if (playerGoals[this.lastTouchedPlayer]  == 5) {
+					for (let i = 0; i < players.length; i++) {
+						if (i !== this.lastTouchedPlayer) {
+							players[i].getPaddle().stopBotPolling();
+						}
+					}
 					stopGame();
 					showVictoryScreen(players[this.lastTouchedPlayer]);
 				}
@@ -154,6 +169,11 @@ export class Ball {
 				drawScore(nbrPlayer);
 				this.resetGame(players);
 				if (playerGoals[this.lastTouchedPlayer] == 5) {
+					for (let i = 0; i < players.length; i++) {
+						if (i !== this.lastTouchedPlayer) {
+							players[i].getPaddle().stopBotPolling();
+						}
+					}
 					stopGame();
 					showVictoryScreen(players[this.lastTouchedPlayer]);
 				}

@@ -5,7 +5,8 @@ import { resetCanvas, generateBracket, renderBracket, drawCornerWalls, drawMiddl
 
 const buttonLocalPlay = document.getElementById("LocalPlay") as HTMLButtonElement;
 const buttonRemotePlay = document.getElementById("RemotePlay") as HTMLButtonElement;
-const button2P = document.getElementById("Play2P") as HTMLButtonElement;
+const button2PLocal = document.getElementById("Play2P") as HTMLButtonElement;
+const button2PRemote = document.getElementById("Play2PRemote") as HTMLButtonElement;
 const button4P = document.getElementById("Play4P") as HTMLButtonElement;
 const buttonAi = document.getElementById("PlayAI") as HTMLButtonElement;
 const textPong = document.getElementById("PongGame") as HTMLHeadingElement;
@@ -140,10 +141,8 @@ export function showMenu(winner: Player) {
 				player.getPaddle().stopBotPolling();
 			textPong.style.display = "block";
 			bracketContainer.style.display = "none";
-			button2P.style.display = "inline-block";
-			button4P.style.display = "inline-block";
-			buttonAi.style.display = "inline-block";
-			buttonTournament.style.display = "inline-block";
+			buttonLocalPlay.style.display = "none";
+			buttonRemotePlay.style.display = "none";
 			sendTournamentData();
 		}
 	}
@@ -155,10 +154,8 @@ export function showMenu(winner: Player) {
 		buttonPlayGame.style.display = "none";
 		bracketContainer.style.display = "none";
 		canvas_container.style.display = "none";
-		button2P.style.display = "inline-block";
-		button4P.style.display = "inline-block";
-		buttonAi.style.display = "inline-block";
-		buttonTournament.style.display = "inline-block";
+		buttonRemotePlay.style.display = 'inline-block';
+		buttonLocalPlay.style.display = 'inline-block';
 		sendMatchData();
 	}
 }
@@ -229,7 +226,7 @@ function playCurrentMatch() {
 buttonLocalPlay.addEventListener("click", () => {
 	buttonLocalPlay.style.display = "none";
 	buttonRemotePlay.style.display = "none";
-	button2P.style.display = "inline-block";
+	button2PLocal.style.display = "inline-block";
 	buttonAi.style.display = "inline-block";
 	buttonTournament.style.display = "inline-block";
 	buttonMainMenu.style.display = "inline-block";
@@ -238,7 +235,7 @@ buttonLocalPlay.addEventListener("click", () => {
 buttonRemotePlay.addEventListener("click", () => {
 	buttonLocalPlay.style.display = "none";
 	buttonRemotePlay.style.display = "none";
-	button2P.style.display = "inline-block";
+	button2PRemote.style.display = "inline-block";
 	button4P.style.display = "inline-block";
 	buttonTournament.style.display = "inline-block";
 	buttonMainMenu.style.display = "inline-block";
@@ -247,15 +244,15 @@ buttonRemotePlay.addEventListener("click", () => {
 buttonMainMenu.addEventListener("click", () => {
 	buttonLocalPlay.style.display = "inline-block";
 	buttonRemotePlay.style.display = "inline-block";
-	button2P.style.display = "none";
+	button2PLocal.style.display = "none";
 	button4P.style.display = "none";
 	buttonAi.style.display = "none";
 	buttonTournament.style.display = "none";
 	buttonMainMenu.style.display = "none";
 });
 
-button2P.addEventListener("click", () => {
-	button2P.style.display = "none";
+button2PLocal.addEventListener("click", () => {
+	button2PLocal.style.display = "none";
 	button4P.style.display = "none";
 	buttonAi.style.display = "none";
 	buttonMainMenu.style.display = "none";
@@ -263,7 +260,7 @@ button2P.addEventListener("click", () => {
 	textPong.style.display = "none";
 	canvas_container.style.display = "block";
 	canvas.style.display = "block";
-	nbrPlayer = parseInt(button2P.value);
+	nbrPlayer = parseInt(button2PLocal.value);
 	if (isNaN(nbrPlayer))
 		nbrPlayer = 2;
 	playerGoals = new Array(nbrPlayer).fill(0);
@@ -279,7 +276,8 @@ button2P.addEventListener("click", () => {
 
 button4P.addEventListener("click", () => {
 	button4P.style.display = "none";
-	button2P.style.display = "none";
+	button2PRemote.style.display = "none";
+	button2PLocal.style.display = "none";
 	buttonAi.style.display = "none";
 	buttonMainMenu.style.display = "none";
 	buttonTournament.style.display = "none";
@@ -306,7 +304,7 @@ button4P.addEventListener("click", () => {
 buttonAi.addEventListener("click", () => {
 	buttonAi.style.display = "none";
 	buttonMainMenu.style.display = "none";
-	button2P.style.display = "none";
+	button2PLocal.style.display = "none";
 	button4P.style.display = "none";
 	buttonTournament.style.display = "none";
 	textPong.style.display = "none";
@@ -340,7 +338,7 @@ buttonTournament.addEventListener("click", async () => {
 	Tournament = true;
 	resetBracket();
 	buttonTournament.style.display = "none";
-	button2P.style.display = "none";
+	button2PLocal.style.display = "none";
 	button4P.style.display = "none";
 	buttonAi.style.display = "none";
 	buttonMainMenu.style.display = "none";
