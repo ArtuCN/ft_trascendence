@@ -73,9 +73,9 @@ contract Staking is TournamentScores, ReentrancyGuard {
 
 
 	//constructor ######################
-	constructor(address _owner) {
-		require(_owner != address(0), "owner cannot be zero address!");
-		owner = _owner;
+	constructor(/*address _owner*/) {
+		// require(_owner != address(0), "owner cannot be zero address!");
+		owner = msg.sender;
 		// if (_tournamentScoresContract == address(0))
 		// 	revert("no contract provided");
 
@@ -387,6 +387,20 @@ contract Staking is TournamentScores, ReentrancyGuard {
 
 	// -----------------PUBLIC VIEW ONLY --------------------------
 
+
+	//test function to test if contract is deployed ------------------------------
+	function testReturn() public view returns(
+													uint256 curr_tour,
+													string	memory message,
+													address owner_addr
+
+	) {
+		return (_current_tournament,"  whaaat   ", owner);
+	}
+
+													
+
+
 	//check if goal is reached --------------------------------------------------- 
 	/*
 		a view only function that RETURNS true if the stake goal is reached
@@ -424,7 +438,6 @@ contract Staking is TournamentScores, ReentrancyGuard {
 		returns true if all players have signed up for the tournament
 	*/
 	function hasAllPlayers(uint256 tournament_id) public view returns(bool hasAll) {
-		
 		if (_tournaments.length <= tournament_id)
 			revert indexOutOfBounds("Tournament_id is to high, max id is: ", _tournaments.length -1);
 
