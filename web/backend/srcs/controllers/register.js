@@ -15,10 +15,6 @@ export default async function (fastify, opts) {
       if (userByMail)
         return reply.code(400).send({ error: 'Mail already registered!' });
   
-      //const userByUsername = await getUserByUsername(username);
-      //if (userByUsername)
-        //return reply.code(400).send({ error: 'Username already registered!' });
-  
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash(psw, saltRounds);
       const newUser = await insertUser({ username, mail, psw: hashedPassword });
@@ -35,9 +31,7 @@ export default async function (fastify, opts) {
       });
     }
     catch (err) {
-      // Log dettagliato
       fastify.log.error(err);
-      // Risposta chiara e utile per frontend
       reply.code(500).send({ error: 'Internal Server Error', details: err.message });
     }
   });
