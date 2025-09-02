@@ -1,10 +1,11 @@
-import { connectWallet } from './Wallet';
+import { connectWallet, getStoredAccount } from './Wallet';
 
 
-window.onload = () => {
+document.addEventListener('DOMContentLoaded', () => {
 
 	const connectBtn = document.getElementById("connectBtn");
 	const accountInfo = document.getElementById("accountInfo");
+	const testBtn = document.getElementById("testBtn");
 
 	if (connectBtn && accountInfo) {
 		connectBtn.onclick = async () => {
@@ -13,7 +14,20 @@ window.onload = () => {
 				accountInfo.textContent = "Connected: " + account;
 			else
 				accountInfo.textContent = "Connection failed";
-			return (client);
 		};
-	};
-};
+	}
+
+	if (testBtn) {
+		testBtn.onclick = async () => {
+			console.log("test click");
+			const address: string | null =  getStoredAccount();
+			if (address)
+				console.log(address);
+			else
+				console.log("error getting address");
+		};
+
+	}
+	else
+		console.log("no test button");
+});
