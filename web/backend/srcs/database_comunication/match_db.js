@@ -49,8 +49,9 @@ async function insertPlayerMatchStats(id_user, id_match, goal_scored, goal_taken
     return new Promise((resolve, reject) =>
     {
         const query = `
-        INSERT INTO player_match_stats (id_user, id_match, goal_scored, goal_taken
-        VALUES (?, ?, ?, ?) `;
+        INSERT INTO player_match_stats (id_user, id_match, goal_scored, goal_taken)
+        VALUES (?, ?, ?, ?)
+         `;
 
         db.run(
             query,

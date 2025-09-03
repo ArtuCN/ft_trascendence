@@ -12,6 +12,7 @@ import tokenRoute from './controllers/token.js';
 import googleAuthRoute from './controllers/google-auth.js';
 import statsRoute from './controllers/stats.js';
 import friendRoute from './controllers/friendship.js';
+import matchRoute from './controllers/match.js';
 
 const fastify = Fastify({ logger: true });
 
@@ -19,9 +20,10 @@ const fastify = Fastify({ logger: true });
 await fastify.register(cors, { origin: '*' });
 
 // Configura JWT
-await fastify.register(jwt, { secret: 'your_secret_key' }); // 🔐 metti un valore sicuro in .env
+await fastify.register(jwt, { secret: 'your_secret_key' }); // 🔐 usa un valore sicuro in .env
 
 // Registra le rotte modulari
+await fastify.register(matchRoute);
 await fastify.register(loginRoute);
 await fastify.register(registerRoute);
 await fastify.register(logoutRoute);
@@ -40,6 +42,8 @@ fastify.get('/users', async (request, reply) => {
     reply.code(500).send({ error: 'Error searching in the db' });
   }
 });
+
+// Stampa tutte le rotte per debug
 
 // Avvia il server
 fastify.listen({ port: 3000, host: '0.0.0.0' }, (err, address) => {

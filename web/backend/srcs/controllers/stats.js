@@ -22,7 +22,6 @@ export default async function (fastify, opts) {
       try
       {
 
-        console.log("I BODY DIAHANE ", request.body);
         const { id_tournament, users_ids, users_goal_scored, users_goal_taken} = request.body;
   
         if (!id_tournament || !users_ids || !users_goal_scored || !users_goal_taken)
