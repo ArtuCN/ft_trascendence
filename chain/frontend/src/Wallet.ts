@@ -1,5 +1,5 @@
 import { fujiC } from "./chains";
-import { createWalletClient, WalletClient, custom, http } from 'viem'
+import { createWalletClient, WalletClient, type Address, custom, http } from 'viem'
 
 declare global {
 	interface Window {
@@ -8,33 +8,28 @@ declare global {
 };
 	
 let _walletClient: WalletClient | null = null;
-let _account: string | null = null;
+let _account: Address | null = null;
 
 export async function connectWallet() {
 	if (typeof window === "undefined") throw new Error("Browser only");
 	if (!window.ethereum) throw new Error("No injected provider");
 
 
-	const accounts = await window.ethereum!.request({ method: 'eth_requestAccounts' });
-	const account = accounts[0];
-
 	const client = createWalletClient({
 		transport: custom(window.ethereum),
 		chain: fujiC,
-		account,
 	});
 
 	_walletClient = client;
-	_account = account;
+	const [ address ] =  await client.requestAddresses();
+	_account = address;
 
 	try {
-		window.ethereum.on?.("accountsChanged", (accounts: string[]) => {
-			_account = accounts[0] ?? null;
-			// update wallet client with new account if you want:
+		window.ethereum.on?.("accountsChanged", (address: Address) => {
+			_account = address ?? null;
 			_walletClient = createWalletClient({
 				transport: custom(window.ethereum),
 				chain: fujiC,
-				account,
 			});
 		});
 		window.ethereum.on?.("chainChanged", () => {
@@ -42,14 +37,14 @@ export async function connectWallet() {
 		});
 	} catch (e) {}
 
-	return { client, account };
+	return { client, address };
 }
 
 export function getStoredWalletClient(): WalletClient | null {
 	return _walletClient;
 }
 
-export function getStoredAccount(): string | null {
+export function getStoredAccount(): Address | null {
 	return _account;
 }
 
@@ -58,20 +53,4 @@ export function getWalletClientOnDemand() {
 	if (!window.ethereum) throw new Error("No injected provider");
 	// create a client but do NOT request accounts here, MetaMask will prompt on tx/sign
 	return createWalletClient({ transport: custom(window.ethereum), chain: fujiC });
-}
-
-export function getReadClient() {
-	if (typeof window === "undefined") throw new Error("Browser only");
-	if (!window.ethereum) throw new Error("No injected provider");
-
-	const accounts = await window.ethereum!.request({ method: 'eth_requestAccounts' });
-	const account = accounts[0];
-
-	const client = createWalletClient({
-		transport: http(),
-		chain: fujiC,
-		account,
-	});
-
-	return {client, account};
 }
