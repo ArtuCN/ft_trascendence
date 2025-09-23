@@ -32,8 +32,7 @@ $db->exec("CREATE TABLE IF NOT EXISTS game_match (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     id_tournament INTEGER, 
     time_stamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    number_of_players INTEGER,
-    FOREIGN KEY (id_tournament) REFERENCES tournament(id)
+    number_of_players INTEGER
 )");
 
 $db->exec("CREATE TABLE IF NOT EXISTS friendship (

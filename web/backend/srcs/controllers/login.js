@@ -8,22 +8,25 @@ export default async function (fastify, opts) {
     fastify.post('/login', async (request, reply) =>  {
         try
         {
-            const { username, password } = request.body;
-            const user = await getUserByMail(username);
+            const { mail, password } = request.body;
+            const user = await getUserByMail(mail);
             if (!user)
                 return reply.code(400).send({ error: 'email not registered!'});
-            
+            console.log(user);
+
             if (user.google_id && user.google_id.trim() !== '') {
                 return reply.code(400).send({ error: 'This account is linked to Google. Please use Google Sign In.' });
             }
-            
+            console.log("fatto get user");
             const isValid = await bcrypt.compare(password, user.psw);
+            console.log("fatto check");
             if (!isValid)
                 return reply.code(401).send({ error: 'Invalid password' });
             let token = '';
-            if (await tokenExists(user.username) == true)
+            console.log("fatto check2");
+            if (await tokenExists(user.mail) == true)
             {
-                token = await getTokenByUsername(user.username);
+                token = await getTokenByUsername(user.mail);
             }
             else
             {
@@ -32,8 +35,8 @@ export default async function (fastify, opts) {
                     mail: user.mail,
                     username: user.username
                 });
-                const saveResult = await saveToken(user.username, token);
             }
+            console.log("fatto check3");
             reply.send({
                 token,
                 user: {
@@ -42,6 +45,7 @@ export default async function (fastify, opts) {
                     username: user.username
                 }
             });
+            console.log("fatto check4");
         }
         catch (err)
         {

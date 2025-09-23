@@ -42,8 +42,6 @@ async function insertMatchInDB(id_tournament, number_of_players)
     
     })
 }
-// result = insertMatch()
-// result.id per ottenere id
 async function insertPlayerMatchStats(id_user, id_match, goal_scored, goal_taken)
 {
     return new Promise((resolve, reject) =>
@@ -155,4 +153,21 @@ export async function insertMatch(id_tournament, users_ids, users_goal_scored, u
         console.error("Error inserting match and stats:", error);
         throw error;
     }
+}
+
+export async function getAllMatches()
+{
+    return new Promise((resolve, reject) => {
+        const query = `
+        SELECT * FROM game_match
+        `;
+        db.all(query, [], (err, rows) => {
+            if (err) {
+                console.error('Error while fetching all matches:', err);
+                reject(err);
+            } else {
+                resolve(rows);
+            }
+        });
+    });
 }

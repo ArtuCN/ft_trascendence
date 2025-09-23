@@ -13,7 +13,7 @@ import googleAuthRoute from './controllers/google-auth.js';
 import statsRoute from './controllers/stats.js';
 import friendRoute from './controllers/friendship.js';
 import matchRoute from './controllers/match.js';
-
+import tournamentRoute from './controllers/tournament.js';
 const fastify = Fastify({ logger: true });
 
 // Abilita CORS (per il frontend React o altro)
@@ -31,7 +31,7 @@ await fastify.register(tokenRoute);
 await fastify.register(googleAuthRoute);
 await fastify.register(statsRoute);
 await fastify.register(friendRoute);
-
+await fastify.register(tournamentRoute);
 // Endpoint semplice per debug
 fastify.get('/users', async (request, reply) => {
   try {
