@@ -171,3 +171,54 @@ export async function getAllMatches()
         });
     });
 }
+
+export async function getMatchById(id)
+{
+    return new Promise((resolve, reject) => {
+        const query = `
+        SELECT * FROM game_match WHERE id = ?
+        `;
+        db.get(query, [id], (err, row) => {
+            if (err) {
+                console.error('Error while fetching match by id:', err);
+                reject(err);
+            } else {
+                resolve(row);
+            }
+        });
+    });
+}
+
+export async function getPlayerByMatchId(id_match)
+{
+    return new Promise((resolve, reject) => {
+        const query = `
+        SELECT * FROM player_match_stats WHERE id_match = ?
+        `;
+        db.all(query, [id_match], (err, rows) => {
+            if (err) {
+                console.error('Error while fetching players by match id:', err);
+                reject(err);
+            } else {
+                resolve(rows);
+            }
+        });
+    });
+}
+
+export async function getPlayerMatchStats(id_player, id_match)
+{
+    return new Promise((resolve, reject) => {
+        const query = `
+        SELECT * FROM player_match_stats WHERE id_user = ? AND id_match = ?
+        `;
+        db.get(query, [id_player, id_match], (err, row) => {
+            if (err) {
+                console.error('Error while fetching player match stats:', err);
+                reject(err);
+            } else {
+                resolve(row);
+            }
+        });
+    });
+}

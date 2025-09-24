@@ -261,3 +261,25 @@ export function insertGoogleUser(user) {
     );
   });
 }
+
+export async function getAllMatchesOfPlayer(id_player)
+{
+    return new Promise((resolve, reject) => {
+        const query = `
+        SELECT * FROM game_match
+        WHERE id IN (
+            SELECT id_match FROM player_match_stats WHERE id_user = ?
+        )
+        `;
+        db.all(query, [id_player], (err, rows) => {
+            if (err) {
+                console.error('Error while fetching all matches of player:', err);
+                reject(err);
+            } else {
+                resolve(rows);
+            }
+        });
+    });
+}
+
+
