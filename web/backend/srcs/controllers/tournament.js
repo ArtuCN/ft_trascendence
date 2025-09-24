@@ -1,5 +1,4 @@
-import { insertMatch } from '../database_comunication/match_db.js';
-import { insertTournamentInDB } from '../database_comunication/tournament_db.js';
+import { insertTournamentInDB, getAllTournaments, startTournament, finishTournament } from '../database_comunication/tournament_db.js';
 
 export default async function (fastify, opts) {
       fastify.post('/tournament', async (request, reply) => {
@@ -9,4 +8,37 @@ export default async function (fastify, opts) {
       reply.send(result);
     }
   })
+  fastify.get('/alltournament', async (request, reply) => {
+    try {
+      const result = await getAllTournaments();
+      reply.send(result);
+    } catch (error) {
+      console.log(error);
+      reply.code(500).send({ error: 'Internal Server Error ' + error });
+    }
+  });
+  fastify.post('/starttournament', async (request, reply) => {
+    try {
+      const { id } = request.body;
+      if (!id) return reply.code(400).send({ error: 'Missing id' });
+
+      const result = await startTournament(id);
+      reply.send(result);
+    } catch (error) {
+      console.log(error);
+      reply.code(500).send({ error: 'Internal Server Error ' + error });
+    }
+  });
+  fastify.post('/finishtournament', async (request, reply) => {
+    try {
+      const { id, id_winner } = request.body;
+      if (!id || !id_winner) return reply.code(400).send({ error: 'Missing id or id_winner' });
+
+      const result = await finishTournament(id, id_winner);
+      reply.send(result);
+    } catch (error) {
+      console.log(error);
+      reply.code(500).send({ error: 'Internal Server Error ' + error });
+    }
+  });
 }

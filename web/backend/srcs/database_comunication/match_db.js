@@ -94,21 +94,20 @@ async function insertTournament_db(tournament_name, id_winner)
 
 
 
-async function updateStatsAfterMatch(id_player, goal_scored, goal_taken, tournament_won)
-{
-    return new Promise((resolve, reject) => {
+export async function upsertStatsAfterMatch(id_player, goal_scored, goal_taken, tournament_won) {
+  return new Promise((resolve, reject) => {
     const query = `
-      UPDATE player_all_time_stats
-      SET 
-        goal_scored = goal_scored + ?,
-        goal_taken = goal_taken + ?,
-        tournament_won = tournament_won + ?
-      WHERE id_player = ?
+      INSERT INTO player_all_time_stats (id_player, goal_scored, goal_taken, tournament_won)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(id_player) DO UPDATE SET
+        goal_scored = player_all_time_stats.goal_scored + excluded.goal_scored,
+        goal_taken = player_all_time_stats.goal_taken + excluded.goal_taken,
+        tournament_won = player_all_time_stats.tournament_won + excluded.tournament_won
     `;
 
-    db.run(query, [goal_scored, goal_taken, tournament_won, id_player], function(err) {
+    db.run(query, [id_player, goal_scored, goal_taken, tournament_won], function (err) {
       if (err) {
-        console.error('Error while updating stats:', err);
+        console.error("Error while upserting stats:", err);
         reject(err);
       } else {
         resolve({ changes: this.changes });
@@ -116,6 +115,7 @@ async function updateStatsAfterMatch(id_player, goal_scored, goal_taken, tournam
     });
   });
 }
+
 
 export async function insertTournament(tournament_name, id_winner)
 {
@@ -135,7 +135,7 @@ export async function insertTournament(tournament_name, id_winner)
 export async function insertMatch(id_tournament, users_ids, users_goal_scored, users_goal_taken)
 {
     try
-    {
+    {   
         const match = await insertMatchInDB(id_tournament, users_ids.length);
     
         for (let i = 0; i < users_ids.length; i++)
@@ -144,7 +144,7 @@ export async function insertMatch(id_tournament, users_ids, users_goal_scored, u
             const goalsScored = users_goal_scored[i];
             const goalsTaken = users_goal_taken[i];
             await insertPlayerMatchStats(userId, match.id, goalsScored, goalsTaken);
-            await updateStatsAfterMatch(userId, goalsScored, goalsTaken, 0);
+            await upsertStatsAfterMatch(userId, goalsScored, goalsTaken, 0);
         }
         return { matchId: match.id };
     }

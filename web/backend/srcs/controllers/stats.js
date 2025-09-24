@@ -1,6 +1,5 @@
-import { getStatsById } from '../database_comunication/user_db.js';
-import { createRequire } from 'module';
-import { insertMatch } from '../database_comunication/match_db.js';
+import { getStatsById, getAllPlayerStats } from '../database_comunication/user_db.js';
+
 export default async function (fastify, opts) {
   fastify.get('/stats', async (request, reply) => {
     try
@@ -17,5 +16,17 @@ export default async function (fastify, opts) {
         reply.code(500).send({ error: ('Internal Server Error' + error)});
     }
   })
-
+  //stats of ALL players
+  fastify.get('/allstats', async (request, reply) => {
+    try
+    {
+        const result = await getAllPlayerStats();
+        reply.send(result);
+    }
+    catch(error)
+    {
+        console.log(error);
+        reply.code(500).send({ error: ('Internal Server Error' + error)});
+    }
+  })
 }

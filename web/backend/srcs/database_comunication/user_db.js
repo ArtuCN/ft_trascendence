@@ -130,7 +130,9 @@ export function getUserById(id) {
 // -----------------------------
 export function getStatsById(id) {
   return new Promise((resolve, reject) => {
+    console.log('Fetching stats for player id:', id);
     db.all('SELECT * FROM player_all_time_stats WHERE id_player = ?', [id], (err, rows) => {
+      console.log('Database response for stats:', rows);
       if (err) {
         console.error('Error during SELECT by id of stats:', err);
         reject(err);
@@ -283,3 +285,37 @@ export async function getAllMatchesOfPlayer(id_player)
 }
 
 
+export async function winTournament(id_player)
+{
+    return new Promise((resolve, reject) => {
+        const query = `
+        UPDATE player_all_time_stats
+        SET tournament_won = tournament_won + 1
+        WHERE id_player = ?
+        `;
+        db.run(query, [id_player], function (err) {
+            if (err) {
+                console.error('Error while updating tournament wins:', err);
+                reject(err);
+            } else {
+                resolve({ id_player, status: 'tournament win updated' });
+            }
+        });
+    });
+}
+
+export async function getAllPlayerStats() {
+    return new Promise((resolve, reject) => {
+        const query = `
+        SELECT * FROM player_all_time_stats
+        `;
+        db.all(query, [], (err, rows) => {
+            if (err) {
+                console.error('Error while fetching all player stats:', err);
+                reject(err);
+            } else {
+                resolve(rows);
+            }
+        });
+    });
+}

@@ -23,8 +23,9 @@ $db->exec("CREATE TABLE IF NOT EXISTS user (
 $db->exec("CREATE TABLE IF NOT EXISTS tournament (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     tournament_name TEXT,
-    started BOOLEAN DEFAULT FALSE,
-    finished BOOLEAN DEFAULT FALSE
+    has_started BOOLEAN DEFAULT FALSE,
+    finished BOOLEAN DEFAULT FALSE,
+    id_winner INTEGER
 )");
 
 //$db->exec("DROP TABLE IF EXISTS game_match");
@@ -57,10 +58,10 @@ $db->exec("CREATE TABLE IF NOT EXISTS player_match_stats(
 
 //$db->exec("DROP TABLE IF EXISTS player_all_time_stats");
 $db->exec("CREATE TABLE IF NOT EXISTS player_all_time_stats(
-    id_player PRIMARY KEY,
+    id_player INTEGER PRIMARY KEY,
     goal_scored INTEGER DEFAULT 0,
     goal_taken INTEGER DEFAULT 0,
-    tournament_won INTGER DEFAULT 0,
+    tournament_won INTEGER DEFAULT 0,
     FOREIGN KEY (id_player) REFERENCES user(id)
 )");
 ?>
