@@ -6,12 +6,6 @@ import "./TournamentScores.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-
-//TODO: malicious owner of tournament could potentially steal peoples money (need a fix for this), some ecdsa between backend server and contract
-// the server could have a special signature for hashing certain parts
-//TODO: add a way if something went wrong in tournament and couldn't finish to reimburse money
-//TODO: add checks for tournament and user ids if out of bounds
-
 contract Staking is TournamentScores, ReentrancyGuard {
 
 
@@ -52,10 +46,10 @@ contract Staking is TournamentScores, ReentrancyGuard {
 		uint256	created_at;
 	} // created tournament info
 
-	struct Pair {
-			uint256 user_score;
-			uint256	user_id;
-	} // for placement ordering
+	// struct Pair {
+	// 		uint256 user_score;
+	// 		uint256	user_id;
+	// } // for placement ordering
 
 
 	//vars ######################
@@ -84,14 +78,7 @@ contract Staking is TournamentScores, ReentrancyGuard {
 	}
 
 
-
-
-
-
 	//functions ######################
-
-
-
 	// -------------- PUBLIC (MODIFY STATE) --------------
 
 	//create a tournament with specific staking -----------------------------------
@@ -139,23 +126,11 @@ contract Staking is TournamentScores, ReentrancyGuard {
 			});
 		}
 
-		////save user id in tournament struct
-		//payableTournament storage tour = _tournaments[tournament_id];
-
-		//uint256 temp_idx;
-		//for (temp_idx = 0; temp_idx < tour.NofPlayers; temp_idx++) {
-		//	if (tour.user_ids[temp_idx] == 0)
-		//		break;
-		//}
-		//if (temp_idx >= tour.NofPlayers) 
-		//	revert numberToHigh("Too many players already: ", tour.NofPlayers);
-		//tour.user_ids[temp_idx] = _user_id;
-
 		uint256 id = _tournaments.length;
 		_tournaments.push(tournament);
 		_ownersOfTournaments[msg.sender].push(id);
 		_tournamentBalances[id][msg.sender] = msg.value;
-		_current_tournament = _tournaments.length - 1;
+		_current_tournament = _tournaments.length;
 
 		emit tournamentCreated("You have successfully created tournament with id: ",
 							   _current_tournament -1,
@@ -177,6 +152,7 @@ contract Staking is TournamentScores, ReentrancyGuard {
 
 		function RETURNS the index of the last user who staked,
 		if tournament is already full, returns 0
+
 	*/
 	function stake(uint256			tournament_id,
 				   uint256			_user_id,
@@ -197,9 +173,12 @@ contract Staking is TournamentScores, ReentrancyGuard {
 		payableTournament storage tour = _tournaments[tournament_id];
 		uint256 temp_idx;
 		for (temp_idx = 0; temp_idx < tour.NofPlayers; temp_idx++) {
-			if (tour.user_ids[temp_idx] == 0)
+			if (tour.user_ids[temp_idx] == _user_id)
+				revert wrongUser("this user is already registered in this tournament", _user_id);
+			else if (tour.user_ids[temp_idx] == 0)
 				break;
 		}
+
 		if (temp_idx < tour.NofPlayers || !tour.has_started)
 			tour.user_ids[temp_idx] = _user_id;
 		if (checkTournamentStatus(tournament_id)) {
@@ -384,9 +363,23 @@ contract Staking is TournamentScores, ReentrancyGuard {
 	
 
 
-
 	// -----------------PUBLIC VIEW ONLY --------------------------
 
+	// returns data of a payable tournament (can be unfinished) -----------------
+	function getPayableTournamentData(uint256 tournament_id) public view returns (payableTournament memory t) {
+		if (_tournaments.length <= tournament_id)
+			revert indexOutOfBounds("Tournament_id is to high, max id is: ", _tournaments.length -1);
+		
+		payableTournament memory tour = _tournaments[tournament_id];
+		return (tour);
+	}
+
+	// returns the user struct of the user_id passed --------------------------
+	function getUserbyId(uint256 user_id) public view returns (user memory u) {
+		if (_users[user_id].user_id == 0)
+			revert wrongUser("user doesn't exist", user_id);
+		return (_users[user_id]);
+	}
 
 	//test function to test if contract is deployed ------------------------------
 	function testReturn() public view returns(
@@ -501,10 +494,6 @@ contract Staking is TournamentScores, ReentrancyGuard {
 					: 58008);
 	}
 
-
-
-
-
 	// -----------------------PRIVATE --------------------------------
 
 
@@ -607,52 +596,6 @@ contract Staking is TournamentScores, ReentrancyGuard {
 		}
 	}
 
-
- 
-	//placement in tournament (first to last) -----------------------------------
-	/*
-		used for distributing prizes fairly and for saving  tournament results to blockchain
-		returns a 2d array of fixed size 8x8 where arr[0] is all who placed first (if same score),
-		arr[1] are who placed 2nd, and so on ....
-	*/
-	function tournamentPlacement(uint256[8]	memory	user_scores,
-								 uint256[8]	memory	user_ids
-	)	private pure returns(uint256[8][8] memory placements) {
-
-		//populate
-		Pair[8] memory	pairs;
-		for (uint64	i = 0; i < user_scores.length; i++) {
-			pairs[i] = Pair(user_scores[i], user_ids[i]);
-		}
-
-		//sort
-		for (uint256 i = 0; i < pairs.length; i++) {
-			Pair memory curr = pairs[i];
-			uint256 j = i;
-			while (j > 0 && pairs[j - 1].user_score < curr.user_score) {
-				pairs[j] = pairs[j-1];
-				j--;
-			}
-			pairs[j] = curr;
-		}
-
-		//put in correct placement
-		uint256 placement = 0;
-		uint256 idx = 0;
-		for (uint256 i = 0; i < pairs.length; i++) {
-			if (i == 0 || pairs[i].user_score == pairs[i -1].user_score) {
-				placements[placement][idx++] = pairs[i].user_id;
-			}
-			else {
-				idx = 0;
-				placement++;
-				placements[placement][idx++] = pairs[i].user_id;
-			}
-		}
-		return (placements);
-	}
-
-
 	// delete player from tournament -------------------------------
 	/*
 		used when a player decides to step out of tournament before it starts.
@@ -674,10 +617,4 @@ contract Staking is TournamentScores, ReentrancyGuard {
 				break ;
 		}
 	}
-	
-	
-	//withdraw -- might not do the withdraw function - 
-	// so only after tournaments can owner get his share, and not just take what he wants
-
-
 }

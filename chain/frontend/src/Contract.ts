@@ -3,7 +3,6 @@ import stakingAbi from './abi/Staking1.abi.json'
 import { fujiC } from './chains';
 import { getStoredAccount, getStoredWalletClient } from './Wallet';
 
-// export type Address = `0x${string}`;
 // --- env / constants ---
 const CONTRACT_ADDRESS: Address = (import.meta.env.VITE_CONTRACT_ADDRESS as string) as Address
 
@@ -18,7 +17,7 @@ export const publicClient = createPublicClient({
 	transport: http()
 })
 
-const walletClient = getStoredWalletClient();
+// const walletClient = getStoredWalletClient();
 const clientAddress: Address | null = getStoredAccount();
 
 // --- helper wrappers ---
@@ -30,7 +29,6 @@ export async function getTournamentData(tournamentIndex: number) {
 		functionName: 'getTournamentData',
 		args: [BigInt(tournamentIndex)],
 	})
-	// res is an array-like return (matching the ABI outputs)
 	return res
 }
 
@@ -62,7 +60,8 @@ export async function testReturn() {
 		args: [],
 	})
 	console.log("contract addr: ", CONTRACT_ADDRESS);
-	return res
+	const walletClient = getStoredWalletClient();
+	return (res + walletClient);
 }
 
 // --- write / payable helpers ---
@@ -73,11 +72,13 @@ export async function stake(
 	_user_wallet: Address,
 	stakeValueEth: string
 ) {
-	if (!walletClient) {
-		throw new Error("Wallet client not available");
+	const walletClient = getStoredWalletClient();
+	const clientAddress: Address | null = getStoredAccount();
+	if (!walletClient || !clientAddress) {
+		throw new Error("Wallet client or account not available");
 	}
 	const valueWei = parseUnits(stakeValueEth, 18);
-	const {request} = await publicClient.simulateContract({
+	const {request, result} = await publicClient.simulateContract({
 		account: clientAddress,
 		address: CONTRACT_ADDRESS,
 		abi: stakingAbi,
@@ -85,10 +86,12 @@ export async function stake(
 		args: [tournament_id,
 				_user_id,
 				_username,
-				_user_wallet,
-				valueWei],
+				_user_wallet],
+		value: valueWei
 	});
 	await walletClient.writeContract(request);
+
+	return (result)
 }
 
 /**
@@ -106,8 +109,10 @@ export async function startPayableTournament(
 	_user_wallet: Address,
 	_min_stake_eth: string
 ) : Promise<bigint> {
-	if (!walletClient) {
-		throw new Error("Wallet client not available");
+	const walletClient = getStoredWalletClient();
+	const clientAddress: Address | null = getStoredAccount();
+	if (!walletClient || !clientAddress) {
+		throw new Error("Wallet client or account not available");
 	}
 	const valueWei = parseUnits(_min_stake_eth, 18);
 	const {request, result} = await publicClient.simulateContract({
@@ -120,6 +125,7 @@ export async function startPayableTournament(
 				_username,
 				_user_wallet,
 				valueWei],
+		value: valueWei,
 	});
 	await walletClient.writeContract(request);
 

@@ -1,0 +1,30 @@
+forge create --rpc-url fuji-c --private-key $PK contracts/transcendence/Staking.sol:Staking --broadcast
+forge create --rpc-url fuji-c --private-key $PK flats/Staking_flat.sol:Staking --broadcast --verify
+
+
+forge create --rpc-url fuji-c --private-key $PK flats/Staking_flat.sol:Staking --broadcast --verify --verifier-url 'https://api.routescan.io/v2/network/testnet/evm/43113/etherscan' --etherscan-api-key "verifyContract"  --constructor-args 0x29893E95166f5CD86b1C9401eC427e01EEc6Ed85
+
+
+forge build
+forge flatten contracts/transcendence/Staking.sol > flats/Staking_flat.sol
+
+forge verify-contract \                        (chain|✚5…1)
+  0xd3B1D32E9632b77aDD2FcF57FCeEEA16b1eff188 \
+  contracts/transcendence/Staking.sol:Staking \
+  --verifier-url "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan" \
+  --etherscan-api-key "verifyContract" \
+  --compiler-version v0.8.25+commit.b61c2a91 \
+  --num-of-optimizations 200 \
+  --chain-id 43113
+
+
+ jq '.abi' out/Staking.sol/Staking.json > abi/Staking1.abi.json
+
+cast call 0xe66F0f20F5531808d3b46040bC42767e196D0278 "testReturn()" --rpc-url fuji-c 
+forge build --contracts contracts/transcendence
+
+forge script script/testReturn.s.sol:CallTestReturn --rpc-url fuji-c  
+
+forge clean
+
+
