@@ -130,9 +130,7 @@ export function getUserById(id) {
 // -----------------------------
 export function getStatsById(id) {
   return new Promise((resolve, reject) => {
-    console.log('Fetching stats for player id:', id);
     db.all('SELECT * FROM player_all_time_stats WHERE id_player = ?', [id], (err, rows) => {
-      console.log('Database response for stats:', rows);
       if (err) {
         console.error('Error during SELECT by id of stats:', err);
         reject(err);

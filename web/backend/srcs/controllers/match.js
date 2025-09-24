@@ -14,7 +14,6 @@ export default async function (fastify, opts) {
   fastify.get('/matchid', async (request, reply) => {
     try {
       const { id } = request.query;
-      console.log("GET /matchid called with id:", id);
       if (!id) return reply.code(400).send({ error: 'Missing id' });
 
       const result = await getMatchById(id);
@@ -31,7 +30,6 @@ export default async function (fastify, opts) {
       if (!id_player) return reply.code(400).send({ error: 'Missing id_player' });
 
       const result = await getAllMatchesOfPlayer(id_player);
-      console.log("Matches found for player:", result);
       const all = result.map(match => match.id);
 
       const allMatchesDetails = [];
