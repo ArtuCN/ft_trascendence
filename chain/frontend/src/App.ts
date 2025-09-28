@@ -1,11 +1,14 @@
 import { connectWallet } from './Wallet';
 import { type Address, type WalletClient, parseUnits } from 'viem';
-import { testReturn, stake, startPayableTournament, getTournamentData } from './Contract';
+import { testReturn, stake, startPayableTournament, getTournamentData,
+			saveGameData, getGameData} from './Contract';
 
 const connectBtn = document.getElementById('connectBtn') as HTMLButtonElement | null;
 const accountInfo = document.getElementById('accountInfo') as HTMLDivElement | null;
 const testBtn = document.getElementById('testBtn') as HTMLButtonElement | null;
 const DataBtn = document.getElementById('dataBtn') as HTMLButtonElement | null;
+const gameBtn = document.getElementById('gameBtn') as HTMLButtonElement | null;
+const loadGameBtn = document.getElementById('loadGameBtn') as HTMLButtonElement | null;
 const infoBlock = document.getElementById('infoBlock') as HTMLDivElement | null;
 
 // --- stake form fields ---
@@ -26,6 +29,14 @@ const startBtn = document.getElementById('startBtn') as HTMLButtonElement | null
 
 // --- getTournamentData
 const tournamentDataId = document.getElementById('tournamentDataId') as HTMLInputElement | null;
+
+
+// ---game data ----
+const gameUserIds = document.getElementById('gameUserIds') as HTMLInputElement | null;
+const gameUserWallets = document.getElementById('gameUserWallets') as HTMLInputElement | null;
+const gameUserScores = document.getElementById('gameUserScores') as HTMLInputElement | null;
+const gameIdInput = document.getElementById('gameIdInput') as HTMLInputElement | null;
+
 
 const CONTRACT_ADDRESS: Address = (import.meta.env.VITE_CONTRACT_ADDRESS as string) as Address
 let _client: WalletClient | null = null;
@@ -115,4 +126,58 @@ DataBtn?.addEventListener('click', async () => {
     infoBlock!.innerHTML += `<p>no tournament data</p>`;
   }
 
+});
+
+gameBtn?.addEventListener('click', async () => {
+  if (!_client || !_account) {
+    infoBlock!.innerHTML += `<p>Please connect your wallet first</p>`;
+    return;
+  }
+  try {
+    // Parse comma-separated input values
+    const userIds = gameUserIds!.value.split(',').map(Number);
+    const userWallets = gameUserWallets!.value.split(',').map(w => w.trim() as Address);
+    const userScores = gameUserScores!.value.split(',').map(Number);
+	console.log("userid: ", userIds);
+	console.log("user wallets", userWallets);
+	console.log("userScores: ", userScores);
+
+    while (userIds.length < 8) userIds.push(0);
+    while (userWallets.length < 8) userWallets.push('0x0000000000000000000000000000000000000000' as Address);
+    while (userScores.length < 8) userScores.push(0);
+
+    const result = await saveGameData(userIds, userWallets, userScores);
+    infoBlock!.innerHTML += `<p>Game data saved! Result: ${result}</p>`;
+  } catch (err) {
+    console.error('saveGameData failed', err);
+    infoBlock!.innerHTML += `<p>Save game data failed</p>`;
+  }
+});
+
+loadGameBtn?.addEventListener('click', async () => {
+  if (!_client || !_account) {
+    infoBlock!.innerHTML += `<p>Please connect your wallet first</p>`;
+    return;
+  }
+  try {
+    const gameId = Number(gameIdInput!.value);
+    const gameData : any = await getGameData(gameId);
+    // const pre = document.createElement('pre');
+	console.log(gameData);
+    // pre.textContent = JSON.stringify(gameData, null, 2);
+    // infoBlock!.appendChild(pre);
+    const formatArray = (arr: any[]) => arr.map(v => typeof v === 'bigint' ? v.toString() : v).join(', ');
+    infoBlock!.innerHTML += `
+      <div>
+        <p><strong>Game ID:</strong> ${gameData.game_id.toString()}</p>
+        <p><strong>User IDs:</strong> [${formatArray(gameData.user_ids)}]</p>
+        <p><strong>User Wallets:</strong> [${formatArray(gameData.user_wallets)}]</p>
+        <p><strong>User Scores:</strong> [${formatArray(gameData.user_scores)}]</p>
+        <p><strong>Winner IDs:</strong> [${formatArray(gameData.winner_ids)}]</p>
+      </div>
+    `;
+  } catch (err) {
+    console.error('getGameData failed', err);
+    infoBlock!.innerHTML += `<p>Load game data failed</p>`;
+  }
 });

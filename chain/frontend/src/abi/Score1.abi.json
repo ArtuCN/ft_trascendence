@@ -1,0 +1,267 @@
+[
+  {
+    "type": "function",
+    "name": "game_registry",
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "game_id",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getGameData",
+    "inputs": [
+      {
+        "name": "game_id",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "g",
+        "type": "tuple",
+        "internalType": "struct TournamentScores.game",
+        "components": [
+          {
+            "name": "user_ids",
+            "type": "uint256[8]",
+            "internalType": "uint256[8]"
+          },
+          {
+            "name": "user_wallets",
+            "type": "address[8]",
+            "internalType": "address[8]"
+          },
+          {
+            "name": "user_scores",
+            "type": "uint256[8]",
+            "internalType": "uint256[8]"
+          },
+          {
+            "name": "winner_ids",
+            "type": "uint256[8]",
+            "internalType": "uint256[8]"
+          },
+          {
+            "name": "game_id",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getTournamentData",
+    "inputs": [
+      {
+        "name": "tournamentIndex",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256[8]",
+        "internalType": "uint256[8]"
+      },
+      {
+        "name": "",
+        "type": "uint256[8]",
+        "internalType": "uint256[8]"
+      },
+      {
+        "name": "",
+        "type": "uint256[8]",
+        "internalType": "uint256[8]"
+      },
+      {
+        "name": "",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "saveGameData",
+    "inputs": [
+      {
+        "name": "_user_ids",
+        "type": "uint256[8]",
+        "internalType": "uint256[8]"
+      },
+      {
+        "name": "_user_wallets",
+        "type": "address[8]",
+        "internalType": "address[8]"
+      },
+      {
+        "name": "_user_scores",
+        "type": "uint256[8]",
+        "internalType": "uint256[8]"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "match_id",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "saveTournamentData",
+    "inputs": [
+      {
+        "name": "_NofPlayers",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "_user_ids",
+        "type": "uint256[8]",
+        "internalType": "uint256[8]"
+      },
+      {
+        "name": "_user_scores",
+        "type": "uint256[8]",
+        "internalType": "uint256[8]"
+      },
+      {
+        "name": "_winner_ids",
+        "type": "uint256[8]",
+        "internalType": "uint256[8]"
+      },
+      {
+        "name": "_winner_names",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "_tournament_id",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "tournament_registry",
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "winner_names",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "tournament_id",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "event",
+    "name": "gameDataSaved",
+    "inputs": [
+      {
+        "name": "msg",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "match_id",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "tournamentDataSaved",
+    "inputs": [
+      {
+        "name": "msg",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "tournament_id",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "indexOutOfBounds",
+    "inputs": [
+      {
+        "name": "msg",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "passedIndex",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "numberToHigh",
+    "inputs": [
+      {
+        "name": "msg",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "NofPlayers",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  }
+]

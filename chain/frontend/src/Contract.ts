@@ -1,10 +1,12 @@
 import { createPublicClient, createWalletClient, http, parseUnits, type Address } from 'viem'
 import stakingAbi from './abi/Staking1.abi.json'
+import ScoreAbi from './abi/Score1.abi.json'
 import { fujiC } from './chains';
 import { getStoredAccount, getStoredWalletClient } from './Wallet';
 
 // --- env / constants ---
 const CONTRACT_ADDRESS: Address = (import.meta.env.VITE_CONTRACT_ADDRESS as string) as Address
+const SCORES_ADDRESS: Address = (import.meta.env.VITE_SCORES_ADDRESS as string) as Address
 
 if (!CONTRACT_ADDRESS) {
 	console.warn('VITE_CONTRACT_ADDRESS not provided. Set it in your .env (Vite) file.')
@@ -21,16 +23,7 @@ export const publicClient = createPublicClient({
 const clientAddress: Address | null = getStoredAccount();
 
 // --- helper wrappers ---
-// Read-only helpers
-export async function getTournamentData(tournamentIndex: number) {
-	const res = await publicClient.readContract({
-		address: CONTRACT_ADDRESS,
-		abi: stakingAbi as any,
-		functionName: 'getTournamentData',
-		args: [BigInt(tournamentIndex)],
-	})
-	return res
-}
+// Read-only helpers (Staking  contract)
 
 export async function checkTime(tournament_id: number) {
 	const res = await publicClient.readContract({
@@ -64,7 +57,59 @@ export async function testReturn() {
 	return (res + walletClient);
 }
 
+
+// Read-only helpers (Scores  contract) ----------
+
+export async function getTournamentData(tournamentIndex: number) {
+	const res = await publicClient.readContract({
+		address: SCORES_ADDRESS,
+		abi: ScoreAbi as any,
+		functionName: 'getTournamentData',
+		args: [BigInt(tournamentIndex)],
+	})
+	return res;
+}
+
+
+export async function getGameData(game_id: number) {
+	const res = await publicClient.readContract({
+		address: SCORES_ADDRESS,
+		abi: ScoreAbi as any,
+		functionName: 'getGameData',
+		args: [BigInt(game_id)],
+	});
+
+	return res;
+}
+
 // --- write / payable helpers ---
+
+// scores saving for each match/game
+export async function saveGameData(
+	_user_ids: number[],
+	_user_wallets: Address[],
+	_user_scores: number[]
+) : Promise<bigint> {
+	const walletClient = getStoredWalletClient();
+	const clientAddress: Address | null = getStoredAccount();
+	if (!walletClient || !clientAddress) {
+		throw new Error("Wallet client or account not available");
+	}
+	const {request, result} = await publicClient.simulateContract({
+		account: clientAddress,
+		address: SCORES_ADDRESS,
+		abi: ScoreAbi,
+		functionName: 'saveGameData',
+		args: [ _user_ids,
+				_user_wallets,
+				_user_scores]
+	});
+	await walletClient.writeContract(request);
+	return(result);
+}
+
+
+
 export async function stake(
 	tournament_id: number,
 	_user_id: number,
@@ -131,6 +176,8 @@ export async function startPayableTournament(
 
 	return result;
 }
+
+
 
 /**
 	* reimbursePlayer (nonpayable, owner-only maybe)

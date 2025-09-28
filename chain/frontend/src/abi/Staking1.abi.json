@@ -1,7 +1,13 @@
 [
   {
     "type": "constructor",
-    "inputs": [],
+    "inputs": [
+      {
+        "name": "_tourmentScoresAddress",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
     "stateMutability": "nonpayable"
   },
   {
@@ -44,39 +50,97 @@
   },
   {
     "type": "function",
-    "name": "getTournamentData",
+    "name": "getPayableTournamentData",
     "inputs": [
       {
-        "name": "tournamentIndex",
+        "name": "tournament_id",
         "type": "uint256",
         "internalType": "uint256"
       }
     ],
     "outputs": [
       {
-        "name": "",
-        "type": "uint256[8]",
-        "internalType": "uint256[8]"
-      },
+        "name": "t",
+        "type": "tuple",
+        "internalType": "struct Staking.payableTournament",
+        "components": [
+          {
+            "name": "NofPlayers",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "user_ids",
+            "type": "uint256[8]",
+            "internalType": "uint256[8]"
+          },
+          {
+            "name": "min_stake",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "stake_goal",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "is_finished",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "has_started",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "is_reimbursed",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "created_at",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getUserbyId",
+    "inputs": [
       {
-        "name": "",
-        "type": "uint256[8]",
-        "internalType": "uint256[8]"
-      },
-      {
-        "name": "",
-        "type": "uint256[8]",
-        "internalType": "uint256[8]"
-      },
-      {
-        "name": "",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
-        "name": "",
+        "name": "user_id",
         "type": "uint256",
         "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "u",
+        "type": "tuple",
+        "internalType": "struct Staking.user",
+        "components": [
+          {
+            "name": "user_id",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "username",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "user_wallet",
+            "type": "address",
+            "internalType": "address"
+          }
+        ]
       }
     ],
     "stateMutability": "view"
@@ -212,44 +276,6 @@
   },
   {
     "type": "function",
-    "name": "saveTournamentData",
-    "inputs": [
-      {
-        "name": "_NofPlayers",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "_user_ids",
-        "type": "uint256[8]",
-        "internalType": "uint256[8]"
-      },
-      {
-        "name": "_user_scores",
-        "type": "uint256[8]",
-        "internalType": "uint256[8]"
-      },
-      {
-        "name": "_winner_ids",
-        "type": "uint256[8]",
-        "internalType": "uint256[8]"
-      },
-      {
-        "name": "_winner_names",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
-        "name": "_tournament_id",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
     "name": "stake",
     "inputs": [
       {
@@ -359,24 +385,13 @@
   },
   {
     "type": "function",
-    "name": "tournament_registry",
-    "inputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
+    "name": "tournamentScoresContract",
+    "inputs": [],
     "outputs": [
       {
-        "name": "winner_names",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
-        "name": "tournament_id",
-        "type": "uint256",
-        "internalType": "uint256"
+        "name": "",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "stateMutability": "view"
@@ -506,25 +521,6 @@
       },
       {
         "name": "amount_staked",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "tournamentDataSaved",
-    "inputs": [
-      {
-        "name": "msg",
-        "type": "string",
-        "indexed": false,
-        "internalType": "string"
-      },
-      {
-        "name": "tournament_id",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
