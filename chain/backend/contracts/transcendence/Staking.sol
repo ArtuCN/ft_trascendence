@@ -3,10 +3,11 @@
 pragma solidity 0.8.25;
 
 import "./TournamentScores.sol";
+import "./utils.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract Staking is TournamentScores, ReentrancyGuard {
+contract Staking is ReentrancyGuard {
 
 
 	//events ######################
@@ -19,8 +20,8 @@ contract Staking is TournamentScores, ReentrancyGuard {
 	event tournamentStarted(string msg, uint256 tour_id);
 
 	//errors ######################
-	// error numberToHigh(string msg, uint256 NofPlayers);
-	// error indexOutOfBounds(string msg, uint256 passedIndex);
+	error numberToHigh(string msg, uint256 NofPlayers);
+	error indexOutOfBounds(string msg, uint256 passedIndex);
 	error insufficientAmount(string msg, uint256 amount);
 	error tournamentAlreadyFinished(string msg, uint256 tournament_id);
 	error wrongUsersPassed(string msg, uint256[8] user_ids);
@@ -46,12 +47,6 @@ contract Staking is TournamentScores, ReentrancyGuard {
 		uint256	created_at;
 	} // created tournament info
 
-	// struct Pair {
-	// 		uint256 user_score;
-	// 		uint256	user_id;
-	// } // for placement ordering
-
-
 	//vars ######################
 	payableTournament[]								private	_tournaments; //info about tournament and its players
 	mapping(uint256 => user)						private _users;
@@ -62,19 +57,15 @@ contract Staking is TournamentScores, ReentrancyGuard {
 	uint256											public	threshold = 1000000; //min amount that can be proposed as stake
 
 	address											public	owner;
-	// address 										public	tournamentScoresContract;
-	// TournamentScores								private tournamentScores;
+	address 										public	tournamentScoresContract;
+	TournamentScores								private tournamentScores;
 
 
 	//constructor ######################
-	constructor(/*address _owner*/) {
-		// require(_owner != address(0), "owner cannot be zero address!");
+	constructor(address _tourmentScoresAddress) {
 		owner = msg.sender;
-		// if (_tournamentScoresContract == address(0))
-		// 	revert("no contract provided");
-
-		// tournamentScoresContract = _tournamentScoresContract;
-		// tournamentScores = TournamentScores(tournamentScoresContract);
+		tournamentScoresContract = _tourmentScoresAddress;
+		tournamentScores = TournamentScores(tournamentScoresContract);
 	}
 
 
@@ -330,7 +321,7 @@ contract Staking is TournamentScores, ReentrancyGuard {
 			revert wrongUsersPassed("the users passed, are not the same as saved on chain. user_ids on chain: ", tour.user_ids);
 
 		//concat winning_names into one string
-		uint256[8][8] memory placements = tournamentPlacement(reorder_scores, tour.user_ids);
+		uint256[8][8] memory placements = utils.tournamentPlacement(reorder_scores, tour.user_ids);
 		string memory winning_names;
 		for (uint256 i = 0; i < placements[0].length - 1; i++) {
 			user memory u = _users[tour.user_ids[i]];
@@ -340,7 +331,7 @@ contract Staking is TournamentScores, ReentrancyGuard {
 		winning_names = string(abi.encodePacked(winning_names, usr.username));
 
 		//save the correct data to TournamentScores contract
-		saveTournamentData(tour.NofPlayers,
+		tournamentScores.saveTournamentData(tour.NofPlayers,
 							tour.user_ids,
 							reorder_scores,
 							placements[0],

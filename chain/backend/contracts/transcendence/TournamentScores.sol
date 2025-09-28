@@ -2,8 +2,12 @@
 
 pragma solidity 0.8.25;
 
+import "./utils.sol";
+import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+
 	//get all the tournaments player was in //TODO
-contract TournamentScores {
+contract TournamentScores is ERC721URIStorage {
 
 	//events
 	event tournamentDataSaved(string msg, uint256 tournament_id);
@@ -31,23 +35,62 @@ contract TournamentScores {
 		uint256		game_id;
 	}
 
-	struct Pair {
-			uint256 user_score;
-			uint256	user_id;
-	} // for placement ordering
-
 
 	//vars
 	// tournament[]			public	tournament_registry;
-	mapping(uint256 => tournament) public tournament_registry;
-	uint256					private _current_tournament; //when a turnament is played it will have this index	 
-	mapping(uint256 => game) public game_registry;
-	mapping(uint256 => uint256[]) private user_games;
-	uint256					private _current_game;
+	mapping(uint256 => tournament)	public tournament_registry;
+	uint256							private _current_tournament; //when a turnament is played it will have this index	 
+
+	mapping(uint256 => game) 		public game_registry;
+	mapping(address => uint256[]) 	private _user_games;
+	uint256							private _current_game;
+
+	uint256							private	_nextTokenId;
+	mapping(uint256 => address)		private	_tokenOwner;
 
 	//constructor
-
+	constructor()
+	ERC721("Scores", "SCR")
+	{}
 	//functions
+
+	// this will mint an NFT if a person has participated in a game with this id
+	function mint(uint256 gameId) public payable {
+		require(msg.value >= 0.000005 ether, "Not enough ETH!");
+		if (gameId > _current_game)
+			revert indexOutOfBounds("game id too big (doesn't exist). gameId passed: ", gameId);
+
+		_nextTokenId++;
+		uint256[] memory games = _user_games[msg.sender];
+		for(uint256 i = 0; i < games.length; i++) {
+			if (games[i] == gameId) {
+				_safeMint(msg.sender, _nextTokenId);
+				string memory uri = buildTokenURI(gameId);
+				_setTokenURI(_nextTokenId, uri);
+				_tokenOwner[_nextTokenId] = msg.sender;
+				return ;
+			}
+		}
+		revert indexOutOfBounds("user has not participated with his wallet in match id: ", gameId);
+	}
+
+	//creates a encoded URI from the correct game struct object
+	function buildTokenURI(uint256 gameId) internal view returns (string memory) {
+
+		game memory g = game_registry[gameId];
+
+		// Compose metadata JSON
+		string memory json = string(abi.encodePacked(
+			'{"name":"Game #', Strings.toString(gameId),
+			'","description":"Tournament game NFT","user_ids":"', utils.uintArrayToString(g.user_ids),
+			'","user_scores":"', utils.uintArrayToString(g.user_scores),
+			'","winner_ids":"', utils.uintArrayToString(g.winner_ids),
+			'","game_id":"', Strings.toString(g.game_id), '"}'
+		));
+
+		// Return as data URI
+		return string(abi.encodePacked("data:application/json;base64,", utils.base64Encode(bytes(json))));
+	}
 
 	// saves new entry for a match/game
 	function saveGameData(
@@ -61,8 +104,9 @@ contract TournamentScores {
 			_user_scores.length != _user_ids.length)
 			revert indexOutOfBounds("Array length mismatch", _user_ids.length);
 
-		uint256[8][8] memory placements = tournamentPlacement(_user_scores, _user_ids);
+		uint256[8][8] memory placements = utils.tournamentPlacement(_user_scores, _user_ids);
 
+		_current_game++;
 		match_id = _current_game;
 		game_registry[match_id] = game({
 			user_ids: _user_ids,
@@ -71,13 +115,11 @@ contract TournamentScores {
 			winner_ids: placements[0],
 			game_id: match_id
 		});
-		for (uint256 i = 0; i < _user_ids.length; i++) {
-			uint256 u = _user_ids[i];
-			if (u == 0)
-				break ;
-			user_games[u].push(_current_game);
+		for (uint256 i = 0; i < _user_wallets.length; i++) {
+			address u = _user_wallets[i];
+			if (u != address(0))
+				_user_games[u].push(_current_game);
 		}
-		_current_game++;
 
 
 		emit gameDataSaved("Game data saved successfully", match_id);
@@ -146,47 +188,5 @@ contract TournamentScores {
 		);
 	}
 
-	//placement in tournament (first to last) -----------------------------------
-	/*
-		used for distributing prizes fairly and for saving  tournament results to blockchain
-		returns a 2d array of fixed size 8x8 where arr[0] is all who placed first (if same score),
-		arr[1] are who placed 2nd, and so on ....
-	*/
-	function tournamentPlacement(uint256[8]	memory	user_scores,
-								 uint256[8]	memory	user_ids
-	)	internal pure returns(uint256[8][8] memory placements) {
-
-		//populate
-		Pair[8] memory	pairs;
-		for (uint64	i = 0; i < user_scores.length; i++) {
-			pairs[i] = Pair(user_scores[i], user_ids[i]);
-		}
-
-		//sort
-		for (uint256 i = 0; i < pairs.length; i++) {
-			Pair memory curr = pairs[i];
-			uint256 j = i;
-			while (j > 0 && pairs[j - 1].user_score < curr.user_score) {
-				pairs[j] = pairs[j-1];
-				j--;
-			}
-			pairs[j] = curr;
-		}
-
-		//put in correct placement
-		uint256 placement = 0;
-		uint256 idx = 0;
-		for (uint256 i = 0; i < pairs.length; i++) {
-			if (i == 0 || pairs[i].user_score == pairs[i -1].user_score) {
-				placements[placement][idx++] = pairs[i].user_id;
-			}
-			else {
-				idx = 0;
-				placement++;
-				placements[placement][idx++] = pairs[i].user_id;
-			}
-		}
-		return (placements);
-	}
 
 }

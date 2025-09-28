@@ -28,3 +28,53 @@ forge script script/testReturn.s.sol:CallTestReturn --rpc-url fuji-c
 forge clean
 
 
+--------------
+forge script script/Deploy.s.sol:Deploy --rpc-url fuji-c --broadcast  
+
+[⠊] Compiling...
+[⠒] Compiling 27 files with Solc 0.8.25
+[⠑] Solc 0.8.25 finished in 572.37ms
+Compiler run successful!
+Script ran successfully.
+
+== Logs ==
+  TournamentScores deployed at: 0x2f89976c48Dcc18fAD96aaE8b4Cc1F6A09834f3d
+  Staking deployed at: 0x512221864540c31ff9B20F042930fAf3fc6d4405
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 43113
+
+Estimated gas price: 0.000000003 gwei
+
+Estimated total gas used for script: 8333479
+
+Estimated amount required: 0.000000000025000437 ETH
+
+==========================
+
+##### fuji
+✅  [Success] Hash: 0xf1cd24df9ea2af1a2d077f8f1793edbbf708e90e8a0d71e99a969cf4c8b39c1f
+Contract Address: 0x512221864540c31ff9B20F042930fAf3fc6d4405
+Block: 46330662
+Paid: 0.000000000009278354 ETH (4639177 gas * 0.000000002 gwei)
+
+
+##### fuji
+✅  [Success] Hash: 0x28cd88adf57afc60197c0a9a7a0a74aabf68a74dd13535b585b6530220e744b4
+Contract Address: 0x2f89976c48Dcc18fAD96aaE8b4Cc1F6A09834f3d
+Block: 46330661
+Paid: 0.000000000003542384 ETH (1771192 gas * 0.000000002 gwei)
+
+✅ Sequence #1 on fuji | Total Paid: 0.000000000012820738 ETH (6410369 gas * avg 0.000000002 gwei)
+                                                                             
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+
+Transactions saved to: /home/thiew/ft_transcendence/chain/backend/broadcast/Deploy.s.sol/43113/run-latest.json
+
+Sensitive values saved to: /home/thiew/ft_transcendence/chain/backend/cache/Deploy.s.sol/43113/run-latest.json
