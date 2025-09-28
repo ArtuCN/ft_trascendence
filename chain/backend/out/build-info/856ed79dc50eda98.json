@@ -1,0 +1,1 @@
+{"id":"856ed79dc50eda98","source_id_to_path":{"0":"contracts/transcendence/Staking.sol","1":"contracts/transcendence/TournamentScores.sol","2":"contracts/transcendence/utils.sol","3":"lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol","4":"lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol"},"language":"Solidity"}
