@@ -1,7 +1,13 @@
 import { connectWallet } from './Wallet';
 import { type Address, type WalletClient, parseUnits } from 'viem';
-import { testReturn, stake, startPayableTournament, getTournamentData,
-			saveGameData, getGameData} from './Contract';
+import { testReturn,
+		stake,
+		startPayableTournament,
+		getTournamentData,
+		getUserGames,
+		saveGameData,
+		getGameData,
+		mint } from './Contract';
 
 const connectBtn = document.getElementById('connectBtn') as HTMLButtonElement | null;
 const accountInfo = document.getElementById('accountInfo') as HTMLDivElement | null;
@@ -9,6 +15,8 @@ const testBtn = document.getElementById('testBtn') as HTMLButtonElement | null;
 const DataBtn = document.getElementById('dataBtn') as HTMLButtonElement | null;
 const gameBtn = document.getElementById('gameBtn') as HTMLButtonElement | null;
 const loadGameBtn = document.getElementById('loadGameBtn') as HTMLButtonElement | null;
+const mintGameBtn = document.getElementById('mintGameBtn') as HTMLButtonElement | null;
+const userGamesBtn = document.getElementById('userGamesBtn') as HTMLButtonElement | null;
 const infoBlock = document.getElementById('infoBlock') as HTMLDivElement | null;
 
 // --- stake form fields ---
@@ -36,6 +44,11 @@ const gameUserIds = document.getElementById('gameUserIds') as HTMLInputElement |
 const gameUserWallets = document.getElementById('gameUserWallets') as HTMLInputElement | null;
 const gameUserScores = document.getElementById('gameUserScores') as HTMLInputElement | null;
 const gameIdInput = document.getElementById('gameIdInput') as HTMLInputElement | null;
+const userGamesInput = document.getElementById('userGamesInput') as HTMLInputElement | null;
+
+
+
+
 
 
 const CONTRACT_ADDRESS: Address = (import.meta.env.VITE_CONTRACT_ADDRESS as string) as Address
@@ -55,6 +68,102 @@ connectBtn?.addEventListener('click', async () => {
     accountInfo!.textContent = 'Connection failed';
   }
 });
+
+gameBtn?.addEventListener('click', async () => {
+  if (!_client || !_account) {
+    infoBlock!.innerHTML += `<p>Please connect your wallet first</p>`;
+    return;
+  }
+  try {
+    // Parse comma-separated input values
+    const userIds = gameUserIds!.value.split(',').map(Number);
+    const userWallets = gameUserWallets!.value.split(',').map(w => w.trim() as Address);
+    const userScores = gameUserScores!.value.split(',').map(Number);
+	console.log("userid: ", userIds);
+	console.log("user wallets", userWallets);
+	console.log("userScores: ", userScores);
+
+    while (userIds.length < 8) userIds.push(0);
+    while (userWallets.length < 8) userWallets.push('0x0000000000000000000000000000000000000000' as Address);
+    while (userScores.length < 8) userScores.push(0);
+
+    const result = await saveGameData(userIds, userWallets, userScores);
+    infoBlock!.innerHTML += `<p>Game data saved! Result: ${result}</p>`;
+  } catch (err) {
+    console.error('saveGameData failed', err);
+    infoBlock!.innerHTML += `<p>Save game data failed</p>`;
+  }
+});
+
+loadGameBtn?.addEventListener('click', async () => {
+  if (!_client || !_account) {
+    infoBlock!.innerHTML += `<p>Please connect your wallet first</p>`;
+    return;
+  }
+  try {
+    const gameId = Number(gameIdInput!.value);
+    const gameData : any = await getGameData(gameId);
+    // const pre = document.createElement('pre');
+	console.log(gameData);
+    // pre.textContent = JSON.stringify(gameData, null, 2);
+    // infoBlock!.appendChild(pre);
+    const formatArray = (arr: any[]) => arr.map(v => typeof v === 'bigint' ? v.toString() : v).join(', ');
+    infoBlock!.innerHTML += `
+      <div>
+        <p><strong>Game ID:</strong> ${gameData.game_id.toString()}</p>
+        <p><strong>User IDs:</strong> [${formatArray(gameData.user_ids)}]</p>
+        <p><strong>User Wallets:</strong> [${formatArray(gameData.user_wallets)}]</p>
+        <p><strong>User Scores:</strong> [${formatArray(gameData.user_scores)}]</p>
+        <p><strong>Winner IDs:</strong> [${formatArray(gameData.winner_ids)}]</p>
+      </div>
+    `;
+  } catch (err) {
+    console.error('getGameData failed', err);
+    infoBlock!.innerHTML += `<p>Load game data failed</p>`;
+  }
+});
+
+userGamesBtn?.addEventListener('click', async () => {
+  if (!_client || !_account) {
+    infoBlock!.innerHTML += `<p>Please connect your wallet first</p>`;
+    return;
+  }
+  try {
+	  const res: number[] = await getUserGames(_account as Address);
+	  console.log(res);
+	  let arrayString: string = "";
+	  for (let i = 0; i< res.length; i++) {
+		arrayString += res[i].toString();
+		arrayString += ", ";
+	  }
+
+    infoBlock!.innerHTML += `<p>user participated in this games: ${arrayString}</p>`;
+  } catch (err) {
+    infoBlock!.innerHTML += `<p>fetching user games failed!</p>`;
+  }
+});
+
+mintGameBtn?.addEventListener('click', async () => {
+  if (!_client || !_account) {
+    infoBlock!.innerHTML += `<p>Please connect your wallet first</p>`;
+    return;
+  }
+  try {
+    const gameId = Number(gameIdInput!.value);
+	await mint(gameId);
+	console.log("game minted");
+    infoBlock!.innerHTML += `<p>Game with id:${gameId} minted</p>`;
+  } catch (err) {
+    infoBlock!.innerHTML += `<p>couldn't mint: ${err}</p>`;
+
+  }
+});
+
+
+
+
+// ------------------  CODE BELLOW IS CURRENTLY NON NEEDED ----------------------------	
+
 
 // test handler
 testBtn?.addEventListener('click', async () => {
@@ -128,56 +237,3 @@ DataBtn?.addEventListener('click', async () => {
 
 });
 
-gameBtn?.addEventListener('click', async () => {
-  if (!_client || !_account) {
-    infoBlock!.innerHTML += `<p>Please connect your wallet first</p>`;
-    return;
-  }
-  try {
-    // Parse comma-separated input values
-    const userIds = gameUserIds!.value.split(',').map(Number);
-    const userWallets = gameUserWallets!.value.split(',').map(w => w.trim() as Address);
-    const userScores = gameUserScores!.value.split(',').map(Number);
-	console.log("userid: ", userIds);
-	console.log("user wallets", userWallets);
-	console.log("userScores: ", userScores);
-
-    while (userIds.length < 8) userIds.push(0);
-    while (userWallets.length < 8) userWallets.push('0x0000000000000000000000000000000000000000' as Address);
-    while (userScores.length < 8) userScores.push(0);
-
-    const result = await saveGameData(userIds, userWallets, userScores);
-    infoBlock!.innerHTML += `<p>Game data saved! Result: ${result}</p>`;
-  } catch (err) {
-    console.error('saveGameData failed', err);
-    infoBlock!.innerHTML += `<p>Save game data failed</p>`;
-  }
-});
-
-loadGameBtn?.addEventListener('click', async () => {
-  if (!_client || !_account) {
-    infoBlock!.innerHTML += `<p>Please connect your wallet first</p>`;
-    return;
-  }
-  try {
-    const gameId = Number(gameIdInput!.value);
-    const gameData : any = await getGameData(gameId);
-    // const pre = document.createElement('pre');
-	console.log(gameData);
-    // pre.textContent = JSON.stringify(gameData, null, 2);
-    // infoBlock!.appendChild(pre);
-    const formatArray = (arr: any[]) => arr.map(v => typeof v === 'bigint' ? v.toString() : v).join(', ');
-    infoBlock!.innerHTML += `
-      <div>
-        <p><strong>Game ID:</strong> ${gameData.game_id.toString()}</p>
-        <p><strong>User IDs:</strong> [${formatArray(gameData.user_ids)}]</p>
-        <p><strong>User Wallets:</strong> [${formatArray(gameData.user_wallets)}]</p>
-        <p><strong>User Scores:</strong> [${formatArray(gameData.user_scores)}]</p>
-        <p><strong>Winner IDs:</strong> [${formatArray(gameData.winner_ids)}]</p>
-      </div>
-    `;
-  } catch (err) {
-    console.error('getGameData failed', err);
-    infoBlock!.innerHTML += `<p>Load game data failed</p>`;
-  }
-});
