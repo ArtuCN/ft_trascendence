@@ -1,6 +1,11 @@
-import { createPublicClient, createWalletClient, http, parseUnits, type Address } from 'viem'
-import stakingAbi from './abi/Staking1.abi.json'
-import ScoreAbi from './abi/Score1.abi.json'
+import { createPublicClient,
+		createWalletClient,
+		http,
+		parseUnits,
+		type Address,
+		parseEther } from 'viem';
+import stakingAbi from './abi/Staking1.abi.json';
+import ScoreAbi from './abi/Score1.abi.json';
 import { fujiC } from './chains';
 import { getStoredAccount, getStoredWalletClient } from './Wallet';
 
@@ -21,6 +26,91 @@ export const publicClient = createPublicClient({
 
 // const walletClient = getStoredWalletClient();
 const clientAddress: Address | null = getStoredAccount();
+
+
+
+// Read-only helpers (Scores  contract) ----------
+
+// this returs tournament data for specific tournament
+export async function getTournamentData(tournamentIndex: number) {
+	const res = await publicClient.readContract({
+		address: SCORES_ADDRESS,
+		abi: ScoreAbi as any,
+		functionName: 'getTournamentData',
+		args: [BigInt(tournamentIndex)],
+	})
+	return res;
+}
+
+
+//returns game data for specific gameId
+export async function getGameData(game_id: number) {
+	const res = await publicClient.readContract({
+		address: SCORES_ADDRESS,
+		abi: ScoreAbi as any,
+		functionName: 'getGameData',
+		args: [BigInt(game_id)],
+	});
+
+	return res;
+}
+
+// returns all the games user participated in (needs user address)
+export async function getUserGames(userAddress: Address): Promise<number[]> {
+	const res = await publicClient.readContract({
+		address: SCORES_ADDRESS,
+		abi: ScoreAbi as any,
+		functionName: "getUserGames",
+		args: [userAddress]
+	});
+	return res as number[];
+}
+
+// ---- write contract functions for tournament/game contract
+// scores saving for each match/game
+export async function saveGameData(
+	_user_ids: number[],
+	_user_wallets: Address[],
+	_user_scores: number[]
+) : Promise<bigint> {
+	const walletClient = getStoredWalletClient();
+	const clientAddress: Address | null = getStoredAccount();
+	if (!walletClient || !clientAddress) {
+		throw new Error("Wallet client or account not available");
+	}
+	const {request, result} = await publicClient.simulateContract({
+		account: clientAddress,
+		address: SCORES_ADDRESS,
+		abi: ScoreAbi,
+		functionName: 'saveGameData',
+		args: [ _user_ids,
+				_user_wallets,
+				_user_scores]
+	});
+	await walletClient.writeContract(request);
+	return(result);
+}
+
+//mints a nft if the minter has participated in the game with the id passed as arg
+export async function mint(gameId: number) {
+	const walletClient = getStoredWalletClient();
+	const clientAddress: Address | null = getStoredAccount();
+	if (!walletClient || !clientAddress) {
+		throw new Error("Wallet client or account not available");
+	}
+	const {request} = await publicClient.simulateContract({
+		account: clientAddress,
+		address: SCORES_ADDRESS,
+		abi: ScoreAbi,
+		functionName: "mint",
+		args: [ BigInt(gameId) ],
+		value: parseEther("0.000006")
+	});
+	await walletClient.writeContract(request);
+}
+
+
+// ------------------- CODE BELLOW IS NOT NEEDED FOR NOW --------------------
 
 // --- helper wrappers ---
 // Read-only helpers (Staking  contract)
@@ -57,56 +147,8 @@ export async function testReturn() {
 	return (res + walletClient);
 }
 
-
-// Read-only helpers (Scores  contract) ----------
-
-export async function getTournamentData(tournamentIndex: number) {
-	const res = await publicClient.readContract({
-		address: SCORES_ADDRESS,
-		abi: ScoreAbi as any,
-		functionName: 'getTournamentData',
-		args: [BigInt(tournamentIndex)],
-	})
-	return res;
-}
-
-
-export async function getGameData(game_id: number) {
-	const res = await publicClient.readContract({
-		address: SCORES_ADDRESS,
-		abi: ScoreAbi as any,
-		functionName: 'getGameData',
-		args: [BigInt(game_id)],
-	});
-
-	return res;
-}
-
 // --- write / payable helpers ---
 
-// scores saving for each match/game
-export async function saveGameData(
-	_user_ids: number[],
-	_user_wallets: Address[],
-	_user_scores: number[]
-) : Promise<bigint> {
-	const walletClient = getStoredWalletClient();
-	const clientAddress: Address | null = getStoredAccount();
-	if (!walletClient || !clientAddress) {
-		throw new Error("Wallet client or account not available");
-	}
-	const {request, result} = await publicClient.simulateContract({
-		account: clientAddress,
-		address: SCORES_ADDRESS,
-		abi: ScoreAbi,
-		functionName: 'saveGameData',
-		args: [ _user_ids,
-				_user_wallets,
-				_user_scores]
-	});
-	await walletClient.writeContract(request);
-	return(result);
-}
 
 
 

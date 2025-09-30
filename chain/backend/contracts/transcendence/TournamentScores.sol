@@ -158,7 +158,7 @@ contract TournamentScores is ERC721URIStorage {
 
 	// returns game data as a struct
 	function getGameData(uint256 game_id) public view returns (game memory g) {
-		if (game_id >= _current_game)
+		if (game_id > _current_game)
 			revert indexOutOfBounds("index of game/match is out of bounds. Max index: ", _current_game);
 		if (game_registry[game_id].game_id != 0)
 			return (game_registry[game_id]);
@@ -166,6 +166,7 @@ contract TournamentScores is ERC721URIStorage {
 			revert indexOutOfBounds("Game data does not exist for this id", game_id);
 	}
 
+	 
 	//returns a tournament with specified idx as a tuple (can be parsed as JSON in frontend)
 	function getTournamentData(uint256 tournamentIndex) public view returns (
 		uint256[8] memory,
@@ -188,5 +189,13 @@ contract TournamentScores is ERC721URIStorage {
 		);
 	}
 
+	// get users games - ids of games user with specific address has participated
+	function getUserGames(address userAddress) public view returns (uint256[] memory gameIds) {
+		require(userAddress != address(0), "Not a valid Address!");
+		uint256[] memory games = _user_games[userAddress];
+		if (games.length == 0)
+			revert indexOutOfBounds("this address has no games associated", 0);
+		return games;
+	}
 
 }
