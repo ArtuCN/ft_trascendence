@@ -16,7 +16,7 @@ $db->exec("CREATE TABLE IF NOT EXISTS user (
     google_id TEXT,
     avatar BLOB,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-
+	last_active DATETIME DEFAULT CURRENT_TIMESTAMP
 )");
 
 //$db->exec("DROP TABLE IF EXISTS tournament");

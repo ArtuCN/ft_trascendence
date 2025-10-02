@@ -14,6 +14,8 @@ import statsRoute from './controllers/stats.js';
 import friendRoute from './controllers/friendship.js';
 import matchRoute from './controllers/match.js';
 import tournamentRoute from './controllers/tournament.js';
+import heartBeatRoute from './controllers/heartBeat.js';
+
 const fastify = Fastify({ logger: true });
 
 // Abilita CORS (per il frontend React o altro)
@@ -21,6 +23,29 @@ await fastify.register(cors, { origin: '*' });
 
 // Configura JWT
 await fastify.register(jwt, { secret: 'your_secret_key' }); // 🔐 usa un valore sicuro in .env
+
+// per preHandler - estrare dati di user da token, senza lookup in database
+fastify.decorate('authenticate', async function (request, reply) {
+  try {
+    const authHeader = request.headers.authorization;
+    if (!authHeader) {
+      return reply.code(401).send({ error: 'Missing Authorization header' });
+    }
+
+    const parts = authHeader.split(' ');
+    if (parts.length !== 2 || parts[0] !== 'Bearer') {
+      return reply.code(401).send({ error: 'Invalid Authorization header format' });
+    }
+
+    const token = parts[1];
+    // verify throws on invalid/expired token
+    const payload = fastify.jwt.verify(token);
+    // attach decoded payload to request for handlers
+    request.user = payload;
+  } catch (err) {
+    return reply.code(401).send({ error: 'Invalid or expired token' });
+  }
+});
 
 // Registra le rotte modulari
 await fastify.register(matchRoute);
@@ -32,6 +57,8 @@ await fastify.register(googleAuthRoute);
 await fastify.register(statsRoute);
 await fastify.register(friendRoute);
 await fastify.register(tournamentRoute);
+await fastify.register(heartBeatRoute);
+
 // Endpoint semplice per debug
 fastify.get('/users', async (request, reply) => {
   try {

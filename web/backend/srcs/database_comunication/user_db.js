@@ -317,3 +317,25 @@ export async function getAllPlayerStats() {
         });
     });
 }
+
+export async function updateUserLastActive(userId, timestamp) {
+  return new Promise((resolve, reject) => {
+    const query = `UPDATE user SET last_active = ? WHERE id = ?`;
+    db.run(query, [timestamp, userId], function (err) {
+      if (err) 
+		return reject(err);
+      resolve(this.changes);
+    });
+  });
+}
+
+export async function getUserLastActive(userId) {
+	return new Promise((resolve, reject) => {
+		const query = `select last_active FROM user WHERE id = ?`;
+		db.get(query, [userId], function (err) {
+			if (err)
+				return reject(err);
+			resolve(row.last_active);
+		});
+	});
+}
