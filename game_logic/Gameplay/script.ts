@@ -84,10 +84,11 @@ ws.onmessage = (event) => {
 		playerGoalsRecived = new Array(nbrPlayer).fill(0);
 		Pebble.applyState(message.ball);
 		startGame();
-		players = [];
-		for (let i = 0; i < nbrPlayer; i++) {
-			players.push(new Player(playerNames[i], i, 12 + i, "vertical"));
-		}
+		const myId = message.side;
+		players = [
+			new Player(myId === 0 ? "You" : playerNames[0], 0, 12, "vertical"),
+			new Player(myId === 1 ? "You" : playerNames[1], 1, 13, "vertical")
+		];
 		draw();
 	}
 	if (message.type === "update_state") {

@@ -134,7 +134,7 @@ export function setupMatchmaking(server) {
 				}
 				else {
 					console.log('Match found!');
-					const opponent = players.find(p => p.id !== player.id);
+					const opponent = players.find(p => p.id === 0);
 					if (opponent) {
 						const roomId = randomUUID();
 						player.room = roomId;
@@ -142,9 +142,9 @@ export function setupMatchmaking(server) {
 						opponent.opponentId = 'aa';
 						player.opponentId = 'bb';
 						startGame();
-						player.socket.send(JSON.stringify({ type: 'match_found', room: roomId, opponentId: opponent.opponentId, ball: ball }));
+						player.socket.send(JSON.stringify({ type: 'match_found', room: roomId, opponentId: opponent.opponentId, side: 1, ball: ball }));
 						ball.vx *= -1;
-						opponent.socket.send(JSON.stringify({ type: 'match_found', room: roomId, opponentId: player.opponentId, ball: ball }));
+						opponent.socket.send(JSON.stringify({ type: 'match_found', room: roomId, opponentId: player.opponentId, side: 0, ball: ball }));
 						waitingPlayer = null;
 						rooms[roomId] = { ball, players: [player, opponent] };
 					}
