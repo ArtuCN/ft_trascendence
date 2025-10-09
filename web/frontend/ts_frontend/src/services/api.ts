@@ -96,6 +96,40 @@ export class ApiService {
     }
     return response;
   }
+
+  async heartbeat(): Promise<void> {
+    const response = await this.makeAuthenticatedRequest('/heartbeat', {
+      method: 'POST',
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || data.message || 'Failed to send heartbeat');
+    }
+  }
+
+  async getHeartbeat(id: string): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/heartbeat/get?id=${encodeURIComponent(id)}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || data.message || 'Failed to get heartbeat');
+    }
+
+    return data;
+  }
+
+
+
 }
+
+
+
+
 
 export const apiService = new ApiService();
