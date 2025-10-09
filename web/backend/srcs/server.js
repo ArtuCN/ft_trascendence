@@ -12,15 +12,17 @@ import tokenRoute from './controllers/token.js';
 import statsRoute from './controllers/stats.js';
 import friendRoute from './controllers/friendship.js';
 
+import { setupMatchmaking } from './controllers/online_match/online_match.js';
+
 const fastify = Fastify({ logger: true });
 
-// Abilita CORS (per il frontend React o altro)
+// Abilita CORS
 await fastify.register(cors, { origin: '*' });
 
 // Configura JWT
 await fastify.register(jwt, { secret: 'your_secret_key' });
 
-// Registra le rotte modulari
+// Rotte modulari
 await fastify.register(loginRoute);
 await fastify.register(registerRoute);
 await fastify.register(logoutRoute);
@@ -28,7 +30,6 @@ await fastify.register(tokenRoute);
 await fastify.register(statsRoute);
 await fastify.register(friendRoute);
 
-// Endpoint semplice per debug
 fastify.get('/users', async (request, reply) => {
   try {
     const result = await getAllUsers();
@@ -39,11 +40,28 @@ fastify.get('/users', async (request, reply) => {
   }
 });
 
-// Avvia il server
-fastify.listen({ port: 3000, host: '0.0.0.0' }, (err, address) => {
-  if (err) {
-    fastify.log.error(err);
-    process.exit(1);
+const wss = setupMatchmaking(fastify.server);
+
+setInterval(() => {
+  wss.clients.forEach((ws) => {
+      if (ws.readyState === ws.OPEN) {
+        console.log('Sending ping to client');
+        console.log('web socket status: ', ws.readyState);
+        ws.send(JSON.stringify({ type: 'ping' }));
+      }
+  });
+}, 10000); // Send a ping every 10 seconds
+
+fastify.server.on('upgrade', (request, socket, head) => {
+  if (request.url === '/ws') {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit('connection', ws, request);
+    });
+  } else {
+    socket.destroy();
   }
-  fastify.log.info(`Server listening at ${address}`);
 });
+
+// Avvia server
+const address = await fastify.listen({ port: 3000, host: '0.0.0.0' });
+fastify.log.info(`Server listening at ${address}`);

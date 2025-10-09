@@ -1,14 +1,11 @@
 import sqlite3 from 'sqlite3';
-import models from '../models/models.js'
 
 const { verbose } = sqlite3;
-import path, { resolve } from 'path';
-import { rejects } from 'assert';
+import path from 'path';
 
 
 const dbPath = path.resolve('/app/data/database.sqlite');
 const db = new (verbose()).Database(dbPath, (err) => {
-
   if (err) {
     console.error('error while opening db:', err);
   } else {

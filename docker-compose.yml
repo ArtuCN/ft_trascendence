@@ -4,10 +4,8 @@ services:
     container_name: nginx
     volumes:
       - ./nginx/conf:/etc/nginx/conf.d:ro
-      - ./nginx/certs/server.crt:/etc/ssl/nginx.crt:ro
-      - ./nginx/certs/server.key:/etc/ssl/nginx.key:ro
+      - ./nginx/certs:/etc/ssl:ro
     ports:
-      - "80:80"
       - "443:443"
     depends_on:
       - frontend
@@ -40,7 +38,7 @@ services:
       - ./web/backend/srcs:/app/srcs
       - ./web/backend/package.json:/app/package.json
       - backend_node_modules:/app/node_modules
-      - shared_db_volume:/app/data
+      - ./web/backend/data:/app/data
     expose:
       - "3000"
     depends_on:

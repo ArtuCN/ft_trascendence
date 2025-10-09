@@ -1,7 +1,7 @@
 import { Player } from './classPlayer.js';
 import { Paddles } from './classPaddles.js';
 import { gameRunning, stopGame, PaddleOrientation, canvas, ctx, cornerWallSize, cornerWallThickness,  } from './variables.js';
-import { nbrPlayer, playerGoals, playerGoalsRecived, showMenu } from '../script.js';
+import { nbrPlayer, playerGoals, playerGoalsRecived, showMenu, ws } from '../script.js';
 import { showVictoryScreen } from '../utilities.js';
 
 export function drawScore(nbrPlayer: number) {
@@ -44,16 +44,21 @@ export class Ball {
 	private ballY: number = canvas.height / 2;
 	private ballSize: number = 12;
 	private speed: number = 4;
-	private vx: number;
-	private vy: number;
-	private lastTouchedPlayer: number = -1; // -1 means no player touched the ball yet
+	private vx: number = 0;
+	private vy: number = 0;
+	private lastTouchedPlayer: number = -1;
+	private online: boolean = false;
+	private isAuthoritative: boolean = false;
 
 	public getBallSpeed(): number {
 		return this.speed;
 	}
 
-	public constructor() {
+	public constructor(online: boolean = false, isAuthoritative: boolean = false) {
+		this.online = online;
+		this.isAuthoritative = isAuthoritative;
 		let angle: number;
+		if (this.online && this.isAuthoritative) return;
 		if (nbrPlayer <= 2) {
 			if (Math.random() < 0.5) {
 				// Right: -π/4 to π/4
@@ -71,6 +76,18 @@ export class Ball {
 	}
 
 	private resetGame(players: Player[]) {
+		if (this.online && this.isAuthoritative) {
+			this.setOnlinePosition(this.ballX, this.ballY, this.vx, this.vy);
+			ws.send(JSON.stringify({
+				type: 'ball_reset',
+				canvas: {
+					width: canvas.width,
+					height: canvas.height
+				}
+			}));
+			return ;
+		}
+
 		this.ballX = canvas.width / 2;
 		this.ballY = canvas.height / 2;
 		this.speed = 4;
@@ -182,6 +199,33 @@ export class Ball {
 		}
 	}
 
+	public moveBallOnline(players: Player[]) {
+		if (!gameRunning ) return;
+		
+		const leftPaddle = players[0].getPaddle();
+		const rightPaddle = players[1].getPaddle();
+		this.checkScore(players);
+		console.log("Sending ball state to server");
+
+		ws.send(JSON.stringify({
+			type: 'ball_update',
+			leftPaddleY: leftPaddle.getInitialPosition(),
+			rightPaddleY: rightPaddle.getInitialPosition(),
+			PaddleLength: leftPaddle.getPaddleLength(),
+			PaddleThickness: leftPaddle.getPaddleThickness(),
+			canvasWidth: canvas.width
+		}));
+			
+			// ws.onmessage = (event) => {
+			// 	const data = JSON.parse(event.data);
+			// 	if (data.type === 'set_ball') {
+			// 		console.log("receive data ball from backend:", data);
+			// 		this.applyState(data);
+			// 	}
+			// };
+
+	}
+
 	public moveBall(players: Player[]) {
 		if (!gameRunning) return;
 
@@ -286,6 +330,32 @@ export class Ball {
 				this.lastTouchedPlayer = 3; // Bottom player touched the ball
 			}
 		}
+	}
+
+	public setOnlinePosition(x?: number, y?: number, vx?: number, vy?: number) {
+		if (x !== undefined) this.ballX = x;
+		if (y !== undefined) this.ballY = y;
+		if (vx !== undefined) this.vx = vx;
+		if (vy !== undefined) this.vy = vy;
+	}
+
+	public getState() {
+		return {
+			x: this.ballX,
+			y: this.ballY,
+			vx: this.vx,
+			vy: this.vy,
+			lastTouchedPlayer: this.lastTouchedPlayer
+		};
+	}
+
+	public applyState(state: { ballX: number; ballY: number; vx: number; vy: number; lastTouchedPlayer: number }) {
+		this.ballX = state.ballX;
+		this.ballY = state.ballY;
+		this.vx = state.vx;
+		this.vy = state.vy;
+		this.lastTouchedPlayer = state.lastTouchedPlayer;
+		console.log("Ball state applied:");
 	}
 
 	private reflect(normalX: number, normalY: number) {
@@ -422,6 +492,14 @@ export class Ball {
 	}
 
 	public drawBall() {
+		if (this.online && !this.isAuthoritative){
+			ws.onmessage = (event) => {
+				const data = JSON.parse(event.data);
+				if (data.type === 'ball_update') {
+					this.applyState(data);
+				}
+			};
+		}
 		ctx.beginPath();
 		ctx.arc(this.ballX, this.ballY, this.ballSize / 2, 0, Math.PI * 2);
 		ctx.fillStyle = "white";
