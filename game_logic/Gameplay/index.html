@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pong Game</title>
+  <style>
+    html {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(to bottom, #a2d4f5, #e0f7ff);
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;     /* centers content horizontally */
+      justify-content: flex-start;
+      font-family: 'Segoe UI', sans-serif;
+      box-sizing: border-box;
+    }
+
+    h2 {
+      text-align: center;
+      color: #000000;
+    }
+
+    /* Title styling */
+    #PongGame {
+      text-align: center;
+      padding: 30px 0;
+      margin: 0;
+      font-size: 48px;
+      color: #004d66;
+      text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.6);
+    }
+
+    /* Centered menu buttons */
+    #menu-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    
+      width: 100%;
+      box-sizing: border-box;
+      padding: 0 20px;       /* optional padding for side spacing */
+    }
+
+    /* Glossy, round, Aero-style buttons */
+    button {
+      width: 200px;
+      height: 50px;
+      font-size: 18px;
+      font-weight: bold;
+      padding: 10px 20px;
+      margin: 10px;
+      border: none;
+      border-radius: 25px;
+      background: linear-gradient(to bottom, #5dd39e, #3fbf7f);
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      background: linear-gradient(to bottom, #76e7b6, #4fd18d);
+      transform: translateY(-2px);
+    }
+
+    /* Canvas container */
+    #canvas-container {
+      width: 100%;
+      max-width: 900px;
+      aspect-ratio: 3 / 2;
+      margin: 0 auto;            /* Center horizontally */
+      display: none;
+      justify-content: center;   /* Just in case of flex children */
+      align-items: center;
+    }
+
+    canvas {
+      width: 100%;
+      height: auto;
+      background: black;
+      border: 4px solid white;
+      display: block;
+    }
+
+  .bracket {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 40px;
+  }
+  
+  .column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+  
+  .match-wrapper {
+    background-color: #1e293b;
+    border: 2px solid #334155;
+    border-radius: 6px;
+    padding: 10px;
+    min-width: 180px;
+    text-align: center;
+  }
+  
+  .match-label {
+    font-weight: bold;
+    color: #38bdf8;
+    margin-bottom: 5px;
+  }
+  
+  .match {
+    color: white;
+  }
+  
+  .player {
+    font-weight: bold;
+    padding: 5px 0;
+  }
+  
+  .vs {
+    color: #94a3b8;
+    font-style: italic;
+  }
+  
+  .winner {
+    color: #22c55e;
+    font-size: 0.85em;
+    margin-top: 5px;
+  }
+  
+  .playing-indicator {
+    color: #3b82f6;
+    font-size: 0.85em;
+    margin-top: 4px;
+  }
+  
+  .round-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #38bdf8;
+    margin-bottom: 10px;
+  }
+  
+  .center {
+    margin: 0 20px;
+  }
+
+  </style>
+</head>
+  <body>
+  <h1 id="PongGame">Pong Game</h1>
+
+  <div id="menu-container">
+    <button id="LocalPlay" value="1">Local</button>
+    <button id="RemotePlay" value="2">Remote</button>
+    <button id="Play2P" value="2" style="display: none;">2 Player</button>
+    <button id="Play4P" value="4" style="display: none;">4 Player</button>
+    <button id="PlayAI" value="1" style="display: none;">VS Bot</button>
+    <button id="Tournament" style="display: none;">Tournament</button>
+    <button id="returnMenu" style="display: none;">Main Menu</button>
+    <label for="nbrPlayer" style="display: none;">Number of Players:</label>
+    <select id="nbrPlayer" style="display: none;">
+      <option value="4">4</option>
+      <option value="8">8</option>
+    </select>
+    <button id="StartTournament" style="display:none;">Start Tournament</button>
+    <button id="btnBackToMenu" style="display:none;">Back to Menu</button>
+    <div id="bracket-container" style="display:none; margin-bottom: 20px;"></div>
+    <button id="PlayGame" style="display:none;">Play Game</button>
+    
+    <div id="canvas-container">
+      <canvas id="gameCanvas" width="900" height="600"></canvas>
+    </div>
+  </div>
+
+  <script type="module" src="script.js" defer></script>
+</body>
+
+</html>

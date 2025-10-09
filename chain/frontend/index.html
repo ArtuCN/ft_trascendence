@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Wagmi</title>
+  </head>
+  <body>
+	<h1> test </h1>
+    <div id="root"></div>
+	<button id="connectBtn">Connect Wallet</button>
+	<div id="accountInfo"></div>
+	<button id="testBtn" type="button">test contract</button>
+
+	<!-- Stake -->
+	<input id="stakeTournamentId" placeholder="Tournament ID" type="number" />
+	<input id="stakeUserId" placeholder="User ID" type="number" />
+	<input id="stakeUsername" placeholder="Username" type="text" />
+	<input id="stakeUserWallet" placeholder="User Wallet" type="text" />
+	<input id="stakeValueEth" placeholder="Stake (ETH)" type="text" />
+	<button id="stakeBtn">Stake</button>
+	<div/>
+
+	<!-- Start Payable Tournament -->
+	<input id="startNofPlayers" placeholder="Number of Players" type="number" />
+	<input id="startUserId" placeholder="User ID" type="number" />
+	<input id="startUsername" placeholder="Username" type="text" />
+	<input id="startUserWallet" placeholder="User Wallet" type="text" />
+	<input id="startMinStakeEth" placeholder="Min Stake (ETH)" type="text" />
+	<button id="startBtn">Start Tournament</button>
+	<div/>
+
+	<!-- get tour data-->
+	<input id="tournamentDataId" placeholder="Tournament ID" type="number" />
+	<button id="dataBtn">get tournament data</button>
+	<div/>
+
+
+
+	<!--game data-->
+	<input id="gameUserIds" placeholder="User IDs" type="text" />
+	<input id="gameUserWallets" placeholder="user wallets" type="text" />
+	<input id="gameUserScores" placeholder="user scores" type="text" />
+	<button id="gameBtn">game start</button>
+	<div/>
+
+	<div/>
+	<input id="gameIdInput" placeholder="game id" type="number" />
+	<button id="loadGameBtn">game load</button>
+	<button id="mintGameBtn">mint game</button>
+	<div/>
+	<button id="userGamesBtn">get users games</button>
+
+	<div/>
+	
+	<div id="infoBlock">
+	</div>
+	<script type="module" src="./src/App.ts"></script>
+  </body>
+</html>

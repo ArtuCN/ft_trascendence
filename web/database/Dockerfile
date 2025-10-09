@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y \
 RUN docker-php-ext-install pdo pdo_sqlite
 
 COPY app/ /var/www/app
-RUN chmod -R 777 /var/www/app/data
+RUN chmod -R 777 /var/www/app
 
 WORKDIR /var/www/app
 

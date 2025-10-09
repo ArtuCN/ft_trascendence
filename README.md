@@ -1,3 +1,0 @@
-# FT_TRANSCENDENCE
-
-### placeholder
