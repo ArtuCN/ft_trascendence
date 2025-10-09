@@ -48,7 +48,6 @@ function MoveBallOnline(roomId, data) {
 		if (ball.lastTouchedPlayer == -1)
 			ball.speed = 7;
 		else {
-			ball.speed = data.speed;
 			ball.speed += 0.1;
 		}
 		ball.ballX = 20 + data.paddleThickness + data.ballSize / 2;
@@ -63,7 +62,6 @@ function MoveBallOnline(roomId, data) {
 		if (ball.lastTouchedPlayer == -1)
 			ball.speed = 7;
 		else {
-			ball.speed = data.speed;
 			ball.speed += 0.1;
 		}
 		ball.ballX = canvas.width - 20 - data.paddleThickness - data.ballSize / 2;
@@ -71,12 +69,12 @@ function MoveBallOnline(roomId, data) {
 		ball.lastTouchedPlayer = 1;
 	}
 	const roomPlayers = rooms[roomId].players;
-		console.log("send data ball to player:", roomPlayers[0].id, ball);
+	console.log("send data ball to player:", roomPlayers[0].id, ball);
+	try {
 		roomPlayers[0].socket.send(JSON.stringify({
 			type: 'set_ball',
 			ballX: ball.ballX,
 			ballY: ball.ballY,
-			speed: ball.speed,
 			vx: ball.vx,
 			vy: ball.vy,
 			lastTouchedPlayer: ball.lastTouchedPlayer
@@ -86,10 +84,14 @@ function MoveBallOnline(roomId, data) {
 			type: 'set_ball',
 			ballX: ball.ballX,
 			ballY: ball.ballY,
-			vx: ball.vx * -1,
+			vx: ball.vx,
 			vy: ball.vy,
 			lastTouchedPlayer: ball.lastTouchedPlayer
 		}));
+	}
+	catch (error) {
+		console.error("Error sending ball data:", error);
+	}
 }
 
 function startGame() {
@@ -143,12 +145,8 @@ export function setupMatchmaking(server) {
 						player.socket.send(JSON.stringify({ type: 'match_found', room: roomId, opponentId: opponent.opponentId, ball: ball }));
 						ball.vx *= -1;
 						opponent.socket.send(JSON.stringify({ type: 'match_found', room: roomId, opponentId: player.opponentId, ball: ball }));
-						console.log(`Game started in room: ${roomId}`);
-						console.log('web socket status: ', ws.readyState);
 						waitingPlayer = null;
 						rooms[roomId] = { ball, players: [player, opponent] };
-						console.log('Rooms ID:', roomId);
-						console.log('Current rooms:', Object.keys(rooms));
 					}
 				}
 			}

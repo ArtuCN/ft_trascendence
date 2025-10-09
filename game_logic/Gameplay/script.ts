@@ -73,6 +73,7 @@ ws.onopen = () => {
 
 ws.onmessage = (event) => {
 	const message = JSON.parse(event.data);
+	console.log("Received message from server script:", message.data);
 	if (message.type === "waiting") {
 		console.log("Waiting for an opponent...");
 	}
@@ -95,11 +96,7 @@ ws.onmessage = (event) => {
 		playerGoalsRecived = newPlayerGoalsRecived;
 		draw();
 	}
-	if (message.type === "set_ball"){
-		console.log("Setting ball state from server");
-		Pebble.applyState(message);
-	}
-	};
+};
 
 ws.onclose = () => {
   console.log('WebSocket chiuso');

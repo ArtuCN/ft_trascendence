@@ -177,6 +177,9 @@ export class Paddles {
 						this.initialPosition -= this.speed;
 					}
 				}
+				else if (message.type === "set_ball") {
+					Pebble.applyState(message);
+				}
 			if (this.initialPosition > (canvas.height - this.paddleLength))
 				this.initialPosition = canvas.height - this.paddleLength;
 			if (this.initialPosition < 0)

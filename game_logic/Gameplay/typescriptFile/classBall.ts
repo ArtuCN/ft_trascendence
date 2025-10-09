@@ -205,7 +205,6 @@ export class Ball {
 		const leftPaddle = players[0].getPaddle();
 		const rightPaddle = players[1].getPaddle();
 		this.checkScore(players);
-		console.log("Sending ball state to server");
 
 		ws.send(JSON.stringify({
 			type: 'ball_update',
@@ -215,15 +214,6 @@ export class Ball {
 			PaddleThickness: leftPaddle.getPaddleThickness(),
 			canvasWidth: canvas.width
 		}));
-			
-			// ws.onmessage = (event) => {
-			// 	const data = JSON.parse(event.data);
-			// 	if (data.type === 'set_ball') {
-			// 		console.log("receive data ball from backend:", data);
-			// 		this.applyState(data);
-			// 	}
-			// };
-
 	}
 
 	public moveBall(players: Player[]) {
@@ -282,7 +272,7 @@ export class Ball {
 					this.speed += 0.1;
 				this.ballX = 20 + leftPaddle.getPaddleThickness() + this.ballSize / 2;
 				this.calculateBounce(leftPaddle, "vertical");
-				this.lastTouchedPlayer = 0; // Left player touched the ball
+				this.lastTouchedPlayer = 0;
 			}
 
 			const rightPaddle = players[1].getPaddle();
@@ -492,14 +482,6 @@ export class Ball {
 	}
 
 	public drawBall() {
-		if (this.online && !this.isAuthoritative){
-			ws.onmessage = (event) => {
-				const data = JSON.parse(event.data);
-				if (data.type === 'ball_update') {
-					this.applyState(data);
-				}
-			};
-		}
 		ctx.beginPath();
 		ctx.arc(this.ballX, this.ballY, this.ballSize / 2, 0, Math.PI * 2);
 		ctx.fillStyle = "white";
