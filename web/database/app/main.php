@@ -15,7 +15,7 @@ $db->exec("CREATE TABLE IF NOT EXISTS user (
     is_admin BOOLEAN DEFAULT FALSE, 
     google_id TEXT,
     avatar BLOB,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 	last_active DATETIME DEFAULT CURRENT_TIMESTAMP
 )");
 
