@@ -5,8 +5,8 @@ import { sendBotData } from "../utilities.js";
 export class Paddles {
 	private id: number;
 	private orientation: PaddleOrientation;
-	private paddleLength: number;
-	private paddleThickness: number;
+	private paddleLength: number = 60;
+	private paddleThickness: number = 20;
 	private speed: number = 6;
 	private initialPosition: number;
 	private botKey: string = "";
@@ -17,12 +17,8 @@ export class Paddles {
 		this.id = i;
 		this.orientation = orientation;
 		if (orientation === "vertical") {
-			this.paddleLength = 60;
-			this.paddleThickness = 20;
 			this.initialPosition = canvas.height / 2 - this.paddleLength / 2;
 		} else {
-			this.paddleLength = 60;
-			this.paddleThickness = 20;
 			this.initialPosition = canvas.width / 2 - this.paddleLength / 2;
 		}
 	}
@@ -58,7 +54,11 @@ export class Paddles {
 			this.initialPosition = canvas.width / 2 - this.paddleLength / 2;
 	}
 
-		public startBotPolling() {
+	private setPosition(pos: number) {
+		this.initialPosition = pos;
+	}
+
+	public startBotPolling() {
 		if (this.botPollingId !== null) {
 			clearInterval(this.botPollingId);
 		}
@@ -151,15 +151,16 @@ export class Paddles {
 		}
 	}
 
-	private twoPlayerOnlineMode() {
-		if (this.id === 0 && this.orientation === "vertical") {
+	private twoPlayerOnlineMode(myId?: number) {
+		if (myId === this.id) {
+			if (this.id === 0 && this.orientation === "vertical") {
 			if ((keysPressed["s"] || keysPressed["S"]) && this.initialPosition <= (canvas.height - this.paddleLength)) {
 				this.initialPosition += this.speed;
-				ws.send(JSON.stringify({ type: "paddleMove", playerId: this.id, key: "s" }));
+				ws.send(JSON.stringify({ type: "paddleMove", playerId: this.id, key: "s", pos: this.initialPosition }));
 			}
 			if ((keysPressed["w"] || keysPressed["W"]) && this.initialPosition >= 0) {
 				this.initialPosition -= this.speed;
-				ws.send(JSON.stringify({ type: "paddleMove", playerId: this.id, key: "w" }));
+				ws.send(JSON.stringify({ type: "paddleMove", playerId: this.id, key: "w", pos: this.initialPosition }));
 			}
 			if (this.initialPosition > (canvas.height - this.paddleLength))
 				this.initialPosition = canvas.height - this.paddleLength;
@@ -167,31 +168,26 @@ export class Paddles {
 				this.initialPosition = 0;
 		}
 		if (this.id === 1 && this.orientation === "vertical") {
-			ws.onmessage = (event) => {
-				const message = JSON.parse(event.data);
-				if (message.type === "opponentMove" && message.playerId === this.id) {
-					if (message.key === "ArrowDown" && this.initialPosition <= (canvas.height - this.paddleLength)) {
-						this.initialPosition += this.speed;
-					}
-					if (message.key === "ArrowUp" && this.initialPosition >= 0) {
-						this.initialPosition -= this.speed;
-					}
-				}
-				else if (message.type === "set_ball") {
-					Pebble.applyState(message);
-				}
+			if ((keysPressed["s"] || keysPressed["S"]) && this.initialPosition <= (canvas.height - this.paddleLength)) {
+				this.initialPosition += this.speed;
+				ws.send(JSON.stringify({ type: "paddleMove", playerId: this.id, key: "ArrowDown", pos: this.initialPosition }));
+			}
+			if ((keysPressed["w"] || keysPressed["W"]) && this.initialPosition >= 0) {
+				this.initialPosition -= this.speed;
+				ws.send(JSON.stringify({ type: "paddleMove", playerId: this.id, key: "ArrowUp", pos: this.initialPosition }));
+			}
 			if (this.initialPosition > (canvas.height - this.paddleLength))
 				this.initialPosition = canvas.height - this.paddleLength;
 			if (this.initialPosition < 0)
 				this.initialPosition = 0;
 			}
 		}
-	}
+		}
 
-	public  movePaddles() {
+	public  movePaddles(myId?: number) {
 		if (online) {
 			if (nbrPlayer === 2)
-				this.twoPlayerOnlineMode();
+				this.twoPlayerOnlineMode(myId);
 		} else {
 			if (nbrPlayer === 1)
 				this.botMode();
@@ -200,6 +196,18 @@ export class Paddles {
 			else if (nbrPlayer == 4)
 				this.fourPlayerMode();
 		}
+	}
+
+	public moveWithKey(key: string) {
+		if (key === "ArrowUp" || key === "w") {
+			this.initialPosition -= this.speed;
+		} else if (key === "ArrowDown" || key === "s") {
+			this.initialPosition += this.speed;
+		}
+		if (this.initialPosition > (canvas.height - this.paddleLength))
+				this.initialPosition = canvas.height - this.paddleLength;
+		if (this.initialPosition < 0)
+			this.initialPosition = 0;
 	}
 
 	public drawPaddles() {

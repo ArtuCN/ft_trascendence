@@ -75,7 +75,7 @@ export class Ball {
 		this.vy = this.speed * Math.sin(angle);
 	}
 
-	private resetGame(players: Player[]) {
+	public resetGame(players: Player[]) {
 		if (this.online && this.isAuthoritative) {
 			this.setOnlinePosition(this.ballX, this.ballY, this.vx, this.vy);
 			ws.send(JSON.stringify({
@@ -111,6 +111,7 @@ export class Ball {
 	}
 
 	private checkScore(players: Player[]) {
+		if (this.online && this.isAuthoritative) return;
 		// Left goal
 		if (this.ballX < 0) {
 			if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
@@ -205,14 +206,15 @@ export class Ball {
 		const leftPaddle = players[0].getPaddle();
 		const rightPaddle = players[1].getPaddle();
 		this.checkScore(players);
-
+	
 		ws.send(JSON.stringify({
 			type: 'ball_update',
 			leftPaddleY: leftPaddle.getInitialPosition(),
 			rightPaddleY: rightPaddle.getInitialPosition(),
 			PaddleLength: leftPaddle.getPaddleLength(),
 			PaddleThickness: leftPaddle.getPaddleThickness(),
-			canvasWidth: canvas.width
+			canvasWidth: canvas.width,
+			canvasHeight: canvas.height,
 		}));
 	}
 

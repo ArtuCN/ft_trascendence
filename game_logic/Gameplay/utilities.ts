@@ -261,6 +261,7 @@ export function showVictoryScreen(winner: Player) {
     ctx.fillStyle = "white";
     ctx.font = "48px Arial";
     ctx.textAlign = "center";
+    console.log(winner.getNameTag());
     ctx.fillText(`🏆` + winner.getNameTag() + ` Wins 🏆`, canvas.width / 2, canvas.height / 2);
 
     const btnBack = document.getElementById("btnBackToMenu") as HTMLButtonElement;

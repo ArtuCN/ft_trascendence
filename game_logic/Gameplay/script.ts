@@ -1,7 +1,7 @@
 import { gameRunning, stopGame, startGame, canvas, ctx, canvas_container, bracketContainer } from "./typescriptFile/variables.js";
 import { Player } from "./typescriptFile/classPlayer.js";
 import { Ball, drawScore } from "./typescriptFile/classBall.js";
-import { resetCanvas, generateBracket, renderBracket, drawCornerWalls, drawMiddleLine, clonePlayer, sendMatchData, sendTournamentData } from "./utilities.js";
+import { resetCanvas, generateBracket, renderBracket, drawCornerWalls, drawMiddleLine, clonePlayer, sendMatchData, sendTournamentData, showVictoryScreen } from "./utilities.js";
 
 const buttonLocalPlay = document.getElementById("LocalPlay") as HTMLButtonElement;
 const buttonRemotePlay = document.getElementById("RemotePlay") as HTMLButtonElement;
@@ -54,7 +54,7 @@ export let animationFrameId: number | null = null;
 export let online: boolean = false;
 
 export const ws = new WebSocket("wss://192.168.1.28/ws");
-
+let myId: number;
 ws.onopen = () => {
 	console.log("WebSocket connection established");
 	button2PRemote.addEventListener("click", () => {
@@ -73,29 +73,46 @@ ws.onopen = () => {
 
 ws.onmessage = (event) => {
 	const message = JSON.parse(event.data);
-	console.log("Received message from server script:", message.data);
 	if (message.type === "waiting") {
 		console.log("Waiting for an opponent...");
 	}
 	if (message.type === "match_found") {
-		const playerNames: string[] = message.opponentId;
+		const playerNames: string = message.opponentName;
 		nbrPlayer = 2;
 		playerGoals = new Array(nbrPlayer).fill(0);
 		playerGoalsRecived = new Array(nbrPlayer).fill(0);
 		Pebble.applyState(message.ball);
 		startGame();
-		const myId = message.side;
+		myId = message.id;
 		players = [
-			new Player(myId === 0 ? "You" : playerNames[0], 0, 12, "vertical"),
-			new Player(myId === 1 ? "You" : playerNames[1], 1, 13, "vertical")
+			new Player(myId === 0 ? "You" : playerNames, 0, 12, "vertical"),
+			new Player(myId === 1 ? "You" : playerNames, 1, 13, "vertical")
 		];
-		draw();
+		draw(myId);
 	}
 	if (message.type === "update_state") {
 		const { playerGoals: newPlayerGoals, playerGoalsRecived: newPlayerGoalsRecived } = message;
 		playerGoals = newPlayerGoals;
 		playerGoalsRecived = newPlayerGoalsRecived;
 		draw();
+	}
+	if (message.type === "opponentMove") {
+		if (message.playerId !== myId) {
+			players[message.playerId].getPaddle().moveWithKey(message.key);
+		}
+	}
+	if (message.type === "set_ball") {
+		Pebble.applyState(message);
+	}
+	if (message.type === 'goal') {
+		playerGoals[0] = message.score[0];
+		playerGoals[1] = message.score[1];
+		// Reset posizione palla, animazione, ecc.
+		Pebble.resetGame(players);
+		drawScore(nbrPlayer);
+	}
+	if (message.type === 'victory') {
+		showVictoryScreen(players[message.winner]);
 	}
 };
 
@@ -131,7 +148,6 @@ function resetBracket() {
 }
 
 export function advanceWinner(winner: Player) {
-	console.log(`player Goals: `, playerGoals);
 	if (currentRound === "quarterfinals") {
 		quarterfinals[currentMatchIndex].matchWinner = winner;
 		quarterfinals[currentMatchIndex].users_goal = playerGoals;
@@ -215,7 +231,7 @@ export function showMenu(winner: Player) {
 	}
 }
 
-function draw() {
+function draw(myId?: number) {
 	if (!gameRunning)
 		return;
 
@@ -232,11 +248,11 @@ function draw() {
 		Pebble.drawBall();
 	}
 	for (const player of players) {
-		player.getPaddle().movePaddles();
+		player.getPaddle().movePaddles(myId);
 		player.getPaddle().drawPaddles();
 	}
 	drawScore(nbrPlayer);
-	animationFrameId = requestAnimationFrame(draw);
+	animationFrameId = requestAnimationFrame(() => draw(myId));
 }
 
 function drawTournament() {
