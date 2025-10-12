@@ -98,9 +98,9 @@ export async function add_friendship(id1, id2)
 async function get_friends_by_user_db(id1) {
     return new Promise((resolve, reject) => {
         const query = `
-        SELECT id_user2
+        SELECT id_user_2
         FROM friendship
-        WHERE id_user1 = ?
+        WHERE id_user_1 = ?
         `;
 
         db.all(query, [id1], (err, rows) => {
@@ -108,7 +108,7 @@ async function get_friends_by_user_db(id1) {
                 console.error('Error while fetching friends:', err);
                 reject(err);
             } else {
-                resolve(rows.map(row => row.id_user2));
+                resolve(rows.map(row => row.id_user_2));
             }
         });
     });

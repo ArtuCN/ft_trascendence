@@ -58,20 +58,7 @@ export default async function (fastify, opts) {
             return reply.code(500).send({ error: 'Server error: ' + error.message });
         }
     });
-    fastify.get('/friends', async (request, reply) => {
-        try {
-            const { id } = request.query;
-            if (!id) {
-                return reply.code(400).send({ error: 'Missing id' });
-            }
 
-            const users = await get_friends_by_user(Number(id));
-            return reply.send(users);
-        } catch (error) {
-            console.error(error);
-            return reply.code(500).send({ error: 'Server error: ' + error.message });
-        }
-    });
     fastify.get('/allfriendships', async (request, reply) => {
         try {
 

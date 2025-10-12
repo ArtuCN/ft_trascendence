@@ -69,8 +69,8 @@ export class AuthState {
       this.notifyListeners();
       
       const response = await apiService.login({
-        username: email,
-        password
+        mail: email,
+        psw: password
       });
       
       apiService.saveToken(response.token);

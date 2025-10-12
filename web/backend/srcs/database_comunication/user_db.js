@@ -64,7 +64,11 @@ export function insertUser(user) {
               console.error('Error while creating player stats:', err2);
               reject(err2);
             } else {
-              resolve({ id: newUserId });
+              resolve({ 
+                id: newUserId,
+                username: user.username,
+                mail: user.mail
+              });
             }
           });
         }
@@ -119,7 +123,7 @@ export function getUserById(id) {
         console.error('Error during SELECT by id:', err);
         reject(err);
       } else {
-        resolve(rows);
+        resolve(rows.length > 0 ? rows[0] : null);
       }
     });
   });
@@ -130,13 +134,62 @@ export function getUserById(id) {
 // -----------------------------
 export function getStatsById(id) {
   return new Promise((resolve, reject) => {
-    db.all('SELECT * FROM player_all_time_stats WHERE id_player = ?', [id], (err, rows) => {
+    // Get base stats from player_all_time_stats
+    const statsQuery = 'SELECT * FROM player_all_time_stats WHERE id_player = ?';
+    
+    db.get(statsQuery, [id], (err, statsRow) => {
       if (err) {
         console.error('Error during SELECT by id of stats:', err);
         reject(err);
-      } else {
-        resolve(rows);
+        return;
       }
+      
+      // Get matches count
+      const matchesQuery = 'SELECT COUNT(*) as count FROM player_match_stats WHERE id_user = ?';
+      
+      db.get(matchesQuery, [id], (err2, matchesRow) => {
+        if (err2) {
+          console.error('Error counting matches:', err2);
+          // Return basic stats even if count fails
+          resolve(statsRow ? [statsRow] : []);
+          return;
+        }
+        
+        // Get wins count (goal_scored > goal_taken)
+        const winsQuery = 'SELECT COUNT(*) as count FROM player_match_stats WHERE id_user = ? AND goal_scored > goal_taken';
+        
+        db.get(winsQuery, [id], (err3, winsRow) => {
+          if (err3) {
+            console.error('Error counting wins:', err3);
+            resolve(statsRow ? [statsRow] : []);
+            return;
+          }
+          
+          // Get losses count (goal_scored < goal_taken)
+          const lossesQuery = 'SELECT COUNT(*) as count FROM player_match_stats WHERE id_user = ? AND goal_scored < goal_taken';
+          
+          db.get(lossesQuery, [id], (err4, lossesRow) => {
+            if (err4) {
+              console.error('Error counting losses:', err4);
+              resolve(statsRow ? [statsRow] : []);
+              return;
+            }
+            
+            // Combine all stats
+            const combinedStats = {
+              id_player: id,
+              goal_scored: statsRow?.goal_scored || 0,
+              goal_taken: statsRow?.goal_taken || 0,
+              tournament_won: statsRow?.tournament_won || 0,
+              matches_played: matchesRow?.count || 0,
+              matches_won: winsRow?.count || 0,
+              matches_lost: lossesRow?.count || 0
+            };
+            
+            resolve([combinedStats]);
+          });
+        });
+      });
     });
   });
 }

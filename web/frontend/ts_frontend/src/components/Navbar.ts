@@ -75,7 +75,7 @@ export class Navbar {
     const profileButton = createButton(
       'Profilo',
       'text-white px-3 py-2 rounded transition-all focus:outline-none w-full text-center',
-      () => this.profileModal.show()
+      async () => await this.profileModal.show()
     );
     profileButton.style.backgroundColor = '#E67923';
     profileButton.addEventListener('mouseenter', () => {
@@ -94,7 +94,7 @@ export class Navbar {
     const socialButton = createButton(
       'Social',
       'text-white px-3 py-2 rounded-md transition-all w-full text-center bg-orange-500 hover:bg-orange-600 focus:outline-none',
-      () => this.socialModal.show()
+      async () => await this.socialModal.show()
     );
 
     const logoutButton = createButton(

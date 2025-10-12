@@ -2,6 +2,8 @@ import { createElement, createButton } from '../utils/dom.js';
 import { authState } from '../state/auth.js';
 import { Stats } from '../types/index.js';
 import { ProfileImageUpload } from './ProfileImageUpload.js';
+import { apiService } from '../services/api.js';
+import { blockchainService } from '../services/blockchainService.js';
 
 const COLORS = {
   primary: '#E67923',
@@ -12,12 +14,53 @@ const COLORS = {
 export class ProfileModal {
   private isVisible: boolean = false;
   private modalElement?: HTMLElement;
+  private walletButtonElement?: HTMLElement;
+  private walletAddressElement?: HTMLElement;
+  private unsubscribeWallet?: () => void;
 
-  show(stats?: Stats): void {
+  async show(stats?: Stats): Promise<void> {
     if (this.isVisible) return;
     
     this.isVisible = true;
-    this.modalElement = this.createModal(stats);
+    
+    // Carica le statistiche reali dal backend se non fornite
+    let playerStats = stats;
+    if (!playerStats) {
+      const { user } = authState.getState();
+      if (user?.id) {
+        try {
+          const backendStats = await apiService.getStats(Number(user.id));
+          
+          // Mappa i dati dal backend al formato atteso dal frontend
+          if (backendStats && Array.isArray(backendStats) && backendStats.length > 0) {
+            const stat = backendStats[0];
+            playerStats = {
+              matchesPlayed: 0, // TODO: calcolare dal database match
+              matchesWon: 0,    // TODO: calcolare dal database match
+              matchesLost: 0,   // TODO: calcolare dal database match
+              goalsScored: stat.goal_scored || 0,
+              tournamentsWon: stat.tournament_won || 0,
+              rank: 0 // TODO: calcolare ranking
+            };
+          } else {
+            throw new Error('No stats found');
+          }
+        } catch (error) {
+          console.error('Errore nel caricamento delle statistiche:', error);
+          // Usa stats di default in caso di errore
+          playerStats = {
+            matchesPlayed: 0,
+            matchesWon: 0,
+            matchesLost: 0,
+            goalsScored: 0,
+            tournamentsWon: 0,
+            rank: 0
+          };
+        }
+      }
+    }
+    
+    this.modalElement = this.createModal(playerStats);
     document.body.appendChild(this.modalElement);
   }
 
@@ -33,12 +76,12 @@ export class ProfileModal {
     const { user } = authState.getState();
     
     const defaultStats: Stats = {
-      matchesPlayed: 10,
-      matchesWon: 5,
-      matchesLost: 5,
-      goalsScored: 20,
-      tournamentsWon: 2,
-      rank: 1
+      matchesPlayed: 0,
+      matchesWon: 0,
+      matchesLost: 0,
+      goalsScored: 0,
+      tournamentsWon: 0,
+      rank: 0
     };
 
     const playerStats = stats || defaultStats;
@@ -114,23 +157,58 @@ export class ProfileModal {
     });
 
     const walletContainer = createElement('div', {
-      className: 'flex items-center'
+      className: 'flex items-center gap-2'
     });
 
     const walletLabel = createElement('span', {
-      className: 'text-sm font-medium mr-2',
+      className: 'text-sm font-medium',
       innerHTML: '<strong>Wallet:</strong>'
     });
 
-    const walletButton = createButton(
-      'Collega Wallet',
-      'text-white px-3 py-1 rounded text-sm hover:opacity-90 transition-opacity focus:outline-none',
-      () => alert('Collega Wallet')
-    );
-    walletButton.style.backgroundColor = COLORS.primary;
+    // Check wallet state
+    const walletState = blockchainService.getWalletState();
+    
+    if (walletState.isConnected && walletState.address) {
+      // Show wallet address and disconnect button
+      this.walletAddressElement = createElement('span', {
+        className: 'text-xs font-mono bg-gray-700 px-2 py-1 rounded',
+        innerHTML: blockchainService.formatAddress(walletState.address)
+      });
+      
+      const disconnectButton = createButton(
+        '✕',
+        'text-red-400 hover:text-red-300 px-2 py-1 text-sm transition-colors focus:outline-none',
+        async () => {
+          blockchainService.disconnect();
+          this.hide();
+          await this.show(stats);
+        }
+      );
+      
+      const viewGamesButton = createButton(
+        '📊 My Games',
+        'text-white px-3 py-1 rounded text-sm hover:opacity-90 transition-opacity focus:outline-none ml-2',
+        async () => this.showUserGames(walletState.address!)
+      );
+      viewGamesButton.style.backgroundColor = '#10B981'; // green
+      
+      walletContainer.appendChild(walletLabel);
+      walletContainer.appendChild(this.walletAddressElement);
+      walletContainer.appendChild(disconnectButton);
+      walletContainer.appendChild(viewGamesButton);
+    } else {
+      // Show connect button
+      this.walletButtonElement = createButton(
+        blockchainService.isMetaMaskInstalled() ? '🦊 Connect MetaMask' : '⚠️ Install MetaMask',
+        'text-white px-3 py-1 rounded text-sm hover:opacity-90 transition-opacity focus:outline-none',
+        async () => this.handleWalletConnect()
+      );
+      this.walletButtonElement.style.backgroundColor = blockchainService.isMetaMaskInstalled() ? COLORS.primary : '#6B7280';
+      
+      walletContainer.appendChild(walletLabel);
+      walletContainer.appendChild(this.walletButtonElement);
+    }
 
-    walletContainer.appendChild(walletLabel);
-    walletContainer.appendChild(walletButton);
     walletDiv.appendChild(walletContainer);
 
     infoDiv.appendChild(mailDiv);
@@ -360,7 +438,52 @@ export class ProfileModal {
     return overlay;
   }
 
+  private async handleWalletConnect(): Promise<void> {
+    if (!blockchainService.isMetaMaskInstalled()) {
+      alert('Please install MetaMask to use blockchain features!\nVisit: https://metamask.io');
+      return;
+    }
+
+    const result = await blockchainService.connect();
+    
+    if (result.success) {
+      // Refresh modal to show connected state
+      this.hide();
+      await this.show();
+    } else {
+      alert(`Failed to connect wallet: ${result.error || 'Unknown error'}`);
+    }
+  }
+
+  private async showUserGames(walletAddress: string): Promise<void> {
+    try {
+      const gameIds = await blockchainService.getUserGames(walletAddress);
+      
+      if (gameIds.length === 0) {
+        alert('No games found for this wallet address');
+        return;
+      }
+
+      let message = `Your Games (${gameIds.length} total):\n\n`;
+      gameIds.slice(0, 10).forEach((id, index) => {
+        message += `Game #${id}\n`;
+      });
+      
+      if (gameIds.length > 10) {
+        message += `\n...and ${gameIds.length - 10} more`;
+      }
+      
+      alert(message);
+    } catch (error) {
+      console.error('Error fetching games:', error);
+      alert('Failed to fetch games from blockchain');
+    }
+  }
+
   destroy(): void {
+    if (this.unsubscribeWallet) {
+      this.unsubscribeWallet();
+    }
     this.hide();
   }
 }

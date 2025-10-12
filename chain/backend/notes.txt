@@ -1,1 +1,0 @@
-forge create --rpc-url fuji-c --private-key $PK contracts/transcendence/Staking.sol:Staking --broadcast --verify --constructor-args 0x29893E95166f5CD86b1C9401eC427e01EEc6Ed85

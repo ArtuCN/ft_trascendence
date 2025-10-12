@@ -1,17 +1,13 @@
 import { createElement, createButton } from '../utils/dom.js';
 import { authState } from '../state/auth.js';
+import { apiService } from '../services/api.js';
+import { User } from '../types/index.js';
 
 const COLORS = {
   primary: '#E67923',
   dark: '#2A2A2A',
   white: '#ffffff'
 };
-
-interface Friend {
-  id: number;
-  username: string;
-  status: 'online' | 'offline';
-}
 
 interface Message {
   id: number;
@@ -23,14 +19,11 @@ interface Message {
 export class SocialModal {
   private isVisible: boolean = false;
   private modalElement?: HTMLElement;
-  private selectedFriend: Friend | null = null;
+  private selectedFriend: User | null = null;
   private newMessage: string = '';
+  private friendIdInput: string = '';
   
-  private friends: Friend[] = [
-    { id: 1, username: 'alice', status: 'online' },
-    { id: 2, username: 'bob', status: 'offline' },
-    { id: 3, username: 'charlie', status: 'online' },
-  ];
+  private friends: User[] = [];
 
   private messages: { [key: number]: Message[] } = {
     1: [
@@ -47,10 +40,22 @@ export class SocialModal {
     ],
   };
 
-  show(): void {
+  async show(): Promise<void> {
     if (this.isVisible) return;
     
     this.isVisible = true;
+    
+    // Carica la lista degli amici dal backend
+    const { user } = authState.getState();
+    if (user?.id) {
+      try {
+        this.friends = await apiService.getFriends(Number(user.id));
+      } catch (error) {
+        console.error('Errore nel caricamento degli amici:', error);
+        this.friends = [];
+      }
+    }
+    
     this.modalElement = this.createModal();
     document.body.appendChild(this.modalElement);
   }
@@ -138,9 +143,7 @@ export class SocialModal {
       friendItem.innerHTML = `
         <div class="flex items-center justify-between">
           <span class="font-medium">${friend.username}</span>
-          <span class="w-3 h-3 rounded-full ${
-            friend.status === 'online' ? 'bg-green-400' : 'bg-gray-400'
-          }"></span>
+          <span class="w-3 h-3 rounded-full bg-gray-400"></span>
         </div>
       `;
 
@@ -155,7 +158,7 @@ export class SocialModal {
     const addFriendButton = createButton(
       '+ Aggiungi Amico',
       'text-white px-4 py-2 rounded text-sm hover:opacity-90 transition-opacity focus:outline-none w-full',
-      () => alert('Aggiungi Amico')
+      () => this.handleAddFriend()
     );
     addFriendButton.style.backgroundColor = COLORS.primary;
 
@@ -163,6 +166,10 @@ export class SocialModal {
       className: 'bg-gray-800 text-white px-4 py-2 rounded text-sm w-full mt-2',
       placeholder: 'id amico'
     }) as HTMLInputElement;
+
+    friendIdInput.addEventListener('input', (e) => {
+      this.friendIdInput = (e.target as HTMLInputElement).value;
+    });
 
     leftContent.appendChild(friendsTitle);
     leftContent.appendChild(friendsListContainer);
@@ -216,9 +223,7 @@ export class SocialModal {
       });
 
       const statusDot = createElement('span', {
-        className: `ml-3 w-3 h-3 rounded-full ${
-          this.selectedFriend.status === 'online' ? 'bg-green-400' : 'bg-gray-400'
-        }`
+        className: 'ml-3 w-3 h-3 rounded-full bg-gray-400'
       });
 
       chatHeader.appendChild(chatTitle);
@@ -229,10 +234,10 @@ export class SocialModal {
         className: 'flex-1 overflow-y-auto bg-gray-800 rounded p-4 mb-4 space-y-3'
       });
 
-      const friendMessages = this.messages[this.selectedFriend.id] || [];
+      const friendMessages = this.messages[Number(this.selectedFriend.id)] || [];
       const currentUsername = user?.username || 'Tu';
 
-      friendMessages.forEach(message => {
+      friendMessages.forEach((message: Message) => {
         const messageDiv = createElement('div', {
           className: `flex ${
             message.sender === currentUsername ? 'justify-end' : 'justify-start'
@@ -322,13 +327,40 @@ export class SocialModal {
       timestamp: new Date(),
     };
 
-    if (!this.messages[this.selectedFriend.id]) {
-      this.messages[this.selectedFriend.id] = [];
+    const friendId = Number(this.selectedFriend.id);
+    if (!this.messages[friendId]) {
+      this.messages[friendId] = [];
     }
 
-    this.messages[this.selectedFriend.id].push(message);
+    this.messages[friendId].push(message);
     this.newMessage = '';
     this.refreshModal();
+  }
+
+  private async handleAddFriend(): Promise<void> {
+    const { user } = authState.getState();
+    if (!user?.id || !this.friendIdInput) {
+      alert('Inserisci un ID amico valido');
+      return;
+    }
+
+    const friendId = Number(this.friendIdInput);
+    if (isNaN(friendId)) {
+      alert('ID amico non valido');
+      return;
+    }
+
+    try {
+      await apiService.addFriend(Number(user.id), friendId);
+      alert('Amico aggiunto con successo!');
+      this.friendIdInput = '';
+      
+      // Ricarica la lista degli amici
+      this.friends = await apiService.getFriends(Number(user.id));
+      this.refreshModal();
+    } catch (error: any) {
+      alert(`Errore nell'aggiunta dell'amico: ${error.message}`);
+    }
   }
 
   private refreshModal(): void {
