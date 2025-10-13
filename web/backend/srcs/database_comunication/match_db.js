@@ -42,6 +42,7 @@ async function insertMatchInDB(id_tournament, number_of_players)
     
     })
 }
+
 async function insertPlayerMatchStats(id_user, id_match, goal_scored, goal_taken)
 {
     return new Promise((resolve, reject) =>
@@ -91,9 +92,6 @@ async function insertTournament_db(tournament_name, id_winner)
     })
 }
 
-
-
-
 export async function upsertStatsAfterMatch(id_player, goal_scored, goal_taken, tournament_won) {
   return new Promise((resolve, reject) => {
     const query = `
@@ -115,7 +113,6 @@ export async function upsertStatsAfterMatch(id_player, goal_scored, goal_taken, 
     });
   });
 }
-
 
 export async function insertTournament(tournament_name, id_winner)
 {
@@ -143,8 +140,15 @@ export async function insertMatch(id_tournament, users_ids, users_goal_scored, u
             const userId = users_ids[i];          
             const goalsScored = users_goal_scored[i];
             const goalsTaken = users_goal_taken[i];
-            await insertPlayerMatchStats(userId, match.id, goalsScored, goalsTaken);
-            await upsertStatsAfterMatch(userId, goalsScored, goalsTaken, 0);
+            
+            try {
+                await insertPlayerMatchStats(userId, match.id, goalsScored, goalsTaken);
+                await upsertStatsAfterMatch(userId, goalsScored, goalsTaken, 0);
+            } catch (err) {
+                // If user doesn't exist (FOREIGN KEY constraint), skip this player's stats
+                console.warn(`Warning: Could not save stats for user ${userId}. User may not exist in database.`);
+                console.warn(`Match will still be recorded, but without stats for this player.`);
+            }
         }
         return { matchId: match.id };
     }

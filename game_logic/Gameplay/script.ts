@@ -1,11 +1,12 @@
 import { gameRunning, stopGame, startGame, canvas, ctx, canvas_container, bracketContainer } from "./typescriptFile/variables.js";
 import { Player } from "./typescriptFile/classPlayer.js";
 import { Ball, drawScore } from "./typescriptFile/classBall.js";
-import { resetCanvas, generateBracket, renderBracket, drawCornerWalls, drawMiddleLine, clonePlayer, sendMatchData, sendTournamentData } from "./utilities.js";
+import { resetCanvas, generateBracket, renderBracket, drawCornerWalls, drawMiddleLine, clonePlayer, sendMatchData, sendTournamentData, showVictoryScreen } from "./utilities.js";
 
 const buttonLocalPlay = document.getElementById("LocalPlay") as HTMLButtonElement;
 const buttonRemotePlay = document.getElementById("RemotePlay") as HTMLButtonElement;
-const button2P = document.getElementById("Play2P") as HTMLButtonElement;
+const button2PLocal = document.getElementById("Play2P") as HTMLButtonElement;
+const button2PRemote = document.getElementById("Play2PRemote") as HTMLButtonElement;
 const button4P = document.getElementById("Play4P") as HTMLButtonElement;
 const buttonAi = document.getElementById("PlayAI") as HTMLButtonElement;
 const textPong = document.getElementById("PongGame") as HTMLHeadingElement;
@@ -50,6 +51,78 @@ export let final: BracketMatch = { player1: null, player2: null, matchWinner: nu
 export let currentRound = "quarterfinals";
 export let currentMatchIndex = 0;
 export let animationFrameId: number | null = null;
+export let online: boolean = false;
+
+export const ws = new WebSocket("wss://192.168.1.28/ws");
+let myId: number;
+ws.onopen = () => {
+	console.log("WebSocket connection established");
+	button2PRemote.addEventListener("click", () => {
+		button2PRemote.style.display = "none";
+		button4P.style.display = "none";
+		buttonMainMenu.style.display = "none";
+		buttonTournament.style.display = "none";
+		textPong.style.display = "none";
+		canvas_container.style.display = "block";
+		canvas.style.display = "block";
+		online = true;
+		Pebble = new Ball(true, true);
+		ws.send(JSON.stringify({ type: "find_match", canvas: { width: canvas.width, height: canvas.height } }));
+	});
+};
+
+ws.onmessage = (event) => {
+	const message = JSON.parse(event.data);
+	if (message.type === "waiting") {
+		console.log("Waiting for an opponent...");
+	}
+	if (message.type === "match_found") {
+		const playerNames: string = message.opponentName;
+		nbrPlayer = 2;
+		playerGoals = new Array(nbrPlayer).fill(0);
+		playerGoalsRecived = new Array(nbrPlayer).fill(0);
+		Pebble.applyState(message.ball);
+		startGame();
+		myId = message.id;
+		players = [
+			new Player(myId === 0 ? "You" : playerNames, 0, 12, "vertical"),
+			new Player(myId === 1 ? "You" : playerNames, 1, 13, "vertical")
+		];
+		draw(myId);
+	}
+	if (message.type === "update_state") {
+		const { playerGoals: newPlayerGoals, playerGoalsRecived: newPlayerGoalsRecived } = message;
+		playerGoals = newPlayerGoals;
+		playerGoalsRecived = newPlayerGoalsRecived;
+		draw();
+	}
+	if (message.type === "opponentMove") {
+		if (message.playerId !== myId) {
+			players[message.playerId].getPaddle().moveWithKey(message.key);
+		}
+	}
+	if (message.type === "set_ball") {
+		Pebble.applyState(message);
+	}
+	if (message.type === 'goal') {
+		playerGoals[0] = message.score[0];
+		playerGoals[1] = message.score[1];
+		// Reset posizione palla, animazione, ecc.
+		Pebble.resetGame(players);
+		drawScore(nbrPlayer);
+	}
+	if (message.type === 'victory') {
+		showVictoryScreen(players[message.winner]);
+	}
+};
+
+ws.onclose = () => {
+  console.log('WebSocket chiuso');
+};
+
+ws.onerror = error => {
+  console.error('Errore WebSocket:', error);
+};
 
 // Reset goalscore
 export function resetGoalscore() {
@@ -75,7 +148,6 @@ function resetBracket() {
 }
 
 export function advanceWinner(winner: Player) {
-	console.log(`player Goals: `, playerGoals);
 	if (currentRound === "quarterfinals") {
 		quarterfinals[currentMatchIndex].matchWinner = winner;
 		quarterfinals[currentMatchIndex].users_goal = playerGoals;
@@ -140,10 +212,8 @@ export function showMenu(winner: Player) {
 				player.getPaddle().stopBotPolling();
 			textPong.style.display = "block";
 			bracketContainer.style.display = "none";
-			button2P.style.display = "inline-block";
-			button4P.style.display = "inline-block";
-			buttonAi.style.display = "inline-block";
-			buttonTournament.style.display = "inline-block";
+			buttonLocalPlay.style.display = "none";
+			buttonRemotePlay.style.display = "none";
 			sendTournamentData();
 		}
 	}
@@ -155,15 +225,13 @@ export function showMenu(winner: Player) {
 		buttonPlayGame.style.display = "none";
 		bracketContainer.style.display = "none";
 		canvas_container.style.display = "none";
-		button2P.style.display = "inline-block";
-		button4P.style.display = "inline-block";
-		buttonAi.style.display = "inline-block";
-		buttonTournament.style.display = "inline-block";
+		buttonRemotePlay.style.display = 'inline-block';
+		buttonLocalPlay.style.display = 'inline-block';
 		sendMatchData();
 	}
 }
 
-function draw() {
+function draw(myId?: number) {
 	if (!gameRunning)
 		return;
 
@@ -171,14 +239,20 @@ function draw() {
 	drawMiddleLine();
 	if (nbrPlayer == 4)
 		drawCornerWalls();
-	Pebble.moveBall(players);
-	Pebble.drawBall();
+	if (!online) {
+		Pebble.moveBall(players);
+		Pebble.drawBall();
+	}
+	else {
+		Pebble.moveBallOnline(players);
+		Pebble.drawBall();
+	}
 	for (const player of players) {
-		player.getPaddle().movePaddles();
+		player.getPaddle().movePaddles(myId);
 		player.getPaddle().drawPaddles();
 	}
 	drawScore(nbrPlayer);
-	animationFrameId = requestAnimationFrame(draw);
+	animationFrameId = requestAnimationFrame(() => draw(myId));
 }
 
 function drawTournament() {
@@ -229,7 +303,7 @@ function playCurrentMatch() {
 buttonLocalPlay.addEventListener("click", () => {
 	buttonLocalPlay.style.display = "none";
 	buttonRemotePlay.style.display = "none";
-	button2P.style.display = "inline-block";
+	button2PLocal.style.display = "inline-block";
 	buttonAi.style.display = "inline-block";
 	buttonTournament.style.display = "inline-block";
 	buttonMainMenu.style.display = "inline-block";
@@ -238,7 +312,7 @@ buttonLocalPlay.addEventListener("click", () => {
 buttonRemotePlay.addEventListener("click", () => {
 	buttonLocalPlay.style.display = "none";
 	buttonRemotePlay.style.display = "none";
-	button2P.style.display = "inline-block";
+	button2PRemote.style.display = "inline-block";
 	button4P.style.display = "inline-block";
 	buttonTournament.style.display = "inline-block";
 	buttonMainMenu.style.display = "inline-block";
@@ -247,15 +321,16 @@ buttonRemotePlay.addEventListener("click", () => {
 buttonMainMenu.addEventListener("click", () => {
 	buttonLocalPlay.style.display = "inline-block";
 	buttonRemotePlay.style.display = "inline-block";
-	button2P.style.display = "none";
+	button2PLocal.style.display = "none";
 	button4P.style.display = "none";
 	buttonAi.style.display = "none";
 	buttonTournament.style.display = "none";
 	buttonMainMenu.style.display = "none";
 });
 
-button2P.addEventListener("click", () => {
-	button2P.style.display = "none";
+button2PLocal.addEventListener("click", () => {
+	button2PLocal.style.display = "none";
+	button2PRemote.style.display = "none";
 	button4P.style.display = "none";
 	buttonAi.style.display = "none";
 	buttonMainMenu.style.display = "none";
@@ -263,7 +338,7 @@ button2P.addEventListener("click", () => {
 	textPong.style.display = "none";
 	canvas_container.style.display = "block";
 	canvas.style.display = "block";
-	nbrPlayer = parseInt(button2P.value);
+	nbrPlayer = parseInt(button2PLocal.value);
 	if (isNaN(nbrPlayer))
 		nbrPlayer = 2;
 	playerGoals = new Array(nbrPlayer).fill(0);
@@ -279,8 +354,7 @@ button2P.addEventListener("click", () => {
 
 button4P.addEventListener("click", () => {
 	button4P.style.display = "none";
-	button2P.style.display = "none";
-	buttonAi.style.display = "none";
+	button2PRemote.style.display = "none";
 	buttonMainMenu.style.display = "none";
 	buttonTournament.style.display = "none";
 	textPong.style.display = "none";
@@ -306,7 +380,8 @@ button4P.addEventListener("click", () => {
 buttonAi.addEventListener("click", () => {
 	buttonAi.style.display = "none";
 	buttonMainMenu.style.display = "none";
-	button2P.style.display = "none";
+	button2PLocal.style.display = "none";
+	button2PRemote.style.display = "none";
 	button4P.style.display = "none";
 	buttonTournament.style.display = "none";
 	textPong.style.display = "none";
@@ -340,7 +415,8 @@ buttonTournament.addEventListener("click", async () => {
 	Tournament = true;
 	resetBracket();
 	buttonTournament.style.display = "none";
-	button2P.style.display = "none";
+	button2PLocal.style.display = "none";
+	button2PRemote.style.display = "none";
 	button4P.style.display = "none";
 	buttonAi.style.display = "none";
 	buttonMainMenu.style.display = "none";

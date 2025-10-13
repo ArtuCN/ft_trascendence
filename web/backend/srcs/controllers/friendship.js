@@ -36,18 +36,15 @@ export default async function (fastify, opts) {
         }
     });
 
-    fastify.delete('/removefriend', async (request, reply) => {
+    fastify.delete('/removefriend/:id1/:id2', async (request, reply) => {
         try {
-            const { id1, id2 } = request.body;
+            const { id1, id2 } = request.params;
 
             if (!id1 || !id2) {
                 return reply.code(400).send({ error: 'Missing id1 or id2' });
             }
 
-            const result = await remove_friendship(id1, id2);
-            if (!result) {
-                return reply.code(500).send({ error: 'Unexpected database response' });
-            }
+            const result = await remove_friendship(Number(id1), Number(id2));
             if (result.deletedRows === 0) {
                 return reply.code(404).send({ success: false, message: 'Friendship not found' });
             }

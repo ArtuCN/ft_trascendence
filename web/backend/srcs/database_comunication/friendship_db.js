@@ -70,8 +70,8 @@ async function remove_friendship_db(id1, id2)
 export async function remove_friendship(id1, id2) {
     try
     {
-        await remove_friendship_db(id1, id2);
-        return { success: true};
+        const result = await remove_friendship_db(id1, id2);
+        return result;
     }
     catch (error)
     {

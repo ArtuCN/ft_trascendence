@@ -19,13 +19,14 @@ $db->exec("CREATE TABLE IF NOT EXISTS user (
 	last_active DATETIME DEFAULT CURRENT_TIMESTAMP
 )");
 
-//$db->exec("DROP TABLE IF EXISTS tournament");
+$db->exec("DROP TABLE IF EXISTS tournament");
 $db->exec("CREATE TABLE IF NOT EXISTS tournament (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     tournament_name TEXT,
     has_started BOOLEAN DEFAULT FALSE,
     finished BOOLEAN DEFAULT FALSE,
-    id_winner INTEGER
+    id_winner INTEGER,
+    FOREIGN KEY (id_winner) REFERENCES user(id)
 )");
 
 //$db->exec("DROP TABLE IF EXISTS game_match");

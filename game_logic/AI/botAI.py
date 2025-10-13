@@ -7,7 +7,7 @@ app = FastAPI()
 # Middleware to handle CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Adjust this to your needs
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -22,9 +22,9 @@ async def ai_decision(data: AIRequest):
     ball_y = data.ball_y
     paddle_y = data.paddle_y
 
-    if ball_y > paddle_y + 10:
+    if ball_y > paddle_y + 20:
         return {"key": "ArrowDown"}
-    elif ball_y < paddle_y:
+    elif ball_y < paddle_y - 20:
         return {"key": "ArrowUp"}
     else:
         return {"key": None}

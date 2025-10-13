@@ -16,6 +16,9 @@ import matchRoute from './controllers/match.js';
 import tournamentRoute from './controllers/tournament.js';
 import heartBeatRoute from './controllers/heartBeat.js';
 
+// WebSocket matchmaking
+import { setupMatchmaking } from './controllers/online_match/online_match.js';
+
 const fastify = Fastify({ logger: true });
 
 // Abilita CORS (per il frontend React o altro)
@@ -70,13 +73,29 @@ fastify.get('/users', async (request, reply) => {
   }
 });
 
-// Stampa tutte le rotte per debug
+// WebSocket setup per matchmaking online
+const wss = setupMatchmaking(fastify.server);
+
+setInterval(() => {
+  wss.clients.forEach((ws) => {
+      if (ws.readyState === ws.OPEN) {
+        console.log('Sending ping to client');
+        console.log('web socket status: ', ws.readyState);
+        ws.send(JSON.stringify({ type: 'ping' }));
+      }
+  });
+}, 10000); // Send a ping every 10 seconds
+
+fastify.server.on('upgrade', (request, socket, head) => {
+  if (request.url === '/ws') {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit('connection', ws, request);
+    });
+  } else {
+    socket.destroy();
+  }
+});
 
 // Avvia il server
-fastify.listen({ port: 3000, host: '0.0.0.0' }, (err, address) => {
-  if (err) {
-    fastify.log.error(err);
-    process.exit(1);
-  }
-  fastify.log.info(`Server listening at ${address}`);
-});
+const address = await fastify.listen({ port: 3000, host: '0.0.0.0' });
+fastify.log.info(`Server listening at ${address}`);

@@ -1,0 +1,54 @@
+{"level":30,"time":1760104847785,"pid":1,"hostname":"a659a536713f","msg":"Server listening at http://0.0.0.0:3000"}
+DB opened successfully!
+DB opened successfully!
+DB opened successfully!
+{"level":30,"time":1760104847790,"pid":1,"hostname":"a659a536713f","msg":"Server listening at http://0.0.0.0:3000"}
+Player connected: 4b47d9cb-0bef-4f91-9028-474120dc6848
+Sending ping to client
+web socket status:  1
+Player connected: e3063037-7b5a-4592-a815-b82955b6b9b0
+Sending ping to client
+web socket status:  1
+Sending ping to client
+web socket status:  1
+dataPaddle: {
+  type: 'ball_update',
+  leftPaddleY: 264,
+  rightPaddleY: 270,
+  PaddleLength: 60,
+  PaddleThickness: 20,
+  canvasWidth: 900,
+  canvasHeight: 600
+}
+dataPaddle: {
+  type: 'ball_update',
+  leftPaddleY: 216,
+  rightPaddleY: 270,
+  PaddleLength: 60,
+  PaddleThickness: 20,
+  canvasWidth: 900,
+  canvasHeight: 600
+}
+dataPaddle: {
+  type: 'ball_update',
+  leftPaddleY: 216,
+  rightPaddleY: 270,
+  PaddleLength: 60,
+  PaddleThickness: 20,
+  canvasWidth: 900,
+  canvasHeight: 600
+}
+dataPaddle: {
+  type: 'ball_update',
+  leftPaddleY: 204,
+  rightPaddleY: 270,
+  PaddleLength: 60,
+  PaddleThickness: 20,
+  canvasWidth: 900,
+  canvasHeight: 600
+}
+{"level":30,"time":1760104886441,"pid":1,"hostname":"a659a536713f","msg":"Server listening at http://0.0.0.0:3000"}
+DB opened successfully!
+DB opened successfully!
+DB opened successfully!
+{"level":30,"time":1760104886442,"pid":1,"hostname":"a659a536713f","msg":"Server listening at http://0.0.0.0:3000"}

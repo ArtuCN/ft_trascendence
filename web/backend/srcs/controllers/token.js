@@ -13,7 +13,6 @@ export default async function (fastify, opts) {
         return reply.code(401).send({ error: 'Invalid Authorization header format' });
       }
 
-
       const res = await searchByToken(token);
 
       if (!res || res.length === 0) {

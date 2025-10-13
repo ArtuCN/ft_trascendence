@@ -216,10 +216,13 @@ export async function sendBotData(ball_y: number, paddle_y: number): Promise<str
 	return data.key;
 }
 
+<<<<<<< HEAD
 
 
 
 
+=======
+>>>>>>> d7ebee9a798e36b285150881b13eb0693a171f07
 export function sendTournamentData() {
 
     let body = {
@@ -238,6 +241,7 @@ export function sendTournamentData() {
 }
 
 export function sendMatchData() {
+<<<<<<< HEAD
   
   let players_id: number[] = [];
   for (let i = 0; i < players.length; i++)
@@ -251,13 +255,30 @@ export function sendMatchData() {
 
     //per della la rotta è https://localhost/api/match ti ho corretto alcune cose
     let response = fetch("/api/match", {
+=======
+
+    let players_id: number[] = [];
+    for (let i = 0; i < players.length; i++)
+        players_id[i] = players[i].getUserID();
+
+    let body = {
+        id_tournament: TournamentID,
+        users_id: players_id,
+        users_goal_scored: playerGoals,
+        users_goal_recived: playerGoalsRecived
+    }
+    let response = fetch("/api/match/", {
+>>>>>>> d7ebee9a798e36b285150881b13eb0693a171f07
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
         body: JSON.stringify(body)
     })
+<<<<<<< HEAD
     console.log("response: ", response);
+=======
+>>>>>>> d7ebee9a798e36b285150881b13eb0693a171f07
 }
 
 export function showVictoryScreen(winner: Player) {
@@ -267,6 +288,10 @@ export function showVictoryScreen(winner: Player) {
     ctx.fillStyle = "white";
     ctx.font = "48px Arial";
     ctx.textAlign = "center";
+<<<<<<< HEAD
+=======
+    console.log(winner.getNameTag());
+>>>>>>> d7ebee9a798e36b285150881b13eb0693a171f07
     ctx.fillText(`🏆` + winner.getNameTag() + ` Wins 🏆`, canvas.width / 2, canvas.height / 2);
 
     const btnBack = document.getElementById("btnBackToMenu") as HTMLButtonElement;
