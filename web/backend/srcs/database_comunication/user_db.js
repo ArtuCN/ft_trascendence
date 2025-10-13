@@ -1,18 +1,21 @@
 import sqlite3 from 'sqlite3';
-
-const { verbose } = sqlite3;
 import path from 'path';
 
+const { verbose } = sqlite3;
 
 const dbPath = path.resolve('/app/data/database.sqlite');
 const db = new (verbose()).Database(dbPath, (err) => {
   if (err) {
-    console.error('error while opening db:', err);
+    console.error('Error while opening db:', err);
   } else {
     console.log('DB opened successfully!');
   }
 });
-db.run("PRAGMA foreign_keys = ON")
+
+// Abilita foreign keys
+db.run("PRAGMA foreign_keys = ON");
+
+// Crea tabella delle stats se non esiste
 db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS player_all_time_stats (
@@ -25,7 +28,9 @@ db.serialize(() => {
   `);
 });
 
-
+// -----------------------------
+// USERS
+// -----------------------------
 export function insertUser(user) {
   return new Promise((resolve, reject) => {
     const insertUserQuery = `
@@ -59,7 +64,11 @@ export function insertUser(user) {
               console.error('Error while creating player stats:', err2);
               reject(err2);
             } else {
-              resolve({ id: newUserId });
+              resolve({ 
+                id: newUserId,
+                username: user.username,
+                mail: user.mail
+              });
             }
           });
         }
@@ -67,9 +76,6 @@ export function insertUser(user) {
     );
   });
 }
-
-
-
 
 export function getAllUsers() {
   return new Promise((resolve, reject) => {
@@ -84,29 +90,21 @@ export function getAllUsers() {
   });
 }
 
-
-export function getUserByMail(mail)
-{
+export function getUserByMail(mail) {
   return new Promise((resolve, reject) => {
     db.all('SELECT * FROM user WHERE mail = ?', [mail], (err, rows) => {
       if (err) {
         console.error('Error during SELECT by mail:', err);
         reject(err);
       } else {
-        if (rows.length === 0) {
-          resolve(null);
-        } else {
-          resolve(rows[0]);
-        }
+        resolve(rows.length > 0 ? rows[0] : null);
       }
     });
   });
 }
 
-
-export function getUserByUsername(username)
-{
-  return new Promise((resolve, reject)=> {
+export function getUserByUsername(username) {
+  return new Promise((resolve, reject) => {
     db.all('SELECT * FROM user WHERE username = ?', [username], (err, rows) => {
       if (err) {
         console.error('Error during SELECT by username:', err);
@@ -118,101 +116,279 @@ export function getUserByUsername(username)
   });
 }
 
-export function getUserById(id)
-{
-  return new Promise((resolve, reject)=> {
+export function getUserById(id) {
+  return new Promise((resolve, reject) => {
     db.all('SELECT * FROM user WHERE id = ?', [id], (err, rows) => {
       if (err) {
         console.error('Error during SELECT by id:', err);
         reject(err);
       } else {
-        resolve(rows);
+        resolve(rows.length > 0 ? rows[0] : null);
       }
     });
   });
 }
 
+// -----------------------------
+// STATS
+// -----------------------------
 export function getStatsById(id) {
   return new Promise((resolve, reject) => {
-    db.all('SELECT * FROM player_all_time_stats WHERE id_player = ?', [id], (err, rows) => {
+    // Get base stats from player_all_time_stats
+    const statsQuery = 'SELECT * FROM player_all_time_stats WHERE id_player = ?';
+    
+    db.get(statsQuery, [id], (err, statsRow) => {
       if (err) {
-        console.error('Error during SELECT by id of stats', err);
+        console.error('Error during SELECT by id of stats:', err);
         reject(err);
-      } else {
-        resolve(rows);
+        return;
       }
+      
+      // Get matches count
+      const matchesQuery = 'SELECT COUNT(*) as count FROM player_match_stats WHERE id_user = ?';
+      
+      db.get(matchesQuery, [id], (err2, matchesRow) => {
+        if (err2) {
+          console.error('Error counting matches:', err2);
+          // Return basic stats even if count fails
+          resolve(statsRow ? [statsRow] : []);
+          return;
+        }
+        
+        // Get wins count (goal_scored > goal_taken)
+        const winsQuery = 'SELECT COUNT(*) as count FROM player_match_stats WHERE id_user = ? AND goal_scored > goal_taken';
+        
+        db.get(winsQuery, [id], (err3, winsRow) => {
+          if (err3) {
+            console.error('Error counting wins:', err3);
+            resolve(statsRow ? [statsRow] : []);
+            return;
+          }
+          
+          // Get losses count (goal_scored < goal_taken)
+          const lossesQuery = 'SELECT COUNT(*) as count FROM player_match_stats WHERE id_user = ? AND goal_scored < goal_taken';
+          
+          db.get(lossesQuery, [id], (err4, lossesRow) => {
+            if (err4) {
+              console.error('Error counting losses:', err4);
+              resolve(statsRow ? [statsRow] : []);
+              return;
+            }
+            
+            // Combine all stats
+            const combinedStats = {
+              id_player: id,
+              goal_scored: statsRow?.goal_scored || 0,
+              goal_taken: statsRow?.goal_taken || 0,
+              tournament_won: statsRow?.tournament_won || 0,
+              matches_played: matchesRow?.count || 0,
+              matches_won: winsRow?.count || 0,
+              matches_lost: lossesRow?.count || 0
+            };
+            
+            resolve([combinedStats]);
+          });
+        });
+      });
     });
   });
 }
 
-
-export function saveToken(username, token)
-{
-  return new Promise((resolve, reject) =>
-  {
+// -----------------------------
+// TOKENS
+// -----------------------------
+export function saveToken(username, token) {
+  return new Promise((resolve, reject) => {
     console.log('Attempting to save token for username:', username);
-    console.log('Token length:', token ? token.length : 'null/undefined');
-    db.run('UPDATE user SET token = ? WHERE username = ?' , [token, username], function(err) {
+    db.run('UPDATE user SET token = ? WHERE username = ?', [token, username], function (err) {
       if (err) {
-        console.error('Error while adding token: ', err);
+        console.error('Error while adding token:', err);
         reject(err);
       } else {
         console.log('Token saved successfully. Rows affected:', this.changes);
         resolve(this.changes);
       }
-    })
-  })
+    });
+  });
 }
 
-export function removeToken(username)
-{
-  return new Promise((resolve, reject)=>
-  {
-    db.run('UPDATE user SET token = NULL WHERE username = ?' , [username], function(err) {
+export function removeToken(username) {
+  return new Promise((resolve, reject) => {
+    db.run('UPDATE user SET token = NULL WHERE username = ?', [username], function (err) {
       if (err) {
-        console.error('Error while removing token: ', err);
+        console.error('Error while removing token:', err);
         reject(err);
       } else {
         resolve(this.changes);
       }
-    })
-  })
+    });
+  });
 }
 
-export function getTokenByUsername(username)
-{
-  return new Promise((resolve, reject)=>
-  {
+export function getTokenByUsername(username) {
+  return new Promise((resolve, reject) => {
     db.get('SELECT token FROM user WHERE username = ?', [username], (err, row) => {
       if (err) {
         console.error('Error during SELECT by username:', err);
         reject(err);
       } else {
-        if (row) {
-          resolve(row.token); // Restituisce il token anche se è null
-        } else {
-          resolve(null); // Utente non trovato
-        }
+        resolve(row ? row.token : null);
       }
     });
-  })
+  });
 }
 
-export async function tokenExists(username)
-{
+export async function tokenExists(username) {
   const token = await getTokenByUsername(username);
   return token !== null && token !== undefined && token !== '';
 }
+
 export async function searchByToken(token) {
-  return new Promise((resolve, reject) =>
-    db.all('SELECT * FROM user WHERE token = ?', [token], (err, rows) =>
-    {
-     if (err) {
-          console.error('Error during SELECT by token:', err);
+  return new Promise((resolve, reject) => {
+    db.all('SELECT * FROM user WHERE token = ?', [token], (err, rows) => {
+      if (err) {
+        console.error('Error during SELECT by token:', err);
+        reject(err);
+      } else {
+        resolve(rows);
+      }
+    });
+  });
+}
+
+// -----------------------------
+// GOOGLE USERS
+// -----------------------------
+export function getUserByGoogleId(googleId) {
+  return new Promise((resolve, reject) => {
+    db.get('SELECT * FROM user WHERE google_id = ?', [googleId], (err, row) => {
+      if (err) {
+        console.error('Error during SELECT by google_id:', err);
+        reject(err);
+      } else {
+        resolve(row || null);
+      }
+    });
+  });
+}
+
+export function insertGoogleUser(user) {
+  return new Promise((resolve, reject) => {
+    const query = `
+      INSERT INTO user (username, mail, psw, token, wallet, is_admin, google_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    db.run(
+      query,
+      [
+        user.username,
+        user.mail,
+        '',
+        user.token || null,
+        user.wallet || '',
+        user.is_admin ? 1 : 0,
+        user.google_id
+      ],
+      function (err) {
+        if (err) {
+          console.error('Error while adding Google user:', err);
           reject(err);
         } else {
-          resolve(rows);
-        }      
-    })
-  );  
+          const newUserId = this.lastID;
+
+          const insertStatsQuery = `
+            INSERT INTO player_all_time_stats (id_player)
+            VALUES (?)
+          `;
+          db.run(insertStatsQuery, [newUserId], (err2) => {
+            if (err2) {
+              console.error('Error while creating player stats for Google user:', err2);
+              reject(err2);
+            } else {
+              resolve({ id: newUserId });
+            }
+          });
+        }
+      }
+    );
+  });
+}
+
+export async function getAllMatchesOfPlayer(id_player)
+{
+    return new Promise((resolve, reject) => {
+        const query = `
+        SELECT * FROM game_match
+        WHERE id IN (
+            SELECT id_match FROM player_match_stats WHERE id_user = ?
+        )
+        `;
+        db.all(query, [id_player], (err, rows) => {
+            if (err) {
+                console.error('Error while fetching all matches of player:', err);
+                reject(err);
+            } else {
+                resolve(rows);
+            }
+        });
+    });
+}
+
+
+export async function winTournament(id_player)
+{
+    return new Promise((resolve, reject) => {
+        const query = `
+        UPDATE player_all_time_stats
+        SET tournament_won = tournament_won + 1
+        WHERE id_player = ?
+        `;
+        db.run(query, [id_player], function (err) {
+            if (err) {
+                console.error('Error while updating tournament wins:', err);
+                reject(err);
+            } else {
+                resolve({ id_player, status: 'tournament win updated' });
+            }
+        });
+    });
+}
+
+export async function getAllPlayerStats() {
+    return new Promise((resolve, reject) => {
+        const query = `
+        SELECT * FROM player_all_time_stats
+        `;
+        db.all(query, [], (err, rows) => {
+            if (err) {
+                console.error('Error while fetching all player stats:', err);
+                reject(err);
+            } else {
+                resolve(rows);
+            }
+        });
+    });
+}
+
+export async function updateUserLastActive(userId, timestamp) {
+  return new Promise((resolve, reject) => {
+    const query = `UPDATE user SET last_active = ? WHERE id = ?`;
+    db.run(query, [timestamp, userId], function (err) {
+      if (err) 
+		return reject(err);
+      resolve(this.changes);
+    });
+  });
+}
+
+export async function getUserLastActive(userId) {
+	return new Promise((resolve, reject) => {
+		const query = `select last_active FROM user WHERE id = ?`;
+		db.get(query, [userId], function (err) {
+			if (err)
+				return reject(err);
+			resolve(row.last_active);
+		});
+	});
 }

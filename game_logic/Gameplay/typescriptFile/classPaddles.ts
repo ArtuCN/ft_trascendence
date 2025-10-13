@@ -47,6 +47,14 @@ export class Paddles {
 		return this.orientation;
 	}
 
+	public getID() {
+		return this.id;
+	}
+
+	public getOrientation(): PaddleOrientation {
+		return this.orientation;
+	}
+
 	public reset() {
 		if (this.orientation === "vertical")
 			this.initialPosition = canvas.height / 2 - this.paddleLength / 2;
@@ -58,7 +66,7 @@ export class Paddles {
 		this.initialPosition = pos;
 	}
 
-	public startBotPolling() {
+		public startBotPolling() {
 		if (this.botPollingId !== null) {
 			clearInterval(this.botPollingId);
 		}
@@ -234,3 +242,4 @@ export class Paddles {
 		}
 	}
 }
+

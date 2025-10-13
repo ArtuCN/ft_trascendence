@@ -216,6 +216,10 @@ export async function sendBotData(ball_y: number, paddle_y: number): Promise<str
 	return data.key;
 }
 
+
+
+
+
 export function sendTournamentData() {
 
     let body = {
@@ -234,24 +238,26 @@ export function sendTournamentData() {
 }
 
 export function sendMatchData() {
+  
+  let players_id: number[] = [];
+  for (let i = 0; i < players.length; i++)
+    players_id[i] = players[i].getUserID();
+  let body = {
+      id_tournament: TournamentID,
+      users_ids: players_id,
+      users_goal_scored: playerGoals,
+      users_goal_taken: playerGoalsRecived
+    };
 
-    let players_id: number[] = [];
-    for (let i = 0; i < players.length; i++)
-        players_id[i] = players[i].getUserID();
-
-    let body = {
-        id_tournament: TournamentID,
-        users_id: players_id,
-        users_goal_scored: playerGoals,
-        users_goal_recived: playerGoalsRecived
-    }
-    let response = fetch("/api/match/", {
+    //per della la rotta è https://localhost/api/match ti ho corretto alcune cose
+    let response = fetch("/api/match", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
         body: JSON.stringify(body)
     })
+    console.log("response: ", response);
 }
 
 export function showVictoryScreen(winner: Player) {
@@ -261,7 +267,6 @@ export function showVictoryScreen(winner: Player) {
     ctx.fillStyle = "white";
     ctx.font = "48px Arial";
     ctx.textAlign = "center";
-    console.log(winner.getNameTag());
     ctx.fillText(`🏆` + winner.getNameTag() + ` Wins 🏆`, canvas.width / 2, canvas.height / 2);
 
     const btnBack = document.getElementById("btnBackToMenu") as HTMLButtonElement;

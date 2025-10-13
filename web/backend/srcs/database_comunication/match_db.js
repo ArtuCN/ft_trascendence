@@ -42,15 +42,14 @@ async function insertMatchInDB(id_tournament, number_of_players)
     
     })
 }
-// result = insertMatch()
-// result.id per ottenere id
 async function insertPlayerMatchStats(id_user, id_match, goal_scored, goal_taken)
 {
     return new Promise((resolve, reject) =>
     {
         const query = `
-        INSERT INTO player_match_stats (id_user, id_match, goal_scored, goal_taken
-        VALUES (?, ?, ?, ?) `;
+        INSERT INTO player_match_stats (id_user, id_match, goal_scored, goal_taken)
+        VALUES (?, ?, ?, ?)
+         `;
 
         db.run(
             query,
@@ -95,21 +94,20 @@ async function insertTournament_db(tournament_name, id_winner)
 
 
 
-async function updateStatsAfterMatch(id_player, goal_scored, goal_taken, tournament_won)
-{
-    return new Promise((resolve, reject) => {
+export async function upsertStatsAfterMatch(id_player, goal_scored, goal_taken, tournament_won) {
+  return new Promise((resolve, reject) => {
     const query = `
-      UPDATE player_all_time_stats
-      SET 
-        goal_scored = goal_scored + ?,
-        goal_taken = goal_taken + ?,
-        tournament_won = tournament_won + ?
-      WHERE id_player = ?
+      INSERT INTO player_all_time_stats (id_player, goal_scored, goal_taken, tournament_won)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(id_player) DO UPDATE SET
+        goal_scored = player_all_time_stats.goal_scored + excluded.goal_scored,
+        goal_taken = player_all_time_stats.goal_taken + excluded.goal_taken,
+        tournament_won = player_all_time_stats.tournament_won + excluded.tournament_won
     `;
 
-    db.run(query, [goal_scored, goal_taken, tournament_won, id_player], function(err) {
+    db.run(query, [id_player, goal_scored, goal_taken, tournament_won], function (err) {
       if (err) {
-        console.error('Error while updating stats:', err);
+        console.error("Error while upserting stats:", err);
         reject(err);
       } else {
         resolve({ changes: this.changes });
@@ -117,6 +115,7 @@ async function updateStatsAfterMatch(id_player, goal_scored, goal_taken, tournam
     });
   });
 }
+
 
 export async function insertTournament(tournament_name, id_winner)
 {
@@ -136,7 +135,7 @@ export async function insertTournament(tournament_name, id_winner)
 export async function insertMatch(id_tournament, users_ids, users_goal_scored, users_goal_taken)
 {
     try
-    {
+    {   
         const match = await insertMatchInDB(id_tournament, users_ids.length);
     
         for (let i = 0; i < users_ids.length; i++)
@@ -145,7 +144,7 @@ export async function insertMatch(id_tournament, users_ids, users_goal_scored, u
             const goalsScored = users_goal_scored[i];
             const goalsTaken = users_goal_taken[i];
             await insertPlayerMatchStats(userId, match.id, goalsScored, goalsTaken);
-            await updateStatsAfterMatch(userId, goalsScored, goalsTaken, 0);
+            await upsertStatsAfterMatch(userId, goalsScored, goalsTaken, 0);
         }
         return { matchId: match.id };
     }
@@ -154,4 +153,72 @@ export async function insertMatch(id_tournament, users_ids, users_goal_scored, u
         console.error("Error inserting match and stats:", error);
         throw error;
     }
+}
+
+export async function getAllMatches()
+{
+    return new Promise((resolve, reject) => {
+        const query = `
+        SELECT * FROM game_match
+        `;
+        db.all(query, [], (err, rows) => {
+            if (err) {
+                console.error('Error while fetching all matches:', err);
+                reject(err);
+            } else {
+                resolve(rows);
+            }
+        });
+    });
+}
+
+export async function getMatchById(id)
+{
+    return new Promise((resolve, reject) => {
+        const query = `
+        SELECT * FROM game_match WHERE id = ?
+        `;
+        db.get(query, [id], (err, row) => {
+            if (err) {
+                console.error('Error while fetching match by id:', err);
+                reject(err);
+            } else {
+                resolve(row);
+            }
+        });
+    });
+}
+
+export async function getPlayerByMatchId(id_match)
+{
+    return new Promise((resolve, reject) => {
+        const query = `
+        SELECT * FROM player_match_stats WHERE id_match = ?
+        `;
+        db.all(query, [id_match], (err, rows) => {
+            if (err) {
+                console.error('Error while fetching players by match id:', err);
+                reject(err);
+            } else {
+                resolve(rows);
+            }
+        });
+    });
+}
+
+export async function getPlayerMatchStats(id_player, id_match)
+{
+    return new Promise((resolve, reject) => {
+        const query = `
+        SELECT * FROM player_match_stats WHERE id_user = ? AND id_match = ?
+        `;
+        db.get(query, [id_player, id_match], (err, row) => {
+            if (err) {
+                console.error('Error while fetching player match stats:', err);
+                reject(err);
+            } else {
+                resolve(row);
+            }
+        });
+    });
 }

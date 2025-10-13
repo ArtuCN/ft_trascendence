@@ -2,11 +2,11 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-COPY ./react_frontend/package.json ./react_frontend/package-lock.json ./
+COPY ./ts_frontend/package.json ./ts_frontend/package-lock.json* ./
 
 RUN npm install
 
-COPY ./react_frontend/ .
+COPY ./ts_frontend/ .
 
 EXPOSE 5173
 

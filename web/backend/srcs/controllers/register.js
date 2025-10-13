@@ -14,6 +14,7 @@ export default async function (fastify, opts) {
       const userByMail = await getUserByMail(mail);
       if (userByMail)
         return reply.code(400).send({ error: 'Mail already registered!' });
+  
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash(psw, saltRounds);
       const newUser = await insertUser({ username, mail, psw: hashedPassword });

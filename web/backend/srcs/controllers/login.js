@@ -8,17 +8,21 @@ export default async function (fastify, opts) {
     fastify.post('/login', async (request, reply) =>  {
         try
         {
-            const { username, password } = request.body;
-            const user = await getUserByMail(username);
+            const { mail, psw } = request.body;
+            const user = await getUserByMail(mail);
             if (!user)
                 return reply.code(400).send({ error: 'email not registered!'});
-                    const isValid = await bcrypt.compare(password, user.psw);
+
+            if (user.google_id && user.google_id.trim() !== '') {
+                return reply.code(400).send({ error: 'This account is linked to Google. Please use Google Sign In.' });
+            }
+            const isValid = await bcrypt.compare(psw, user.psw);
             if (!isValid)
                 return reply.code(401).send({ error: 'Invalid password' });
             let token = '';
-            if (await tokenExists(user.username) == true)
+            if (await tokenExists(user.mail) == true)
             {
-                token = await getTokenByUsername(user.username);
+                token = await getTokenByUsername(user.mail);
             }
             else
             {
@@ -27,7 +31,6 @@ export default async function (fastify, opts) {
                     mail: user.mail,
                     username: user.username
                 });
-                const saveResult = await saveToken(user.username, token);
             }
             reply.send({
                 token,

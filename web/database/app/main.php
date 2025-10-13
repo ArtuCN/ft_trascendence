@@ -15,16 +15,17 @@ $db->exec("CREATE TABLE IF NOT EXISTS user (
     is_admin BOOLEAN DEFAULT FALSE, 
     google_id TEXT,
     avatar BLOB,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	last_active DATETIME DEFAULT CURRENT_TIMESTAMP
 )");
 
 $db->exec("DROP TABLE IF EXISTS tournament");
 $db->exec("CREATE TABLE IF NOT EXISTS tournament (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     tournament_name TEXT,
-    id_winner INTEGER,
-    FOREIGN KEY (id_winner) REFERENCES user(id)
+    has_started BOOLEAN DEFAULT FALSE,
+    finished BOOLEAN DEFAULT FALSE,
+    id_winner INTEGER
 )");
 
 //$db->exec("DROP TABLE IF EXISTS game_match");
@@ -32,8 +33,7 @@ $db->exec("CREATE TABLE IF NOT EXISTS game_match (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     id_tournament INTEGER, 
     time_stamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    number_of_players INTEGER,
-    FOREIGN KEY (id_tournament) REFERENCES tournament(id)
+    number_of_players INTEGER
 )");
 
 $db->exec("CREATE TABLE IF NOT EXISTS friendship (
@@ -58,10 +58,10 @@ $db->exec("CREATE TABLE IF NOT EXISTS player_match_stats(
 
 //$db->exec("DROP TABLE IF EXISTS player_all_time_stats");
 $db->exec("CREATE TABLE IF NOT EXISTS player_all_time_stats(
-    id_player PRIMARY KEY,
+    id_player INTEGER PRIMARY KEY,
     goal_scored INTEGER DEFAULT 0,
     goal_taken INTEGER DEFAULT 0,
-    tournament_won INTGER DEFAULT 0,
+    tournament_won INTEGER DEFAULT 0,
     FOREIGN KEY (id_player) REFERENCES user(id)
 )");
 ?>

@@ -23,7 +23,7 @@ async function add_friendship_db(id1, id2) {
     return new Promise((resolve, reject) =>
     {
         const query = `
-        INSERT INTO friendship (id_user1, id_user2)
+        INSERT INTO friendship (id_user_1, id_user_2)
         VALUES (?,?)
         `;
          db.run(
@@ -48,8 +48,8 @@ async function remove_friendship_db(id1, id2)
     return new Promise((resolve, reject) => {
         const query = `
         DELETE FROM friendship
-        WHERE (id_user1 = ? AND id_user2 = ?)
-           OR (id_user1 = ? AND id_user2 = ?)
+        WHERE (id_user_1 = ? AND id_user_2 = ?)
+           OR (id_user_1 = ? AND id_user_2 = ?)
         `;
 
         db.run(
@@ -71,6 +71,7 @@ export async function remove_friendship(id1, id2) {
     try
     {
         await remove_friendship_db(id1, id2);
+        return { success: true};
     }
     catch (error)
     {
@@ -97,9 +98,9 @@ export async function add_friendship(id1, id2)
 async function get_friends_by_user_db(id1) {
     return new Promise((resolve, reject) => {
         const query = `
-        SELECT id_user2
+        SELECT id_user_2
         FROM friendship
-        WHERE id_user1 = ?
+        WHERE id_user_1 = ?
         `;
 
         db.all(query, [id1], (err, rows) => {
@@ -107,7 +108,7 @@ async function get_friends_by_user_db(id1) {
                 console.error('Error while fetching friends:', err);
                 reject(err);
             } else {
-                resolve(rows.map(row => row.id_user2));
+                resolve(rows.map(row => row.id_user_2));
             }
         });
     });
@@ -126,4 +127,21 @@ export async function get_friends_by_user(id) {
         console.error(error);
         throw error;
     }
+}
+
+export async function get_all_friendships() {
+    return new Promise((resolve, reject) => {
+        const query = `
+        SELECT * FROM friendship
+        `;
+
+        db.all(query, [], (err, rows) => {
+            if (err) {
+                console.error('Error while fetching all friendships:', err);
+                reject(err);
+            } else {
+                resolve(rows);
+            }
+        });
+    });
 }

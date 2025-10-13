@@ -1,4 +1,5 @@
 import { gameRunning, stopGame, startGame, canvas, ctx, canvas_container, bracketContainer } from "./typescriptFile/variables.js";
+import { gameRunning, stopGame, startGame, canvas, ctx, canvas_container, bracketContainer } from "./typescriptFile/variables.js";
 import { Player } from "./typescriptFile/classPlayer.js";
 import { Ball, drawScore } from "./typescriptFile/classBall.js";
 import { resetCanvas, generateBracket, renderBracket, drawCornerWalls, drawMiddleLine, clonePlayer, sendMatchData, sendTournamentData, showVictoryScreen } from "./utilities.js";
@@ -128,6 +129,8 @@ ws.onerror = error => {
 export function resetGoalscore() {
 	for (let i = 0; i < playerGoals.length; i++)
 		playerGoals[i] = 0;
+	for (let i = 0; i < playerGoalsRecived.length; i++)
+		playerGoalsRecived[i] = 0;
 	for (let i = 0; i < playerGoalsRecived.length; i++)
 		playerGoalsRecived[i] = 0;
 }
@@ -266,6 +269,8 @@ function drawTournament() {
 	for (const player of players) {
 		player.getPaddle().movePaddles();
 		player.getPaddle().drawPaddles();
+		player.getPaddle().movePaddles();
+		player.getPaddle().drawPaddles();
 	}
 	drawScore(nbrPlayer);
 	animationFrameId = requestAnimationFrame(drawTournament);
@@ -343,9 +348,14 @@ button2PLocal.addEventListener("click", () => {
 		nbrPlayer = 2;
 	playerGoals = new Array(nbrPlayer).fill(0);
 	playerGoalsRecived = new Array(nbrPlayer).fill(0);
+	playerGoals = new Array(nbrPlayer).fill(0);
+	playerGoalsRecived = new Array(nbrPlayer).fill(0);
 	Pebble = new Ball();
 	startGame();
+	startGame();
 	players = [];
+	players.push(new Player("Matteo", 0, 12, "vertical"));
+	players.push(new Player("Arturo", 1, 13, "vertical"));
 	players.push(new Player("Matteo", 0, 12, "vertical"));
 	players.push(new Player("Arturo", 1, 13, "vertical"));
 
@@ -365,10 +375,17 @@ button4P.addEventListener("click", () => {
 		nbrPlayer = 4;
 	playerGoals = new Array(nbrPlayer).fill(0);
 	playerGoalsRecived = new Array(nbrPlayer).fill(0);
+	playerGoals = new Array(nbrPlayer).fill(0);
+	playerGoalsRecived = new Array(nbrPlayer).fill(0);
 	canvas.height = canvas.width = 800;
 	Pebble = new Ball();
 	startGame();
+	startGame();
 	players = [];
+	players.push(new Player("Matteo", 0, 12, "vertical"));
+	players.push(new Player("Arturo", 1, 13, "vertical"));
+	players.push(new Player("Petre", 2, 14, "horizontal"));
+	players.push(new Player("Tjaz", 3, 15, "horizontal"));
 	players.push(new Player("Matteo", 0, 12, "vertical"));
 	players.push(new Player("Arturo", 1, 13, "vertical"));
 	players.push(new Player("Petre", 2, 14, "horizontal"));
@@ -385,6 +402,8 @@ buttonAi.addEventListener("click", () => {
 	button4P.style.display = "none";
 	buttonTournament.style.display = "none";
 	textPong.style.display = "none";
+	buttonTournament.style.display = "none";
+	textPong.style.display = "none";
 	canvas_container.style.display = "block";
 	canvas.style.display = "block";
 	nbrPlayer = parseInt(buttonAi.value);
@@ -392,9 +411,14 @@ buttonAi.addEventListener("click", () => {
 		nbrPlayer = 1;
 	playerGoals = new Array(2).fill(0);
 	playerGoalsRecived = new Array(2).fill(0);
+	playerGoals = new Array(2).fill(0);
+	playerGoalsRecived = new Array(2).fill(0);
 	Pebble = new Ball();
 	startGame();
+	startGame();
 	players = [];
+	players.push(new Player("Matteo", 0, 12, "vertical"));
+	players.push(new Player("AI", 1, 13, "vertical"));
 	players.push(new Player("Matteo", 0, 12, "vertical"));
 	players.push(new Player("AI", 1, 13, "vertical"));
 
@@ -499,3 +523,4 @@ buttonPlayGame.addEventListener("click", () => {
 	buttonPlayGame.style.display = "none";
 	bracketContainer.style.display = "none";
 });
+
