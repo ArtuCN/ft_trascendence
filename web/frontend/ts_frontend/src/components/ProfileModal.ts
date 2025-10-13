@@ -34,10 +34,11 @@ export class ProfileModal {
           // Mappa i dati dal backend al formato atteso dal frontend
           if (backendStats && Array.isArray(backendStats) && backendStats.length > 0) {
             const stat = backendStats[0];
+            console.log('Backend stats received:', stat);
             playerStats = {
-              matchesPlayed: 0, // TODO: calcolare dal database match
-              matchesWon: 0,    // TODO: calcolare dal database match
-              matchesLost: 0,   // TODO: calcolare dal database match
+              matchesPlayed: stat.matches_played || 0,
+              matchesWon: stat.matches_won || 0,
+              matchesLost: stat.matches_lost || 0,
               goalsScored: stat.goal_scored || 0,
               tournamentsWon: stat.tournament_won || 0,
               rank: 0 // TODO: calcolare ranking

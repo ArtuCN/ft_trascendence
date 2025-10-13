@@ -77,6 +77,12 @@ export class AuthState {
       this.user = response.user;
       this.successMessage = 'Login successful!';
       
+      // Salva dati utente nel localStorage (come in googleAuth)
+      localStorage.setItem('user', JSON.stringify(response.user));
+      localStorage.setItem("username", response.user.username);
+      localStorage.setItem("id", response.user.id.toString());
+      localStorage.setItem("mail", response.user.mail);
+      
       // Redirect alla home page dopo il login
       router.navigate('/');
     } catch (err) {
@@ -104,6 +110,12 @@ export class AuthState {
       
       apiService.saveToken(response.token);
       this.user = response.user;
+      
+      // Salva dati utente nel localStorage
+      localStorage.setItem('user', JSON.stringify(response.user));
+      localStorage.setItem("username", response.user.username);
+      localStorage.setItem("id", response.user.id.toString());
+      localStorage.setItem("mail", response.user.mail);
       
       // Redirect alla home page dopo la registrazione
       router.navigate('/');
@@ -154,6 +166,14 @@ export class AuthState {
     this.user = null;
     this.error = null;
     this.successMessage = null;
+    
+    // Pulisci tutti i dati utente dal localStorage
+    localStorage.removeItem('user');
+    localStorage.removeItem('username');
+    localStorage.removeItem('id');
+    localStorage.removeItem('mail');
+    localStorage.removeItem('walletAddress');
+    
     this.notifyListeners();
   }
 

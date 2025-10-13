@@ -1,10 +1,15 @@
 import { createElement } from '../utils/dom.js';
+import { MatchmakingModal } from '../components/MatchmakingModal.js';
 
 export class PlayPage {
   private element: HTMLElement;
+  private matchmakingModal: MatchmakingModal;
+  private gameFrame?: HTMLIFrameElement;
 
   constructor() {
+    this.matchmakingModal = new MatchmakingModal();
     this.element = this.createPage();
+    this.setupIframeListeners();
   }
 
   private createPage(): HTMLElement {
@@ -74,7 +79,7 @@ export class PlayPage {
     });
 
     // Game iframe
-    const gameFrame = createElement('iframe', {
+    this.gameFrame = createElement('iframe', {
       src: 'https://localhost/game/',
       className: 'w-full h-full border-0',
       style: 'min-height: 500px;'
@@ -92,12 +97,12 @@ export class PlayPage {
     });
 
     // Hide loading overlay when iframe loads
-    gameFrame.onload = () => {
+    this.gameFrame.onload = () => {
       loadingOverlay.style.display = 'none';
     };
 
     rightPanel.appendChild(loadingOverlay);
-    rightPanel.appendChild(gameFrame);
+    rightPanel.appendChild(this.gameFrame);
 
     mainContent.appendChild(leftPanel);
     mainContent.appendChild(rightPanel);
@@ -108,10 +113,42 @@ export class PlayPage {
     return container;
   }
 
+  private setupIframeListeners(): void {
+    // Listen for messages from the game iframe
+    window.addEventListener('message', (event) => {
+      // Verify origin for security
+      if (event.origin !== window.location.origin) return;
+
+      const data = event.data;
+      
+      if (data.type === 'matchmaking_start') {
+        // Show matchmaking modal
+        this.matchmakingModal.show(() => {
+          // Cancel button clicked - notify iframe
+          this.sendMessageToIframe({ type: 'matchmaking_cancel' });
+        });
+      } else if (data.type === 'matchmaking_found') {
+        // Match found - hide modal
+        this.matchmakingModal.hide();
+      } else if (data.type === 'matchmaking_error') {
+        // Error occurred - hide modal and show alert
+        this.matchmakingModal.hide();
+        alert(data.message || 'Errore durante la ricerca della partita');
+      }
+    });
+  }
+
+  private sendMessageToIframe(message: any): void {
+    if (this.gameFrame && this.gameFrame.contentWindow) {
+      this.gameFrame.contentWindow.postMessage(message, window.location.origin);
+    }
+  }
+
   getElement(): HTMLElement {
     return this.element;
   }
 
   destroy(): void {
+    this.matchmakingModal.hide();
   }
 }

@@ -1,5 +1,6 @@
 import { WebSocketServer } from 'ws';
 import { randomUUID } from 'crypto';
+import { insertMatch } from '../../database_comunication/match_db.js';
 
 const players = [];
 class Ball {
@@ -18,7 +19,7 @@ const rooms = {ball, players, score: [0, 0]};
 let gameRunning = false;
 
 // Gestione goal
-function checkGoal(roomId, ball, data) {
+async function checkGoal(roomId, ball, data) {
 
 	if (ball.ballX < 0) {
 			ball.ballX = data.canvasWidth / 2;
@@ -44,6 +45,8 @@ function checkGoal(roomId, ball, data) {
 						winner: 1
 					}))
 				);
+				// Save match stats to database
+				await saveMatchStats(roomId, 1);
 				rooms[roomId].score = [0, 0];
 			}
 		}
@@ -72,8 +75,48 @@ function checkGoal(roomId, ball, data) {
 				winner: 0
 			}))
 		);
+		// Save match stats to database
+		await saveMatchStats(roomId, 0);
 		rooms[roomId].score = [0, 0];
 		}
+	}
+}
+
+// Save match statistics to database
+async function saveMatchStats(roomId, winnerId) {
+	const room = rooms[roomId];
+	if (!room || !room.players || room.players.length !== 2) {
+		console.error(`Cannot save stats: invalid room ${roomId}`);
+		return;
+	}
+
+	const score = room.score || [0, 0];
+	const player0Id = room.players[0].userId;
+	const player1Id = room.players[1].userId;
+
+	// Check if both players have valid user IDs
+	if (!player0Id || !player1Id) {
+		console.warn(`Cannot save stats: missing user IDs for room ${roomId}`, { player0Id, player1Id });
+		return;
+	}
+
+	try {
+		// id_tournament = null for non-tournament matches
+		const users_ids = [player0Id, player1Id];
+		const users_goal_scored = [score[0], score[1]];
+		const users_goal_taken = [score[1], score[0]];
+
+		console.log(`📊 Saving online match stats:`, { 
+			users_ids, 
+			users_goal_scored, 
+			users_goal_taken,
+			winner: winnerId 
+		});
+
+		await insertMatch(null, users_ids, users_goal_scored, users_goal_taken);
+		console.log(`✅ Online match stats saved successfully for room ${roomId}`);
+	} catch (error) {
+		console.error(`❌ Error saving match stats for room ${roomId}:`, error);
 	}
 }
 
@@ -201,8 +244,11 @@ export function setupMatchmaking(server) {
 			if (data.type === 'find_match') {
 				gameRunning = true;
 				ball = new Ball(data.canvas);
+				// Store user ID from the request
+				player.userId = data.userId;
+				
 				if (!waitingPlayer) {
-					player.name = 'aa';
+					player.name = data.username || 'Player 1';
 					waitingPlayer = player;
 					ws.send(JSON.stringify({ type: "waiting" }));
 				} else {
@@ -210,12 +256,15 @@ export function setupMatchmaking(server) {
 					const roomId = randomUUID();
 					player.room = roomId;
 					opponent.room = roomId;
-					opponent.name = 'bb';
+					player.name = data.username || 'Player 2';
+					
 					startGame();
 					player.socket.send(JSON.stringify({ type: 'match_found', opponentName: opponent.name, id: 1, ball: ball }));
 					opponent.socket.send(JSON.stringify({ type: 'match_found', opponentName: player.name, id: 0, ball: ball }));
 					waitingPlayer = null;
-					rooms[roomId] = { ball, players: [opponent, player] };
+					rooms[roomId] = { ball, players: [opponent, player], score: [0, 0] };
+					
+					console.log(`🎮 Match created: ${opponent.name} (ID: ${opponent.userId}) vs ${player.name} (ID: ${player.userId})`);
 				}
 			}
 			if (data.type === 'update_state' && player.room) {

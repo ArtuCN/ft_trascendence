@@ -23,7 +23,8 @@ const createUserTable = `
     wallet TEXT DEFAULT '',
     is_admin INTEGER DEFAULT 0,
     google_id TEXT DEFAULT '',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    last_active DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `;
 
@@ -95,26 +96,37 @@ const tables = [
   { name: 'friendship', query: createFriendshipTable }
 ];
 
-let completed = 0;
-
-tables.forEach(table => {
-  db.run(table.query, (err) => {
-    if (err) {
-      console.error(`Error creating ${table.name} table:`, err);
-    } else {
-      console.log(`${table.name} table created successfully!`);
-    }
-    
-    completed++;
-    if (completed === tables.length) {
-      // Close database connection after all tables are created
-      db.close((err) => {
-        if (err) {
-          console.error('Error closing database:', err);
-        } else {
-          console.log('Database initialization completed. Connection closed.');
-        }
-      });
-    }
+// Use promises to ensure proper completion
+const createTablePromises = tables.map(table => {
+  return new Promise((resolve, reject) => {
+    db.run(table.query, (err) => {
+      if (err) {
+        console.error(`Error creating ${table.name} table:`, err);
+        reject(err);
+      } else {
+        console.log(`${table.name} table created successfully!`);
+        resolve();
+      }
+    });
   });
 });
+
+// Wait for all tables to be created before closing
+Promise.all(createTablePromises)
+  .then(() => {
+    console.log('All tables created successfully!');
+    db.close((err) => {
+      if (err) {
+        console.error('Error closing database:', err);
+        process.exit(1);
+      } else {
+        console.log('Database initialization completed. Connection closed.');
+        process.exit(0);
+      }
+    });
+  })
+  .catch(err => {
+    console.error('Error during table creation:', err);
+    db.close();
+    process.exit(1);
+  });

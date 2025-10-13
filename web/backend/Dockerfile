@@ -12,4 +12,5 @@ RUN mkdir -p /app/data
 
 EXPOSE 3000
 
-CMD ["node", "srcs/server.js"]
+# Inizializza il database prima di avviare il server
+CMD ["sh", "-c", "node init-db.js && node srcs/server.js"]

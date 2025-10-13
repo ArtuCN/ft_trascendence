@@ -20,6 +20,14 @@ export class App {
     this.layout = layout;
     this.mainContent = mainContent;
     this.authGuard = new AuthGuard(this.mainContent);
+    
+    // Nascondi navbar e content di default (prima del login)
+    const { isAuthenticated } = authState.getState();
+    if (!isAuthenticated) {
+      this.navbar.getElement().style.display = 'none';
+      this.mainContent.style.display = 'none';
+    }
+    
     this.setupRoutes();
     this.bindAuthState();
     

@@ -3,6 +3,16 @@ import { Player } from "./typescriptFile/classPlayer.js";
 import { Ball, drawScore } from "./typescriptFile/classBall.js";
 import { resetCanvas, generateBracket, renderBracket, drawCornerWalls, drawMiddleLine, clonePlayer, sendMatchData, sendTournamentData, showVictoryScreen } from "./utilities.js";
 
+// Helper functions to get user data from localStorage
+function getCurrentUserId(): number {
+	const userId = localStorage.getItem('id');
+	return userId ? parseInt(userId) : 0;
+}
+
+function getCurrentUsername(): string {
+	return localStorage.getItem('username') || 'Guest';
+}
+
 const buttonLocalPlay = document.getElementById("LocalPlay") as HTMLButtonElement;
 const buttonRemotePlay = document.getElementById("RemotePlay") as HTMLButtonElement;
 const button2PLocal = document.getElementById("Play2P") as HTMLButtonElement;
@@ -53,22 +63,59 @@ export let currentMatchIndex = 0;
 export let animationFrameId: number | null = null;
 export let online: boolean = false;
 
-export const ws = new WebSocket("wss://192.168.1.28/ws");
+// Usa hostname corrente invece di IP hardcoded
+const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const wsHost = window.location.host; // include porta se presente
+export const ws = new WebSocket(`${wsProtocol}//${wsHost}/ws`);
 let myId: number;
+
+// Setup button listener (outside of ws.onopen to work immediately)
+button2PRemote.addEventListener("click", () => {
+	// Notify parent window that matchmaking started
+	if (window.parent !== window) {
+		window.parent.postMessage({ type: 'matchmaking_start' }, window.location.origin);
+	}
+
+	button2PRemote.style.display = "none";
+	button4P.style.display = "none";
+	buttonMainMenu.style.display = "none";
+	buttonTournament.style.display = "none";
+	textPong.style.display = "none";
+	canvas_container.style.display = "block";
+	canvas.style.display = "block";
+	online = true;
+	Pebble = new Ball(true, true);
+
+	// Check if WebSocket is ready
+	if (ws.readyState === WebSocket.OPEN) {
+		// Get user data from localStorage
+		const userId = localStorage.getItem('id');
+		const username = localStorage.getItem('username');
+
+		ws.send(JSON.stringify({ 
+			type: "find_match", 
+			canvas: { width: canvas.width, height: canvas.height },
+			userId: userId ? Number(userId) : null,
+			username: username || 'Guest'
+		}));
+	} else {
+		// Send when connection is established
+		ws.addEventListener('open', () => {
+			const userId = localStorage.getItem('id');
+			const username = localStorage.getItem('username');
+
+			ws.send(JSON.stringify({ 
+				type: "find_match", 
+				canvas: { width: canvas.width, height: canvas.height },
+				userId: userId ? Number(userId) : null,
+				username: username || 'Guest'
+			}));
+		}, { once: true });
+	}
+});
+
 ws.onopen = () => {
 	console.log("WebSocket connection established");
-	button2PRemote.addEventListener("click", () => {
-		button2PRemote.style.display = "none";
-		button4P.style.display = "none";
-		buttonMainMenu.style.display = "none";
-		buttonTournament.style.display = "none";
-		textPong.style.display = "none";
-		canvas_container.style.display = "block";
-		canvas.style.display = "block";
-		online = true;
-		Pebble = new Ball(true, true);
-		ws.send(JSON.stringify({ type: "find_match", canvas: { width: canvas.width, height: canvas.height } }));
-	});
 };
 
 ws.onmessage = (event) => {
@@ -77,6 +124,11 @@ ws.onmessage = (event) => {
 		console.log("Waiting for an opponent...");
 	}
 	if (message.type === "match_found") {
+		// Notify parent that match was found
+		if (window.parent !== window) {
+			window.parent.postMessage({ type: 'matchmaking_found' }, window.location.origin);
+		}
+
 		const playerNames: string = message.opponentName;
 		nbrPlayer = 2;
 		playerGoals = new Array(nbrPlayer).fill(0);
@@ -122,7 +174,40 @@ ws.onclose = () => {
 
 ws.onerror = error => {
   console.error('Errore WebSocket:', error);
+  
+  // Notify parent of error
+  if (window.parent !== window) {
+    window.parent.postMessage({ 
+      type: 'matchmaking_error',
+      message: 'Errore di connessione al server di gioco'
+    }, window.location.origin);
+  }
 };
+
+// Listen for messages from parent (e.g., cancel matchmaking)
+window.addEventListener('message', (event) => {
+  // Verify origin
+  if (event.origin !== window.location.origin) return;
+
+  const data = event.data;
+  
+  if (data.type === 'matchmaking_cancel') {
+    // User cancelled matchmaking - close WebSocket and reset UI
+    console.log('Matchmaking cancelled by user');
+    ws.close();
+    
+    // Reset UI
+    canvas_container.style.display = "none";
+    canvas.style.display = "none";
+    textPong.style.display = "block";
+    button2PRemote.style.display = "inline-block";
+    button4P.style.display = "inline-block";
+    buttonMainMenu.style.display = "inline-block";
+    buttonTournament.style.display = "inline-block";
+    online = false;
+    stopGame();
+  }
+});
 
 // Reset goalscore
 export function resetGoalscore() {
@@ -346,8 +431,12 @@ button2PLocal.addEventListener("click", () => {
 	Pebble = new Ball();
 	startGame();
 	players = [];
-	players.push(new Player("Matteo", 0, 12, "vertical"));
-	players.push(new Player("Arturo", 1, 13, "vertical"));
+	
+	// Use logged user's ID for Player 1, guest (0) for Player 2
+	const userId = getCurrentUserId();
+	const username = getCurrentUsername();
+	players.push(new Player(username, 0, userId, "vertical"));
+	players.push(new Player("Guest", 1, 0, "vertical"));
 
 	draw();
 });

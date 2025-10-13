@@ -22,13 +22,16 @@ async function insertMatchInDB(id_tournament, number_of_players)
 {
       return new Promise((resolve, reject) => {
       
+        // Convert 0 to null for non-tournament matches
+        const tournamentId = id_tournament === 0 ? null : id_tournament;
+        
         const query = `
         INSERT INTO game_match (id_tournament, number_of_players)
         VALUES (?, ?)
         `;
         db.run(
             query,
-            [id_tournament, number_of_players],
+            [tournamentId, number_of_players],
             function (err)
             {
                 if (err) {

@@ -63,8 +63,22 @@ export default async function (fastify, opts) {
     try {
       const { id_tournament, users_ids, users_goal_scored, users_goal_taken } = request.body;
 
-      if (!id_tournament || !users_ids || !users_goal_scored || !users_goal_taken)
-        return reply.code(400).send({ error: 'Missing something in request body' });
+      // Allow id_tournament to be null for non-tournament matches
+      if (users_ids === undefined || users_goal_scored === undefined || users_goal_taken === undefined) {
+        return reply.code(400).send({ error: 'Missing required fields in request body' });
+      }
+
+      // Validate arrays
+      if (!Array.isArray(users_ids) || !Array.isArray(users_goal_scored) || !Array.isArray(users_goal_taken)) {
+        return reply.code(400).send({ error: 'users_ids, users_goal_scored, and users_goal_taken must be arrays' });
+      }
+
+      if (users_ids.length !== users_goal_scored.length || users_ids.length !== users_goal_taken.length) {
+        return reply.code(400).send({ error: 'Array lengths must match' });
+      }
+
+      console.log('📊 Saving match:', { id_tournament, users_ids, users_goal_scored, users_goal_taken });
+
       const result = await insertMatch(id_tournament, users_ids, users_goal_scored, users_goal_taken);
       reply.send(result);
     } catch (error) {
