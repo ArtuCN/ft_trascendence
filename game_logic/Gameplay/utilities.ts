@@ -216,10 +216,6 @@ export async function sendBotData(ball_y: number, paddle_y: number): Promise<str
 	return data.key;
 }
 
-
-
-
-
 export function sendTournamentData() {
 
     let body = {
@@ -228,7 +224,7 @@ export function sendTournamentData() {
         semifinals: semifinals,
         final: final
     };
-    fetch("/api/tournament/", {
+    fetch("/api/tournament", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -240,8 +236,15 @@ export function sendTournamentData() {
 export function sendMatchData() {
   
   let players_id: number[] = [];
+  console.log("players: ", players);
   for (let i = 0; i < players.length; i++)
     players_id[i] = players[i].getUserID();
+  console.log({
+      id_tournament: TournamentID,
+      users_ids: players_id,
+      users_goal_scored: playerGoals,
+      users_goal_taken: playerGoalsRecived
+  });
   let body = {
       id_tournament: TournamentID,
       users_ids: players_id,
@@ -249,7 +252,6 @@ export function sendMatchData() {
       users_goal_taken: playerGoalsRecived
     };
 
-    //per della la rotta è https://localhost/api/match ti ho corretto alcune cose
     let response = fetch("/api/match", {
         method: "POST",
         headers: {

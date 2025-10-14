@@ -143,6 +143,7 @@ function MoveBallOnline(roomId, data) {
 		ball.ballY = data.canvasHeight - ball.ballSize / 2;
 		ball.vy *= -1;
 	}
+	console.log(ball.speed);
 	const roomPlayers = rooms[roomId].players;
 	try {
 		roomPlayers[0].socket.send(JSON.stringify({
@@ -250,10 +251,32 @@ export function setupMatchmaking(server) {
 		});
 
 		ws.on('close', () => {
-			console.log(`Player disconnected: ${player.id}`);
-			const index = players.findIndex(p => p.id === player.id);
-			if (index !== -1) players.splice(index, 1);
-		});
+	    console.log(`Player disconnected: ${player.id}`);
+	    const index = players.findIndex(p => p.id === player.id);
+	    if (index !== -1) players.splice(index, 1);
+
+	    const roomId = player.room;
+	    if (roomId && rooms[roomId]) {
+				gameRunning = false;
+				rooms[roomId].players.forEach(op => {
+					if (op.id !== player.id && op.socket.readyState === op.socket.OPEN) {
+						op.socket.send(JSON.stringify({
+							type: 'opponent_disconnected',
+						}));
+					}
+				});
+				rooms[roomId].disconnectTimeout = setTimeout(() => {
+					const remaining = rooms[roomId].players.find(op => op.id !== player.id);
+					if (remaining && remaining.socket.readyState === remaining.socket.OPEN) {
+						remaining.socket.send(JSON.stringify({
+							type: 'victory',
+							winner: rooms[remaining.room].players.findIndex(p => p.id === remaining.id)
+						}));
+					}
+					delete rooms[roomId];
+				}, 2 * 60 * 1000); // 2 minuti
+	    }
+	});
 
 		ws.on('error', (err) => {
 			console.error(`Errore WebSocket player ${player.id}:`, err.message);

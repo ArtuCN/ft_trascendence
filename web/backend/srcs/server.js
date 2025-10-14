@@ -16,27 +16,12 @@ import matchRoute from './controllers/match.js';
 import tournamentRoute from './controllers/tournament.js';
 import heartBeatRoute from './controllers/heartBeat.js';
 
-import { getAllUsers } from './database_comunication/user_db.js';
-
-// Rotte modulari
-import registerRoute from './controllers/register.js';
-import loginRoute from './controllers/login.js';
-import logoutRoute from './controllers/logout.js';
-import tokenRoute from './controllers/token.js';
-import statsRoute from './controllers/stats.js';
-import friendRoute from './controllers/friendship.js';
-
 import { setupMatchmaking } from './controllers/online_match/online_match.js';
 
 const fastify = Fastify({ logger: true });
 
 // Abilita CORS (per il frontend React o altro)
 await fastify.register(cors, { origin: '*' });
-// Abilita CORS
-await fastify.register(cors, { origin: '*' });
-
-// Configura JWT
-await fastify.register(jwt, { secret: 'your_secret_key' }); // 🔐 usa un valore sicuro in .env
 
 // per preHandler - estrare dati di user da token, senza lookup in database
 fastify.decorate('authenticate', async function (request, reply) {
@@ -61,12 +46,10 @@ fastify.decorate('authenticate', async function (request, reply) {
   }
 });
 
-// Registra le rotte modulari
-await fastify.register(matchRoute);
 // Configura JWT
 await fastify.register(jwt, { secret: 'your_secret_key' });
-
 // Rotte modulari
+await fastify.register(matchRoute);
 await fastify.register(loginRoute);
 await fastify.register(registerRoute);
 await fastify.register(logoutRoute);
@@ -77,9 +60,6 @@ await fastify.register(friendRoute);
 await fastify.register(tournamentRoute);
 await fastify.register(heartBeatRoute);
 
-// Endpoint semplice per debug
-await fastify.register(statsRoute);
-await fastify.register(friendRoute);
 
 fastify.get('/users', async (request, reply) => {
   try {
@@ -89,17 +69,6 @@ fastify.get('/users', async (request, reply) => {
     request.log.error(err);
     reply.code(500).send({ error: 'Error searching in the db' });
   }
-});
-
-// Stampa tutte le rotte per debug
-
-// Avvia il server
-fastify.listen({ port: 3000, host: '0.0.0.0' }, (err, address) => {
-  if (err) {
-    fastify.log.error(err);
-    process.exit(1);
-  }
-  fastify.log.info(`Server listening at ${address}`);
 });
 
 const wss = setupMatchmaking(fastify.server);
@@ -124,6 +93,11 @@ fastify.server.on('upgrade', (request, socket, head) => {
   }
 });
 
-// Avvia server
-const address = await fastify.listen({ port: 3000, host: '0.0.0.0' });
-fastify.log.info(`Server listening at ${address}`);
+// Avvia il server
+fastify.listen({ port: 3000, host: '0.0.0.0' }, (err, address) => {
+  if (err) {
+    fastify.log.error(err);
+    process.exit(1);
+  }
+  fastify.log.info(`Server listening at ${address}`);
+});

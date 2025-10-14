@@ -1,5 +1,4 @@
 import { gameRunning, stopGame, startGame, canvas, ctx, canvas_container, bracketContainer } from "./typescriptFile/variables.js";
-import { gameRunning, stopGame, startGame, canvas, ctx, canvas_container, bracketContainer } from "./typescriptFile/variables.js";
 import { Player } from "./typescriptFile/classPlayer.js";
 import { Ball, drawScore } from "./typescriptFile/classBall.js";
 import { resetCanvas, generateBracket, renderBracket, drawCornerWalls, drawMiddleLine, clonePlayer, sendMatchData, sendTournamentData, showVictoryScreen } from "./utilities.js";
@@ -20,7 +19,7 @@ export const buttonPlayGame = document.getElementById("PlayGame") as HTMLButtonE
 export let nbrPlayer: number = 0;
 export let countPlayers: number = 0;
 export let Tournament: boolean = false;
-export let TournamentID: number = 0;
+export let TournamentID: number = 1;
 export let playerGoals: number[] = [];
 export let playerGoalsRecived: number[] = [];
 export let Pebble: Ball = new Ball();
@@ -111,6 +110,11 @@ ws.onmessage = (event) => {
 		// Reset posizione palla, animazione, ecc.
 		Pebble.resetGame(players);
 		drawScore(nbrPlayer);
+	}
+	if (message.type === 'opponent_disconnected') {
+		// Mostra messaggio di attesa
+		alert("L'avversario si è disconnesso. Attendi 2 minuti per la sua riconnessione, altrimenti vinci la partita.");
+		stopGame();
 	}
 	if (message.type === 'victory') {
 		showVictoryScreen(players[message.winner]);
@@ -213,10 +217,13 @@ export function showMenu(winner: Player) {
 		if (currentRound === "finished") {
 			for (const player of players)
 				player.getPaddle().stopBotPolling();
+			canvas.style.display = "none";
 			textPong.style.display = "block";
+			buttonPlayGame.style.display = "none";
 			bracketContainer.style.display = "none";
-			buttonLocalPlay.style.display = "none";
-			buttonRemotePlay.style.display = "none";
+			canvas_container.style.display = "none";
+			buttonRemotePlay.style.display = 'inline-block';
+			buttonLocalPlay.style.display = 'inline-block';
 			sendTournamentData();
 		}
 	}
@@ -267,8 +274,6 @@ function drawTournament() {
 	Pebble.moveBall(players);
 	Pebble.drawBall();
 	for (const player of players) {
-		player.getPaddle().movePaddles();
-		player.getPaddle().drawPaddles();
 		player.getPaddle().movePaddles();
 		player.getPaddle().drawPaddles();
 	}
@@ -348,14 +353,9 @@ button2PLocal.addEventListener("click", () => {
 		nbrPlayer = 2;
 	playerGoals = new Array(nbrPlayer).fill(0);
 	playerGoalsRecived = new Array(nbrPlayer).fill(0);
-	playerGoals = new Array(nbrPlayer).fill(0);
-	playerGoalsRecived = new Array(nbrPlayer).fill(0);
 	Pebble = new Ball();
 	startGame();
-	startGame();
 	players = [];
-	players.push(new Player("Matteo", 0, 12, "vertical"));
-	players.push(new Player("Arturo", 1, 13, "vertical"));
 	players.push(new Player("Matteo", 0, 12, "vertical"));
 	players.push(new Player("Arturo", 1, 13, "vertical"));
 
@@ -375,17 +375,10 @@ button4P.addEventListener("click", () => {
 		nbrPlayer = 4;
 	playerGoals = new Array(nbrPlayer).fill(0);
 	playerGoalsRecived = new Array(nbrPlayer).fill(0);
-	playerGoals = new Array(nbrPlayer).fill(0);
-	playerGoalsRecived = new Array(nbrPlayer).fill(0);
 	canvas.height = canvas.width = 800;
 	Pebble = new Ball();
 	startGame();
-	startGame();
 	players = [];
-	players.push(new Player("Matteo", 0, 12, "vertical"));
-	players.push(new Player("Arturo", 1, 13, "vertical"));
-	players.push(new Player("Petre", 2, 14, "horizontal"));
-	players.push(new Player("Tjaz", 3, 15, "horizontal"));
 	players.push(new Player("Matteo", 0, 12, "vertical"));
 	players.push(new Player("Arturo", 1, 13, "vertical"));
 	players.push(new Player("Petre", 2, 14, "horizontal"));
@@ -402,8 +395,6 @@ buttonAi.addEventListener("click", () => {
 	button4P.style.display = "none";
 	buttonTournament.style.display = "none";
 	textPong.style.display = "none";
-	buttonTournament.style.display = "none";
-	textPong.style.display = "none";
 	canvas_container.style.display = "block";
 	canvas.style.display = "block";
 	nbrPlayer = parseInt(buttonAi.value);
@@ -411,14 +402,9 @@ buttonAi.addEventListener("click", () => {
 		nbrPlayer = 1;
 	playerGoals = new Array(2).fill(0);
 	playerGoalsRecived = new Array(2).fill(0);
-	playerGoals = new Array(2).fill(0);
-	playerGoalsRecived = new Array(2).fill(0);
 	Pebble = new Ball();
 	startGame();
-	startGame();
 	players = [];
-	players.push(new Player("Matteo", 0, 12, "vertical"));
-	players.push(new Player("AI", 1, 13, "vertical"));
 	players.push(new Player("Matteo", 0, 12, "vertical"));
 	players.push(new Player("AI", 1, 13, "vertical"));
 

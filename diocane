@@ -1,54 +1,12 @@
-{"level":30,"time":1760104847785,"pid":1,"hostname":"a659a536713f","msg":"Server listening at http://0.0.0.0:3000"}
+{"level":30,"time":1760346812126,"pid":1,"hostname":"16b001543989","msg":"Server listening at http://0.0.0.0:3000"}
 DB opened successfully!
 DB opened successfully!
 DB opened successfully!
-{"level":30,"time":1760104847790,"pid":1,"hostname":"a659a536713f","msg":"Server listening at http://0.0.0.0:3000"}
-Player connected: 4b47d9cb-0bef-4f91-9028-474120dc6848
-Sending ping to client
-web socket status:  1
-Player connected: e3063037-7b5a-4592-a815-b82955b6b9b0
-Sending ping to client
-web socket status:  1
-Sending ping to client
-web socket status:  1
-dataPaddle: {
-  type: 'ball_update',
-  leftPaddleY: 264,
-  rightPaddleY: 270,
-  PaddleLength: 60,
-  PaddleThickness: 20,
-  canvasWidth: 900,
-  canvasHeight: 600
-}
-dataPaddle: {
-  type: 'ball_update',
-  leftPaddleY: 216,
-  rightPaddleY: 270,
-  PaddleLength: 60,
-  PaddleThickness: 20,
-  canvasWidth: 900,
-  canvasHeight: 600
-}
-dataPaddle: {
-  type: 'ball_update',
-  leftPaddleY: 216,
-  rightPaddleY: 270,
-  PaddleLength: 60,
-  PaddleThickness: 20,
-  canvasWidth: 900,
-  canvasHeight: 600
-}
-dataPaddle: {
-  type: 'ball_update',
-  leftPaddleY: 204,
-  rightPaddleY: 270,
-  PaddleLength: 60,
-  PaddleThickness: 20,
-  canvasWidth: 900,
-  canvasHeight: 600
-}
-{"level":30,"time":1760104886441,"pid":1,"hostname":"a659a536713f","msg":"Server listening at http://0.0.0.0:3000"}
 DB opened successfully!
-DB opened successfully!
-DB opened successfully!
-{"level":30,"time":1760104886442,"pid":1,"hostname":"a659a536713f","msg":"Server listening at http://0.0.0.0:3000"}
+{"level":30,"time":1760346812128,"pid":1,"hostname":"16b001543989","msg":"Server listening at http://0.0.0.0:3000"}
+{"level":30,"time":1760346862765,"pid":1,"hostname":"16b001543989","reqId":"req-1","req":{"method":"POST","url":"/register","hostname":"192.168.1.28","remoteAddress":"172.19.0.4","remotePort":49396},"msg":"incoming request"}
+{"level":50,"time":1760346862785,"pid":1,"hostname":"16b001543989","err":{"type":"Error","message":"SQLITE_ERROR: no such table: user","stack":"Error: SQLITE_ERROR: no such table: user\n--> in Database#all('SELECT * FROM user WHERE mail = ?', [ 'matteodella61@gmail.com' ], [Function (anonymous)])\n    at file:///app/srcs/database_comunication/user_db.js:95:8\n    at new Promise (<anonymous>)\n    at getUserByMail (file:///app/srcs/database_comunication/user_db.js:94:10)\n    at Object.<anonymous> (file:///app/srcs/controllers/register.js:14:32)\n    at preHandlerCallback (/app/node_modules/fastify/lib/handleRequest.js:139:37)\n    at validationCompleted (/app/node_modules/fastify/lib/handleRequest.js:123:5)\n    at preValidationCallback (/app/node_modules/fastify/lib/handleRequest.js:100:5)\n    at handler (/app/node_modules/fastify/lib/handleRequest.js:77:7)\n    at /app/node_modules/fastify/lib/contentTypeParser.js:199:9","errno":1,"code":"SQLITE_ERROR","__augmented":true},"msg":"SQLITE_ERROR: no such table: user"}
+{"level":30,"time":1760346862794,"pid":1,"hostname":"16b001543989","reqId":"req-1","res":{"statusCode":500},"responseTime":28.20411100005731,"msg":"request completed"}
+{"level":30,"time":1760346862826,"pid":1,"hostname":"16b001543989","reqId":"req-2","req":{"method":"POST","url":"/register","hostname":"192.168.1.28","remoteAddress":"172.19.0.4","remotePort":49404},"msg":"incoming request"}
+{"level":50,"time":1760346862829,"pid":1,"hostname":"16b001543989","err":{"type":"Error","message":"SQLITE_ERROR: no such table: user","stack":"Error: SQLITE_ERROR: no such table: user\n--> in Database#all('SELECT * FROM user WHERE mail = ?', [ 'matteodella61@gmail.com' ], [Function (anonymous)])\n    at file:///app/srcs/database_comunication/user_db.js:95:8\n    at new Promise (<anonymous>)\n    at getUserByMail (file:///app/srcs/database_comunication/user_db.js:94:10)\n    at Object.<anonymous> (file:///app/srcs/controllers/register.js:14:32)\n    at preHandlerCallback (/app/node_modules/fastify/lib/handleRequest.js:139:37)\n    at validationCompleted (/app/node_modules/fastify/lib/handleRequest.js:123:5)\n    at preValidationCallback (/app/node_modules/fastify/lib/handleRequest.js:100:5)\n    at handler (/app/node_modules/fastify/lib/handleRequest.js:77:7)\n    at /app/node_modules/fastify/lib/contentTypeParser.js:199:9","errno":1,"code":"SQLITE_ERROR","__augmented":true},"msg":"SQLITE_ERROR: no such table: user"}
+{"level":30,"time":1760346862830,"pid":1,"hostname":"16b001543989","reqId":"req-2","res":{"statusCode":500},"responseTime":3.10990499984473,"msg":"request completed"}

@@ -114,16 +114,15 @@ export class Ball {
 		if (this.online && this.isAuthoritative) return;
 		// Left goal
 		if (this.ballX < 0) {
-			if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
-			playerGoalsRecived[0]++;
-			playerGoalsRecived[0]++;
+			playerGoals[1]++;
+			playerGoalsRecived[1]++;
 			drawScore(nbrPlayer);
-			if (playerGoals[this.lastTouchedPlayer] == 5) {
+			if (playerGoals[1] == 5) {
 				if (typeof showMenu === "function") {
 					stopGame();
-					showVictoryScreen(players[this.lastTouchedPlayer]);
+					showVictoryScreen(players[1]);
 					for (let i = 0; i < players.length; i++) {
-						if (i !== this.lastTouchedPlayer) {
+						if (i !== 1) {
 							players[i].getPaddle().stopBotPolling();
 						}
 					}
@@ -135,15 +134,15 @@ export class Ball {
 		}
 		// Right goal
 		if (this.ballX > canvas.width) {
-			if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
+			playerGoals[0]++;
+			playerGoalsRecived[0]++;
 			drawScore(nbrPlayer);
-			playerGoalsRecived[1]++;
-			if (playerGoals[this.lastTouchedPlayer] == 5) {
+			if (playerGoals[0] == 5) {
 				if (typeof showMenu === "function") {
 					stopGame();
-					showVictoryScreen(players[this.lastTouchedPlayer]);
+					showVictoryScreen(players[0]);
 					for (let i = 0; i < players.length; i++) {
-						if (i !== this.lastTouchedPlayer) {
+						if (i !== 0) {
 							players[i].getPaddle().stopBotPolling();
 						}
 					}
@@ -166,37 +165,37 @@ export class Ball {
 		}
 		else if (nbrPlayer == 4) {
 			if (this.ballY < 0) {
-				if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
+				playerGoals[2]++;
 				playerGoalsRecived[2]++;
 				playerGoalsRecived[2]++;
 				drawScore(nbrPlayer);
-				if (playerGoals[this.lastTouchedPlayer]  == 5) {
+				if (playerGoals[2]  == 5) {
 					for (let i = 0; i < players.length; i++) {
-						if (i !== this.lastTouchedPlayer) {
+						if (i !== 2) {
 							players[i].getPaddle().stopBotPolling();
 						}
 					}
 					stopGame();
-					showVictoryScreen(players[this.lastTouchedPlayer]);
+					showVictoryScreen(players[2]);
 				}
 				this.resetGame(players);
 				return;
 			}
 			// Bottom goal
 			if (this.ballY > canvas.height) {
-				if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
+				playerGoals[3]++;
 				playerGoalsRecived[3]++;
 				playerGoalsRecived[3]++;
 				drawScore(nbrPlayer);
 				this.resetGame(players);
-				if (playerGoals[this.lastTouchedPlayer] == 5) {
+				if (playerGoals[3] == 5) {
 					for (let i = 0; i < players.length; i++) {
-						if (i !== this.lastTouchedPlayer) {
+						if (i !== 3) {
 							players[i].getPaddle().stopBotPolling();
 						}
 					}
 					stopGame();
-					showVictoryScreen(players[this.lastTouchedPlayer]);
+					showVictoryScreen(players[3]);
 				}
 				return;
 			}
@@ -529,14 +528,6 @@ export class Ball {
 
 	public getBallSize() {
 		return this.ballSize;
-	}
-
-	public getDirectionX() {
-		return this.vx;
-	}
-
-	public getDirectionY() {
-		return this.vy;
 	}
 
 	public getDirectionX() {
