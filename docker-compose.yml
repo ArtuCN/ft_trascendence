@@ -40,7 +40,7 @@ services:
       - ./web/backend/srcs:/app/srcs
       - ./web/backend/package.json:/app/package.json
       - backend_node_modules:/app/node_modules
-      - ./web/backend/data:/app/data
+      - shared_db_volume:/app/data
     expose:
       - "3000"
     depends_on:
