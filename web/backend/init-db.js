@@ -4,8 +4,6 @@ const { verbose } = sqlite3;
 const db = new (verbose()).Database('./data/database.sqlite', (err) => {
   if (err) {
     console.error('Error while opening db:', err);
-  } else {
-    console.log('DB opened successfully!');
   }
 });
 

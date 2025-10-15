@@ -7,8 +7,6 @@ const dbPath = path.resolve('/app/data/database.sqlite');
 const db = new (verbose()).Database(dbPath, (err) => {
   if (err) {
     console.error('Error while opening db:', err);
-  } else {
-    console.log('DB opened successfully!');
   }
 });
 

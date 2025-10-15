@@ -13,8 +13,6 @@ const db = new (verbose()).Database(dbPath, (err) => {
 
   if (err) {
     console.error('error while opening db:', err);
-  } else {
-    console.log('DB opened successfully!');
   }
 });
 db.run("PRAGMA foreign_keys = ON")
