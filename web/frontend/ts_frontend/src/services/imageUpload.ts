@@ -3,7 +3,7 @@ export class ImageUploadService {
     const formData = new FormData();
     formData.append('profileImage', file);
 
-    const response = await fetch('/api/user/upload-avatar', {
+    const response = await fetch('/api/avatar', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`

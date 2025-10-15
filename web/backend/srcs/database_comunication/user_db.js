@@ -390,3 +390,31 @@ export async function getUserLastActive(userId) {
 		});
 	});
 }
+
+export async function uploadAvatar_db(userId, avatarData) {
+  return new Promise((resolve, reject) => {
+    const query = `UPDATE user SET avatar = ? WHERE id = ?`;
+    db.run(query, [avatarData, userId], function (err) {
+      if (err) {
+        console.error('Error while uploading avatar:', err);
+        reject(err);
+      } else {
+        resolve({ id: userId, status: 'avatar updated' });
+      }
+    });
+  });
+}
+
+export async function getAvatar_db(userId) {
+  return new Promise((resolve, reject) => {
+    const query = `SELECT avatar FROM user WHERE id = ?`;
+    db.get(query, [userId], (err, row) => {
+      if (err) {
+        console.error('Error while fetching avatar:', err);
+        reject(err);
+      } else {
+        resolve(row ? row.avatar : null);
+      }
+    });
+  });
+}
