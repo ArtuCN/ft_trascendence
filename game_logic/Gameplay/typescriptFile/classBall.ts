@@ -537,4 +537,8 @@ export class Ball {
 	public getDirectionY() {
 		return this.vy;
 	}
+
+	public getOnlineStatus() {
+		return this.online;
+	}
 }

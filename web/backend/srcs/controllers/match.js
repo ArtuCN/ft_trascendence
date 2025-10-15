@@ -62,6 +62,7 @@ export default async function (fastify, opts) {
   fastify.post('/match', async (request, reply) => {
     try {
       const { id_tournament, users_ids, users_goal_scored, users_goal_taken } = request.body;
+      console.log(request.body);
       if (!id_tournament || !users_ids || !users_goal_scored || !users_goal_taken)
         return reply.code(400).send({ error: 'Missing something in request body' });
       const result = await insertMatch(id_tournament, users_ids, users_goal_scored, users_goal_taken);

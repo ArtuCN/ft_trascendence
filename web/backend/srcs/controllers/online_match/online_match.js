@@ -9,7 +9,7 @@ class Ball {
 		this.vx = 0;
 		this.vy = 0;
 		this.ballSize = 12;
-		this.speed = 2;
+		this.speed = 1;
 		this.lastTouchedPlayer = -1;
 	}
 }
@@ -25,7 +25,7 @@ function checkGoal(roomId, ball, data) {
 			ball.ballY = data.canvasHeight / 2;
 			ball.vx = -ball.vx; // inverti direzione
 			ball.vy = ball.vy;
-			ball.speed = 4;
+			ball.speed = 1;
 			ball.lastTouchedPlayer = 1; // chi ha segnato
 			rooms[roomId].score = rooms[roomId].score || [0, 0];
 			rooms[roomId].score[1] += 1; // punto al player destro
@@ -53,7 +53,7 @@ function checkGoal(roomId, ball, data) {
 		ball.ballY = data.canvasHeight / 2;
 		ball.vx = -ball.vx;
 		ball.vy = ball.vy;
-		ball.speed = 4;
+		ball.speed = 1;
 		ball.lastTouchedPlayer = 0;
 		rooms[roomId].score = rooms[roomId].score || [0, 0];
 		rooms[roomId].score[0] += 1; // punto al player sinistro
@@ -78,7 +78,6 @@ function checkGoal(roomId, ball, data) {
 }
 
 function calculateBounce(dataBall, dataPaddle, paddle, invertY = false) {
-	console.log(`dataPaddle:`, dataPaddle);
 	let relativeIntersect, normalizedRelativeIntersectionY, bounceAngle;
 	const paddlePosition = paddle === "left" ? dataPaddle.leftPaddleY : dataPaddle.rightPaddleY;
 	relativeIntersect = (dataBall.ballY - paddlePosition) - dataPaddle.PaddleLength / 2;
@@ -108,7 +107,7 @@ function MoveBallOnline(roomId, data) {
 		ball.ballY - (ball.ballSize / 2) <= data.leftPaddleY + data.PaddleLength
 	) {
 		if (ball.lastTouchedPlayer == -1)
-			ball.speed = 5;
+			ball.speed = 3;
 		else {
 			ball.speed += 0.1;
 		}
@@ -124,7 +123,7 @@ function MoveBallOnline(roomId, data) {
 		ball.ballY - (ball.ballSize / 2) <= data.rightPaddleY + data.PaddleLength
 	) {
 		if (ball.lastTouchedPlayer == -1)
-			ball.speed = 5;
+			ball.speed = 3;
 		else {
 			ball.speed += 0.1;
 		}
@@ -143,7 +142,6 @@ function MoveBallOnline(roomId, data) {
 		ball.ballY = data.canvasHeight - ball.ballSize / 2;
 		ball.vy *= -1;
 	}
-	console.log(ball.speed);
 	const roomPlayers = rooms[roomId].players;
 	try {
 		roomPlayers[0].socket.send(JSON.stringify({
@@ -213,8 +211,8 @@ export function setupMatchmaking(server) {
 					opponent.room = roomId;
 					opponent.name = 'bb';
 					startGame();
-					player.socket.send(JSON.stringify({ type: 'match_found', opponentName: opponent.name, id: 1, ball: ball }));
-					opponent.socket.send(JSON.stringify({ type: 'match_found', opponentName: player.name, id: 0, ball: ball }));
+					player.socket.send(JSON.stringify({ type: 'match_found', roomId: roomId, opponentName: opponent.name, id: 1, ball: ball }));
+					opponent.socket.send(JSON.stringify({ type: 'match_found', roomId: roomId, opponentName: player.name, id: 0, ball: ball }));
 					waitingPlayer = null;
 					rooms[roomId] = { ball, players: [opponent, player] };
 				}

@@ -1,6 +1,6 @@
 import { canvas, ctx, canvas_container, cornerWallSize } from "./typescriptFile/variables.js";
 import { Player } from "./typescriptFile/classPlayer.js";
-import { BracketMatch, showMenu, players, nbrPlayer, buttonPlayGame, quarterfinals, semifinals, final, currentMatchIndex, currentRound, countPlayers, playerGoals, playerGoalsRecived, TournamentID } from "./script.js";
+import { BracketMatch, showMenu, players, nbrPlayer, buttonPlayGame, quarterfinals, semifinals, final, currentMatchIndex, currentRound, countPlayers, playerGoals, playerGoalsRecived, TournamentID, Pebble } from "./script.js";
 
 export function resetCanvas() {
     canvas.width = 900;
@@ -234,32 +234,37 @@ export function sendTournamentData() {
 }
 
 export function sendMatchData() {
-  
+  let body;
   let players_id: number[] = [];
-  console.log("players: ", players);
-  for (let i = 0; i < players.length; i++)
-    players_id[i] = players[i].getUserID();
-  console.log({
-      id_tournament: TournamentID,
-      users_ids: players_id,
-      users_goal_scored: playerGoals,
-      users_goal_taken: playerGoalsRecived
-  });
-  let body = {
-      id_tournament: TournamentID,
-      users_ids: players_id,
-      users_goal_scored: playerGoals,
-      users_goal_taken: playerGoalsRecived
-    };
-
-    let response = fetch("/api/match", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(body)
-    })
-    console.log("response: ", response);
+  if (Pebble.getOnlineStatus() === true) {
+    for (let player of players) {
+      if (player.getNameTag() === "You") {
+        body = {
+          id_tournament: TournamentID,
+          users_ids: [player.getUserID()],
+          users_goal_scored: [playerGoals[players.indexOf(player)]],
+          users_goal_taken: [playerGoalsRecived[players.indexOf(player)]]
+        };
+        break;
+      }
+    }
+  }
+  else {
+    body = {
+        id_tournament: TournamentID,
+        users_ids: [players[0].getUserID()],
+        users_goal_scored: [playerGoals[0]],
+        users_goal_taken: [playerGoalsRecived[0]]
+      };
+  }
+  let response = fetch("/api/match", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(body)
+  })
+  console.log("response: ", response);
 }
 
 export function showVictoryScreen(winner: Player) {

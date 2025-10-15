@@ -19,7 +19,7 @@ export const buttonPlayGame = document.getElementById("PlayGame") as HTMLButtonE
 export let nbrPlayer: number = 0;
 export let countPlayers: number = 0;
 export let Tournament: boolean = false;
-export let TournamentID: number = 1;
+export let TournamentID: string = "1";
 export let playerGoals: number[] = [];
 export let playerGoalsRecived: number[] = [];
 export let Pebble: Ball = new Ball();
@@ -65,7 +65,7 @@ ws.onopen = () => {
 		textPong.style.display = "none";
 		canvas_container.style.display = "block";
 		canvas.style.display = "block";
-		online = true;
+		online = true; 
 		Pebble = new Ball(true, true);
 		ws.send(JSON.stringify({ type: "find_match", canvas: { width: canvas.width, height: canvas.height } }));
 	});
@@ -84,6 +84,7 @@ ws.onmessage = (event) => {
 		Pebble.applyState(message.ball);
 		startGame();
 		myId = message.id;
+		TournamentID = message.roomId;
 		players = [
 			new Player(myId === 0 ? "You" : playerNames, 0, 12, "vertical"),
 			new Player(myId === 1 ? "You" : playerNames, 1, 13, "vertical")
@@ -433,7 +434,7 @@ buttonTournament.addEventListener("click", async () => {
 	textPong.style.display = "none";
 	startTournamentButton.style.display = "inline-block";
 	buttonNbrPlayer.style.display = "inline-block";
-	TournamentID= 1234; // Example Tournament ID, replace with actual logic to get ID
+	TournamentID= "1234"; // Example Tournament ID, replace with actual logic to get ID
 	nbrPlayer = await waitForStartButton();
 	if (isNaN(nbrPlayer) || nbrPlayer <= 0) {
 		console.error("Invalid player count:", buttonNbrPlayer.value);
