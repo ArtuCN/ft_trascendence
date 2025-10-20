@@ -56,9 +56,9 @@ library utils {
 	}
 
 	function WinnerNamesToString(
-		uint256[8] winners,
-		uint256[8] user_ids,
-		string[8] user_names
+		uint256[8] memory winners,
+		uint256[8] memory user_ids,
+		string[8] memory user_names
 	) internal pure returns (string memory) {
 
 		string memory winning_names;

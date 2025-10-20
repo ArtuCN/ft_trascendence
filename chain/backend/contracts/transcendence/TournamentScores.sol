@@ -210,11 +210,11 @@ contract TournamentScores is ERC721URIStorage {
 	}
 	
 	// returns tournament data as a struct
-	function getTournamentData(uint256 tournament_id) public view returns (game memory g) {
-		if (game_registry[game_id].game_id != 0)
+	function getTournamentData(uint256 tournament_id) public view returns (tournament memory t) {
+		if (tournament_registry[tournament_id].tournament_id == tournament_id)
 			return (tournament_registry[tournament_id]);
 		else
-			revert indexOutOfBounds("Game data does not exist for this id", game_id);
+			revert indexOutOfBounds("Game data does not exist for this id", tournament_id);
 	}
 
 	 
@@ -253,7 +253,7 @@ contract TournamentScores is ERC721URIStorage {
 		uint256[] memory tournaments = _user_tournaments[userAddress];
 		if (tournaments.length == 0)
 			revert indexOutOfBounds("this address has no games associated", 0);
-		return games;
+		return tournaments;
 	}
 
 }
