@@ -12,12 +12,35 @@
     + _tournament_id: pass the id that is created in the applications backend for this specific tournament
 
 
-* frontend:
+* **frontend**:
     + stays the same as other functions in how it works.
     + function name to call: /src/Contracts.ts: saveTournamentData
+    + function getUserTournaments to get all the tournaments user participated(only works with addresses)
 
 <br>
     **important note**: remember to zero the rest of the arrays that are not used so for example a tournament of 4 would have _user_ids sth like this (`[345, 456, 23, 2345, 0, 0 ,0 ,0]`)
+
+**structs in backend**:<br>
+
+```solidity
+	//structs
+	struct tournament {
+		uint256[8]	user_ids;
+		address[8]	user_wallets;
+		uint256[8] 	user_scores;
+		uint256[8]	winner_ids;
+		string		winner_names;
+		uint256		tournament_id;
+	}
+
+	struct game {
+		uint256[8]	user_ids;
+		address[8]	user_wallets;
+		uint256[8]	user_scores;
+		uint256[8]	winner_ids;
+		uint256		game_id;
+	}
+```
 
 
 

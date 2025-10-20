@@ -66,6 +66,17 @@ export async function getUserGames(userAddress: Address): Promise<number[]> {
 	return res as number[];
 }
 
+// returns all the tournaments user participated in (needs user address)
+export async function getUserTournaments(userAddress: Address): Promise<number[]> {
+	const res = await publicClient.readContract({
+		address: SCORES_ADDRESS,
+		abi: ScoreAbi as any,
+		functionName: "getUserTournaments",
+		args: [userAddress]
+	});
+	return res as number[];
+}
+
 // ---- write contract functions for tournament/game contract
 // scores saving for each match/game
 export async function saveGameData(

@@ -43,6 +43,7 @@ contract TournamentScores is ERC721URIStorage {
 
 	mapping(uint256 => game) 		public game_registry;
 	mapping(address => uint256[]) 	private _user_games;
+	mapping(address => uint256[]) 	private _user_tournaments;
 	uint256							private _current_game;
 
 	uint256							private	_nextTokenId;
@@ -133,6 +134,7 @@ contract TournamentScores is ERC721URIStorage {
 		uint256[8]	memory	_user_ids,
 		uint256[8]	memory	_user_scores,
 		string[8]	memory	_user_names,
+		address[8]	memory	_user_wallets,
 		uint256				_tournament_id
 	)	public {
 
@@ -154,10 +156,17 @@ contract TournamentScores is ERC721URIStorage {
 			t.user_ids[i] = _user_ids[i];
 			t.user_scores[i] = _user_scores[i];
 			t.winner_ids[i] = placements[0][i];
+			t.user_wallets[i] = _user_wallets[i];
 		}
 		t.winner_names = winner_names;
 		t.tournament_id = _tournament_id;
 		_current_tournament++;
+
+		for (uint256 i = 0; i < _user_wallets.length; i++) {
+			address u = _user_wallets[i];
+			if (u != address(0))
+				_user_tournaments[u].push(_tournament_id);
+		}
 		emit tournamentDataSaved("all neccesarry data for a tournament has been saved. tournament id: ", _tournament_id);
 	}
 	
@@ -199,35 +208,50 @@ contract TournamentScores is ERC721URIStorage {
 		else
 			revert indexOutOfBounds("Game data does not exist for this id", game_id);
 	}
+	
+	// returns tournament data as a struct
+	function getTournamentData(uint256 tournament_id) public view returns (game memory g) {
+		if (game_registry[game_id].game_id != 0)
+			return (tournament_registry[tournament_id]);
+		else
+			revert indexOutOfBounds("Game data does not exist for this id", game_id);
+	}
 
 	 
 	//returns a tournament with specified idx as a tuple (can be parsed as JSON in frontend)
-	function getTournamentData(uint256 tournamentIndex) public view returns (
-		uint256[8] memory,
-		uint256[8] memory,
-		uint256[8] memory,
-		string memory,
-		uint256
-	) {
-
-		if (tournamentIndex >= _current_tournament)
-			revert indexOutOfBounds("index of turnament is out of bounds. Max index: ", _current_tournament);
-
-		tournament memory t = tournament_registry[tournamentIndex];
-		return (
-			t.user_ids,
-			t.user_scores,
-			t.winner_ids,
-			t.winner_names,
-			t.tournament_id
-		);
-	}
+	// function getTournamentData(uint256 tournamentIndex) public view returns (
+	// 	uint256[8] memory,
+	// 	uint256[8] memory,
+	// 	uint256[8] memory,
+	// 	string memory,
+	// 	uint256
+	// ) {
+	// 	// if (tournamentIndex >= _current_tournament)
+	// 	// 	revert indexOutOfBounds("index of turnament is out of bounds. Max index: ", _current_tournament);
+	// 	tournament memory t = tournament_registry[tournamentIndex];
+	// 	return (
+	// 		t.user_ids,
+	// 		t.user_scores,
+	// 		t.winner_ids,
+	// 		t.winner_names,
+	// 		t.tournament_id
+	// 	);
+	// }
 
 	// get users games - ids of games user with specific address has participated
 	function getUserGames(address userAddress) public view returns (uint256[] memory gameIds) {
 		require(userAddress != address(0), "Not a valid Address!");
 		uint256[] memory games = _user_games[userAddress];
 		if (games.length == 0)
+			revert indexOutOfBounds("this address has no games associated", 0);
+		return games;
+	}
+
+	// get user tournaments - ids of tournaments where user was  participating
+	function getUserTournaments(address userAddress) public view returns (uint256[] memory tournamentIds) {
+		require(userAddress != address(0), "Not a valid Address!");
+		uint256[] memory tournaments = _user_tournaments[userAddress];
+		if (tournaments.length == 0)
 			revert indexOutOfBounds("this address has no games associated", 0);
 		return games;
 	}
