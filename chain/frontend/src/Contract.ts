@@ -91,6 +91,39 @@ export async function saveGameData(
 	return(result);
 }
 
+//saving the tournament data
+// all arrays passed need to have a fixed size of 8!!!
+// so zero out the values in array that are supposed to be null
+export async function saveTournamentData(
+	_nOfPlayers: number,
+	_user_ids: number[],
+	_user_scores: number[],
+	_user_names: string[],
+	_tournament_id: number
+) {
+	const walletClient = getStoredWalletClient();
+	const clientAddress: Address | null = getStoredAccount();
+	if (!walletClient || !clientAddress) {
+		throw new Error("Wallet client or account not available");
+	}
+	const {request} = await publicClient.simulateContract({
+		account: clientAddress,
+		address: SCORES_ADDRESS,
+		abi: ScoreAbi,
+		functionName: 'standAloneSaveTournamentData',
+		args: [ 
+			_nOfPlayers,
+			_user_ids,
+			_user_scores,
+			_user_names,
+			_tournament_id
+		]
+	});
+	const tx = await walletClient.writeContract(request);
+	return (tx);
+}
+
+
 //mints a nft if the minter has participated in the game with the id passed as arg
 export async function mint(gameId: number) {
 	const walletClient = getStoredWalletClient();

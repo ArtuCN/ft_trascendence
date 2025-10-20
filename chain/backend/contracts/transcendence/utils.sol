@@ -55,8 +55,24 @@ library utils {
 		return (placements);
 	}
 
+	function WinnerNamesToString(
+		uint256[8] winners,
+		uint256[8] user_ids,
+		string[8] user_names
+	) internal pure returns (string memory) {
 
-	// transform aray into a string delimited by ,
+		string memory winning_names;
+		for (uint256 i = 0; winners[i] != 0; i++) {
+			for (uint256 j = 0; user_ids[j] != 0; j++) {
+				if (user_ids[j] == winners[i])
+					winning_names = string(abi.encodePacked(winning_names, user_names[j] , ";"));
+			}
+		}
+		return (winning_names);
+	}
+
+
+	// transform array into a string delimited by ,
     function uintArrayToString(uint256[8] memory arr) internal pure returns (string memory) {
         bytes memory str;
         for (uint256 i = 0; i < arr.length; i++) {

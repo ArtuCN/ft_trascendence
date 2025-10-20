@@ -127,7 +127,41 @@ contract TournamentScores is ERC721URIStorage {
 
 	}
 
-	//saves new entry for a completed tournament
+	// standalone saveTournament function - for working without the staking contract
+	function standAloneSaveTournamentData(
+		uint256				_NofPlayers,	
+		uint256[8]	memory	_user_ids,
+		uint256[8]	memory	_user_scores,
+		string[8]	memory	_user_names,
+		uint256				_tournament_id
+	)	public {
+
+		if (_NofPlayers > 8)
+			revert numberToHigh("Too many players", _NofPlayers);
+
+		tournament storage t = tournament_registry[_tournament_id];
+		uint256[8][8] memory placements = utils.tournamentPlacement(
+			_user_scores,
+			_user_ids
+		);
+		string memory winner_names = utils.WinnerNamesToString(
+			placements[0],
+			_user_ids,
+			_user_names
+		);
+		
+		for (uint256 i = 0; i < _NofPlayers; i++) {
+			t.user_ids[i] = _user_ids[i];
+			t.user_scores[i] = _user_scores[i];
+			t.winner_ids[i] = placements[0][i];
+		}
+		t.winner_names = winner_names;
+		t.tournament_id = _tournament_id;
+		_current_tournament++;
+		emit tournamentDataSaved("all neccesarry data for a tournament has been saved. tournament id: ", _tournament_id);
+	}
+	
+	//saves new entry for a completed tournament - works with staking contract
 	function saveTournamentData(
 		uint256				_NofPlayers,	
 		uint256[8]	memory	_user_ids,
