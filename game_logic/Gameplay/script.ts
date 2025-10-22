@@ -166,6 +166,10 @@ ws.onmessage = (event) => {
 	if (message.type === 'victory') {
 		showVictoryScreen(players[message.winner]);
 	}
+	if (message.type === 'opponent_disconnected') {
+		alert(`Opponent disconnected: ${message.playerId}`);
+		stopGame();
+	}
 };
 
 ws.onclose = () => {
