@@ -1,6 +1,8 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
+import fastifyMultipart from 'fastify-multipart';
+
 
 import { getAllUsers } from './database_comunication/user_db.js';
 
@@ -15,7 +17,7 @@ import friendRoute from './controllers/friendship.js';
 import matchRoute from './controllers/match.js';
 import tournamentRoute from './controllers/tournament.js';
 import heartBeatRoute from './controllers/heartBeat.js';
-
+import avatarRoute from './controllers/avatar.js';
 // WebSocket matchmaking
 import { setupMatchmaking } from './controllers/online_match/online_match.js';
 
@@ -23,6 +25,11 @@ const fastify = Fastify({ logger: true });
 
 // Abilita CORS (per il frontend React o altro)
 await fastify.register(cors, { origin: '*' });
+
+
+await fastify.register(fastifyMultipart, {
+  limits: { fileSize: 5 * 1024 * 1024 }, // opzionale, max 5MB
+});
 
 // Configura JWT
 await fastify.register(jwt, { secret: 'your_secret_key' }); // 🔐 usa un valore sicuro in .env
@@ -61,7 +68,7 @@ await fastify.register(statsRoute);
 await fastify.register(friendRoute);
 await fastify.register(tournamentRoute);
 await fastify.register(heartBeatRoute);
-
+await fastify.register(avatarRoute);
 // Endpoint semplice per debug
 fastify.get('/users', async (request, reply) => {
   try {

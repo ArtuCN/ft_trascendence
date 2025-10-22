@@ -11,6 +11,11 @@ export class ProfileImageUpload {
 
   constructor(currentImageUrl?: string, onImageUploaded?: (imageUrl: string) => void) {
     this.onImageUploaded = onImageUploaded;
+    // If no currentImageUrl provided, try to build one from auth state
+    const currentUser = authState.getState().user;
+    if (!currentImageUrl && currentUser?.id) {
+      currentImageUrl = ImageUploadService.getProfileImageUrl(currentUser.id);
+    }
     this.element = this.createElement(currentImageUrl);
   }
 
@@ -87,7 +92,8 @@ export class ProfileImageUpload {
     this.showLoadingState();
 
     try {
-      const imageUrl = await ImageUploadService.uploadProfileImage(fileToUpload);
+  const currentUserLocal = authState.getState().user;
+  const imageUrl = await ImageUploadService.uploadProfileImage(fileToUpload, currentUserLocal?.id);
       
       const currentUser = authState.getState().user;
       if (currentUser) {

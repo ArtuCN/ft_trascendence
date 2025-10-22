@@ -12,6 +12,7 @@
     "@fastify/jwt": "^6.2.1",
     "bcrypt": "^6.0.0",
     "fastify": "^4.20.0",
+    "fastify-multipart": "^5.3.1",
     "google-auth-library": "^9.0.0",
     "sqlite3": "^5.x.x",
     "ws": "^8.18.3"

@@ -1,9 +1,9 @@
 export class ImageUploadService {
-  static async uploadProfileImage(file: File): Promise<string> {
+  static async uploadProfileImage(file: File, userId?: string | number): Promise<string> {
     const formData = new FormData();
     formData.append('profileImage', file);
 
-    const response = await fetch('/api/user/upload-avatar', {
+    const response = await fetch('/api/avatar', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -16,7 +16,9 @@ export class ImageUploadService {
     }
 
     const data = await response.json();
-    return data.imageUrl;
+    if (data && data.imageUrl) return data.imageUrl;
+    if (userId !== undefined && userId !== null) return ImageUploadService.getProfileImageUrl(userId);
+    return '';
   }
 
   static validateImageFile(file: File): string | null {
@@ -48,4 +50,20 @@ export class ImageUploadService {
       reader.readAsDataURL(file);
     });
   }
+
+    static getProfileImageUrl(userId: string | number, avoidCache = true): string {
+      const ts = avoidCache ? `?t=${Date.now()}` : '';
+      return `/api/avatar/${userId}${ts}`;
+    }
+
+    static async fetchProfileImageObjectUrl(userId: string | number): Promise<string | null> {
+      try {
+        const res = await fetch(`/api/avatar/${userId}`);
+        if (!res.ok) return null;
+        const blob = await res.blob();
+        return URL.createObjectURL(blob);
+      } catch (e) {
+        return null;
+      }
+    }
 }
