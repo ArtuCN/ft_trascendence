@@ -1,9 +1,11 @@
 // @ts-ignore
 import { Server } from "socket.io";
 import { fastifyServer} from "./server";
+import { chat, startChatProps } from "@/types/SocketTypes";
 import "dotenv/config";
 
 export let io: Server | undefined;
+const chats: chat[] = [];
 
 export function startSocket() {
 	console.log("socket function");
@@ -28,18 +30,75 @@ export function startSocket() {
 				io?.emit("chat:message", msg);
 			});
 
-			////private message group
-			//socket.on("private_message", ({to,msg}) => {
-			//	console.log(`private message sent from ${socket.id} to ${to}`);
-			//	const payload = { from: socket.id, to, msg };
-			//	io?.to(to).to(socket.id).emit("private_message", payload);
-			//});
+			//create group chat
+			socket.on("create_chat", ({recipients,
+									 recipient_ids = [],
+										 chat_name = ""
+			}: startChatProps) => {
+				const updateRecipients = [ ...recipients];
+				if (typeof socket.id?.toString() === "string") {
+					console.log("added socket to recipients");
+					updateRecipients.push(socket.id.toString());
+				}
+				const chat_id = crypto.randomUUID().toString();
+				// console.log("updated recipients: ", updateRecipients);
+				const temp_chat = {
+					chat_id: chat_id,
+					chat_name: chat_name,
+					recipients: updateRecipients,
+					recipient_ids: recipient_ids ? recipient_ids : undefined
+				};
+				chats.push(temp_chat);
+
+				//emit event with chat id
+				updateRecipients.forEach((r: string) => {
+					io?.to(r).emit("create_chat", chat_id);
+				});
+				console.log("new chat id:", chat_id, "recipients:", updateRecipients);
+			});
+
+			//add new recipient to group chat
+			socket.on("add_recipient", ({chat_id, new_recipient}) => {
+				const curr_chat = chats.find((c: chat) => c.chat_id === chat_id);
+				console.log("adding recipient: ", new_recipient);
+				if (curr_chat && !curr_chat.recipients.find((r: string) => r === new_recipient)) {
+					curr_chat.recipients.push(new_recipient);
+					console.log(curr_chat.chat_id, " has recipients: ", curr_chat.recipients);
+					curr_chat.recipients.forEach((r: string) => {
+						io?.to(r).emit("add_recipient", curr_chat.recipients);
+					});
+					console.log("added recipient:", new_recipient, " to chat:", chat_id);
+				}
+				else console.log("wrong chat_id or recipient already in chat");
+
+			});
+
+			//get all chats client is in
+			socket.on("get_client_chat_ids", () => {
+				const chat_ids = chats
+					.filter((c: chat) =>{
+						return c.recipients.find((r: string) => r === socket.id.toString());})
+					.map((c: chat) => c.chat_id);
+
+				io?.to(socket.id).emit("get_client_chat_ids", chat_ids);
+			});
+
+			socket.on("get_chat_object", (chat_id: string, chat_name: string = "") => {
+				let temp_chat;
+				if (!chat_name)
+					temp_chat = chats.find((c: chat) => c.chat_id === chat_id);
+				else
+					temp_chat = chats.find((c: chat) => c.chat_name === chat_name);
+				if (temp_chat)
+					io?.to(socket.id).emit("get_chat_object", temp_chat as chat);
+			});
+
 
 			//group  private message
 			socket.on("private_message", ({recipients, msg}) => {
 				console.log(`private message sent from ${socket.id} to ${recipients}`);
 				const payload = { from: socket.id, msg};
-				recipients.foreach((recipient: string) => (
+				recipients.forEach((recipient: string) => (
 					io?.to(recipient).emit("private_message", payload)
 				));
 			});
