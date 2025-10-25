@@ -62,6 +62,10 @@ export async function getChatIdFromName(chat_name: string) {
 	return chat.chat_name as string;
 }
 
+
+
+
+// setters -----------------------------------
 export function startChat(recipients: string[], recipient_ids: string[] = [], chat_name: string = "") {	
 	return new Promise((resolve) => {
 
@@ -87,5 +91,15 @@ export async function addRecipient(chat_id: string, new_recipient: string) {
 		});
 	}
 	else console.log("wrong chat_id or recipient already in chat");
+}
+
+
+export function deleteRecipient(chat_id: string, client_id: string) {
+	return new Promise((resolve) => {
+		socket.emit("delete_recipient", {chat_id, client_id});
+		socket.once("delete_recipient", client_id => {
+			resolve(client_id);
+		});
+	});
 }
 

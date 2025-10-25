@@ -5,6 +5,7 @@ import {socket,
 		getChatObject,
 		startChat,
 		addRecipient,
+		deleteRecipient,
         getClientChats,
 		client_chat_ids,
 		} from "../lib/client-socket";
@@ -20,6 +21,7 @@ export default function SocketComponent(): HTMLElement {
 	const buttonPrivate = document.createElement("button");
 	const buttonChat = document.createElement("button");
 	const buttonAddRecipient = document.createElement("button");
+	const buttonDeleteRecipient = document.createElement("button");
 	const messages = document.createElement("div");
 
 	//this only for dev -- done differently in production
@@ -33,6 +35,7 @@ export default function SocketComponent(): HTMLElement {
 	buttonPrivate.textContent = "private send";
 	buttonChat.textContent = "start chat";
 	buttonAddRecipient.textContent = "add new recipient";
+	buttonDeleteRecipient.textContent = "delete recipient";
 
 	//styling
 	select.style.margin = "0 8px";
@@ -101,6 +104,17 @@ export default function SocketComponent(): HTMLElement {
 		messages.appendChild(line);
 	});
 
+
+	buttonDeleteRecipient.addEventListener("click", async () => {
+		if (!select.value || !selectChat.value)
+			return ;
+		const deleted_id = await deleteRecipient(selectChat.value, select.value);
+		console.log("recipient deleted: ", deleted_id);
+		const line = document.createElement("p");
+		line.textContent = "deleted recipient: " + deleted_id;
+		messages.appendChild(line);
+	});
+
 	button.addEventListener("click", async () => {
 		getAllSockets();
 		await getClientChats();
@@ -132,6 +146,6 @@ export default function SocketComponent(): HTMLElement {
 		messages.appendChild(line);
 	});
 
-	element.append(status, select, buttonChat, selectChat, input, button, buttonPrivate, buttonAddRecipient, messages);
+	element.append(status, select, buttonChat, selectChat, input, button, buttonPrivate, buttonAddRecipient, buttonDeleteRecipient, messages);
 	return (element);
 }

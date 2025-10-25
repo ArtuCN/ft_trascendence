@@ -30,7 +30,7 @@ export function startSocket() {
 				io?.emit("chat:message", msg);
 			});
 
-			//create group chat
+			//create group chat -----------------------------------
 			socket.on("create_chat", ({recipients,
 									 recipient_ids = [],
 										 chat_name = ""
@@ -50,17 +50,16 @@ export function startSocket() {
 				};
 				chats.push(temp_chat);
 
-				//emit event with chat id
+				//emit event with chat id -----------------------------------
 				updateRecipients.forEach((r: string) => {
 					io?.to(r).emit("create_chat", chat_id);
 				});
 				console.log("new chat id:", chat_id, "recipients:", updateRecipients);
 			});
 
-			//add new recipient to group chat
+			//add new recipient to group chat -----------------------------------
 			socket.on("add_recipient", ({chat_id, new_recipient}) => {
 				const curr_chat = chats.find((c: chat) => c.chat_id === chat_id);
-				console.log("adding recipient: ", new_recipient);
 				if (curr_chat && !curr_chat.recipients.find((r: string) => r === new_recipient)) {
 					curr_chat.recipients.push(new_recipient);
 					console.log(curr_chat.chat_id, " has recipients: ", curr_chat.recipients);
@@ -73,7 +72,23 @@ export function startSocket() {
 
 			});
 
-			//get all chats client is in
+			// delete client from chat -----------------------------------
+			socket.on("delete_recipient", ({chat_id, client_id}) => {
+				const curr_chat = chats.find((c: chat) => c.chat_id === chat_id);
+				if (curr_chat && curr_chat.recipients.find((r: string) => r === client_id)) {
+					const i  = curr_chat.recipients.indexOf(client_id);
+					if (i !== -1) {
+						curr_chat.recipients.splice(i, 1);
+						curr_chat.recipients.forEach((r: string) => {
+							io?.to(r).emit("delete_recipient", client_id);
+						});
+						console.log("deleted recipient:", client_id, " from chat:", chat_id);
+					}
+				}
+				else console.log("wrong chat_id or recipient not in chat");
+			});
+
+			//get all chats client is in -----------------------------------
 			socket.on("get_client_chat_ids", () => {
 				const chat_ids = chats
 					.filter((c: chat) =>{
@@ -94,7 +109,7 @@ export function startSocket() {
 			});
 
 
-			//group  private message
+			//group  private message -----------------------------------
 			socket.on("private_message", ({recipients, msg}) => {
 				console.log(`private message sent from ${socket.id} to ${recipients}`);
 				const payload = { from: socket.id, msg};
@@ -103,7 +118,7 @@ export function startSocket() {
 				));
 			});
 
-			//pass all the existing sockets
+			//pass all the existing sockets -----------------------------------
 			socket.on("get_sockets", () => {
 				const allSockets = getAllSockets();
 				io?.to(socket.id).emit("get_sockets", allSockets);
@@ -112,12 +127,14 @@ export function startSocket() {
 
 		});
 
+		// ----- end of socket APIs ------------------------------------
 		console.log("Socket.io server started");
 	} catch (error) {
 		console.log(error);
 	}
 }
 
+// get all sockets that are connected to the server (only for developing) -----------------------------------
 export function getAllSockets() {
 	return Array.from(io?.sockets.sockets.keys() || []);
 }
