@@ -44,6 +44,15 @@ $db->exec("CREATE TABLE IF NOT EXISTS friendship (
     FOREIGN KEY (id_user_1) REFERENCES user(id),
     FOREIGN KEY (id_user_2) REFERENCES user(id)
 )");
+
+$db->exec("CREATE TABLE IF NOT EXISTS blocked (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_user_1 INTEGER,
+    id_blocked INTEGER,
+    FOREIGN KEY (id_user_1) REFERENCES user(id),
+    FOREIGN KEY (id_blocked) REFERENCES user(id)
+)");
+
 //non è obbligatorio che id_torunament ci sia, dipende se il game fa parte di un tournament o no
 
 //$db->exec("DROP TABLE IF EXISTS player_match_stats");
