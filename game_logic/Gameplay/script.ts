@@ -67,6 +67,8 @@ export let online: boolean = false;
 const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 const wsHost = window.location.host; // include porta se presente
 export const ws = new WebSocket(`${wsProtocol}//${wsHost}/ws`);
+const userId = getCurrentUserId();
+const username = getCurrentUsername();
 let myId: number;
 
 // Setup button listener (outside of ws.onopen to work immediately)
@@ -89,9 +91,7 @@ button2PRemote.addEventListener("click", () => {
 	// Check if WebSocket is ready
 	if (ws.readyState === WebSocket.OPEN) {
 		// Get user data from localStorage
-		const userId = localStorage.getItem('id');
 		const username = localStorage.getItem('username');
-
 		ws.send(JSON.stringify({ 
 			type: "find_match", 
 			canvas: { width: canvas.width, height: canvas.height },
@@ -137,8 +137,8 @@ ws.onmessage = (event) => {
 		startGame();
 		myId = message.id;
 		players = [
-			new Player(myId === 0 ? "You" : playerNames, 0, 12, "vertical"),
-			new Player(myId === 1 ? "You" : playerNames, 1, 13, "vertical")
+			new Player(myId === 0 ? "You" : playerNames, 0, myId === 0 ? Number(userId) : Number(message.opponentId), "vertical"),
+			new Player(myId === 1 ? "You" : playerNames, 1, myId === 1 ? Number(userId) : Number(message.opponentId), "vertical")
 		];
 		draw(myId);
 	}
@@ -301,8 +301,8 @@ export function showMenu(winner: Player) {
 				player.getPaddle().stopBotPolling();
 			textPong.style.display = "block";
 			bracketContainer.style.display = "none";
-			buttonLocalPlay.style.display = "none";
-			buttonRemotePlay.style.display = "none";
+			buttonRemotePlay.style.display = 'inline-block';
+			buttonLocalPlay.style.display = 'inline-block';
 			sendTournamentData();
 		}
 	}
@@ -435,10 +435,6 @@ button2PLocal.addEventListener("click", () => {
 	Pebble = new Ball();
 	startGame();
 	players = [];
-	
-	// Use logged user's ID for Player 1, guest (0) for Player 2
-	const userId = getCurrentUserId();
-	const username = getCurrentUsername();
 	players.push(new Player(username, 0, userId, "vertical"));
 	players.push(new Player("Guest", 1, 0, "vertical"));
 
@@ -462,10 +458,10 @@ button4P.addEventListener("click", () => {
 	Pebble = new Ball();
 	startGame();
 	players = [];
-	players.push(new Player("Matteo", 0, 12, "vertical"));
-	players.push(new Player("Arturo", 1, 13, "vertical"));
-	players.push(new Player("Petre", 2, 14, "horizontal"));
-	players.push(new Player("Tjaz", 3, 15, "horizontal"));
+	players.push(new Player(username, 0, userId, "vertical"));
+	players.push(new Player("Guest1", 1, 0, "vertical"));
+	players.push(new Player("Guest2", 2, 0, "horizontal"));
+	players.push(new Player("Guest3", 3, 0, "horizontal"));
 
 	draw();
 });
@@ -488,8 +484,8 @@ buttonAi.addEventListener("click", () => {
 	Pebble = new Ball();
 	startGame();
 	players = [];
-	players.push(new Player("Matteo", 0, 12, "vertical"));
-	players.push(new Player("AI", 1, 13, "vertical"));
+	players.push(new Player(username, 0, userId, "vertical"));
+	players.push(new Player("AI", 1, 0, "vertical"));
 
 	players[1].getPaddle().startBotPolling();
 	draw();
@@ -526,9 +522,13 @@ buttonTournament.addEventListener("click", async () => {
 	players = [];
 	for (let i = 0; i < nbrPlayer; i++) {
 		if (i % 2 == 0) {
-			players.push(new Player(`Player${i + 1}`, 0, 12 + i, "vertical"));
+			if (i == 0) {
+				players.push(new Player(username, 0, userId, "vertical"));
+			}
+			else
+				players.push(new Player(`Guest${i}`, 0, 0, "vertical"));
 		} else {
-			players.push(new Player(`Player${i + 1}`, 1, 13 + i, "vertical"));
+			players.push(new Player(`Guest${i}`, 1, 0, "vertical"));
 		}
 	}
 	if (nbrPlayer == 8) {

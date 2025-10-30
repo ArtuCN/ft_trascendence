@@ -180,7 +180,6 @@ export class Ball {
 				this.resetGame(players);
 				return;
 			}
-			// Bottom goal
 			if (this.ballY > canvas.height) {
 				if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
 				playerGoalsRecived[3]++;
@@ -227,7 +226,6 @@ export class Ball {
 		this.checkScore(players);
 
 		if (nbrPlayer <= 2) {
-			// Left paddle (Player 0)
 			const leftPaddle = players[0].getPaddle();
 			if (
 				this.ballX - this.ballSize / 2 <= 20 + leftPaddle.getPaddleThickness() &&
@@ -240,7 +238,7 @@ export class Ball {
 					this.speed += 0.1;
 				this.ballX = 20 + leftPaddle.getPaddleThickness() + this.ballSize / 2;
 				this.calculateBounce(leftPaddle, "vertical");
-				this.lastTouchedPlayer = 0; // Left player touched the ball
+				this.lastTouchedPlayer = 0;
 			}
 
 			const rightPaddle = players[1].getPaddle();
@@ -255,7 +253,7 @@ export class Ball {
 					this.speed += 0.1;
 				this.ballX = canvas.width - 20 - rightPaddle.getPaddleThickness() - this.ballSize / 2;
 				this.calculateBounce(rightPaddle, "vertical", true);
-				this.lastTouchedPlayer = 1; // Right player touched the ball
+				this.lastTouchedPlayer = 1;
 			}
 		}
 				
@@ -289,7 +287,7 @@ export class Ball {
 					this.speed += 0.1;
 				this.ballX = canvas.width - 20 - rightPaddle.getPaddleThickness() - this.ballSize / 2;
 				this.calculateBounce(rightPaddle, "vertical", true);
-				this.lastTouchedPlayer = 1; // Right player touched the ball
+				this.lastTouchedPlayer = 1;
 			}
 
 			const topPaddle = players[2].getPaddle();
@@ -304,7 +302,7 @@ export class Ball {
 					this.speed += 0.1;
 				this.ballY = 20 + topPaddle.getPaddleThickness() + this.ballSize / 2;
 				this.calculateBounce(topPaddle, "horizontal");
-				this.lastTouchedPlayer = 2; // Top player touched the ball
+				this.lastTouchedPlayer = 2;
 			}
 
 			const bottomPaddle = players[3].getPaddle();
@@ -319,7 +317,7 @@ export class Ball {
 					this.speed += 0.1;
 				this.ballY = canvas.height - 20 - bottomPaddle.getPaddleThickness() - this.ballSize / 2;
 				this.calculateBounce(bottomPaddle, "horizontal", true);
-				this.lastTouchedPlayer = 3; // Bottom player touched the ball
+				this.lastTouchedPlayer = 3;
 			}
 		}
 	}
@@ -369,15 +367,12 @@ export class Ball {
 			const dx = this.ballX - cornerWallThickness;
 			const dy = this.ballY - cornerWallThickness;
 			if (Math.abs(dx) < Math.abs(dy)) {
-				// Closer to vertical wall (left)
 				this.ballX = cornerWallThickness + this.ballSize / 2;
 				this.reflect(1, 0);
 			} else if (Math.abs(dy) < Math.abs(dx)) {
-				// Closer to horizontal wall (top)
 				this.ballY = cornerWallThickness + this.ballSize / 2;
 				this.reflect(0, 1);
 			} else {
-				// Corner point: reflect both
 				this.ballX = cornerWallThickness + this.ballSize / 2;
 				this.ballY = cornerWallThickness + this.ballSize / 2;
 				this.reflect(1 / Math.sqrt(2), 1 / Math.sqrt(2));

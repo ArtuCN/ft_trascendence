@@ -42,8 +42,11 @@ export class PlayPage {
     });
 
     const controls = [
+      'LOCALE',
       'W / S - Giocatore 1 (sinistra)',
       'Frecce Su/Giù - Giocatore 2 (destra)', 
+      'REMOTO',
+      'W / S - Giocatore',
       'Spacebar - Pausa/Resume',
       'ESC - Menu principale'
     ];

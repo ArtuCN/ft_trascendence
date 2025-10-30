@@ -182,7 +182,7 @@ export class Paddles {
 				this.initialPosition = 0;
 			}
 		}
-		}
+	}
 
 	public  movePaddles(myId?: number) {
 		if (online) {

@@ -47,7 +47,7 @@ async function checkGoal(roomId, ball, data) {
 				);
 				// Save match stats to database
 				await saveMatchStats(roomId, 1);
-				rooms[roomId].score = [0, 0];
+				delete rooms[roomId];
 			}
 		}
 
@@ -77,7 +77,7 @@ async function checkGoal(roomId, ball, data) {
 		);
 		// Save match stats to database
 		await saveMatchStats(roomId, 0);
-		rooms[roomId].score = [0, 0];
+		delete rooms[roomId];
 		}
 	}
 }
@@ -259,8 +259,8 @@ export function setupMatchmaking(server) {
 					player.name = data.username || 'Player 2';
 					
 					startGame();
-					player.socket.send(JSON.stringify({ type: 'match_found', opponentName: opponent.name, id: 1, ball: ball }));
-					opponent.socket.send(JSON.stringify({ type: 'match_found', opponentName: player.name, id: 0, ball: ball }));
+					player.socket.send(JSON.stringify({ type: 'match_found', opponentName: opponent.name, opponentId: opponent.userId, id: 1, ball: ball }));
+					opponent.socket.send(JSON.stringify({ type: 'match_found', opponentName: player.name, opponentId: player.userId, id: 0, ball: ball }));
 					waitingPlayer = null;
 					rooms[roomId] = { ball, players: [opponent, player], score: [0, 0] };
 					
