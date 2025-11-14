@@ -5,6 +5,7 @@ import { Navbar } from './components/Navbar.js';
 import { AuthGuard } from './components/AuthGuard.js';
 import { HomePage } from './pages/HomePage.js';
 import { PlayPage } from './pages/PlayPage.js';
+import { PlayPage3D } from './pages/PlayPage3D.js';
 
 export class App {
   private navbar: Navbar;
@@ -62,6 +63,7 @@ export class App {
   private setupRoutes(): void {
     router.addRoute('/', () => this.renderPage(new HomePage()));
     router.addRoute('/play', () => this.renderPage(new PlayPage()));
+    router.addRoute('/play3D', () => this.renderPage(new PlayPage3D()));
   }
 
   private bindAuthState(): void {

@@ -3,16 +3,17 @@ import { authState } from '../state/auth.js';
 import { googleAuthService } from '../services/googleAuth.js';
 
 const COLORS = {
-  primary: '#E67923',
-  error: '#DC2626',
-  errorHover: '#D32F2F',
-  dark: '#2A2A2A',
-  darkText: '#3C3C3C',
-  loginButton: '#B20000',
-  loginButtonHover: '#D32F2F',
-  inputBg: '#f9fafb',
+  // Fruitiger / Aero inspired cool-blue palette
+  primary: '#00B4D8',        // cyan accent
+  error: '#EF4444',          // red-500
+  errorHover: '#DC2626',
+  dark: '#062A3A',           // deep cool background
+  darkText: '#9BCAD8',       // muted cyan text
+  loginButton: '#0077B6',    // deeper blue for action
+  loginButtonHover: '#0096C7',
+  inputBg: '#E6F9FF',        // very light cyan
   white: '#ffffff',
-  lightGray: '#f5f5f5'
+  lightGray: '#E6F6FB'
 } as const;
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -214,11 +215,12 @@ export class AuthModal {
       innerHTML: label
     });
 
-    const input = createInput(type, placeholder, 
-      `w-4/5 px-4 py-3 border rounded-lg outline-none transition-all text-center text-black placeholder-gray-500 ${
-        this.errors[fieldName] ? 'border-red-500' : 'border-gray-700'
-      } bg-gray-100`
-    );
+    // use inline style for background/border so colors come from COLORS
+    const input = createInput(type, placeholder,
+      'w-4/5 px-4 py-3 border rounded-lg outline-none transition-all text-center text-black placeholder-gray-500',
+    ) as HTMLInputElement;
+    input.style.backgroundColor = COLORS.inputBg;
+    input.style.borderColor = this.errors[fieldName] ? COLORS.error : '#2c3e50';
 
     input.value = this.formData[fieldName as keyof typeof this.formData];
     input.addEventListener('input', (e) => this.handleInputChange(fieldName, (e.target as HTMLInputElement).value));
