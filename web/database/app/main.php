@@ -19,7 +19,7 @@ $db->exec("CREATE TABLE IF NOT EXISTS user (
 	last_active DATETIME DEFAULT CURRENT_TIMESTAMP
 )");
 
-$db->exec("DROP TABLE IF EXISTS tournament");
+//$db->exec("DROP TABLE IF EXISTS tournament");
 $db->exec("CREATE TABLE IF NOT EXISTS tournament (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     tournament_name TEXT,
@@ -43,6 +43,16 @@ $db->exec("CREATE TABLE IF NOT EXISTS friendship (
     id_user_2 INTEGER,
     FOREIGN KEY (id_user_1) REFERENCES user(id),
     FOREIGN KEY (id_user_2) REFERENCES user(id)
+)");
+
+$db->exec("CREATE TABLE IF NOT EXISTS chat_message (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_sender INTEGER,
+    id_receiver INTEGER,
+    message TEXT,
+    time_stamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_sender) REFERENCES user(id),
+    FOREIGN KEY (id_receiver) REFERENCES user(id)
 )");
 
 $db->exec("CREATE TABLE IF NOT EXISTS blocked (
