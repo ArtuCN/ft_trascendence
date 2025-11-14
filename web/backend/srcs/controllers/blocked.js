@@ -1,6 +1,6 @@
 
 
-import { get_blocked_user, add_blocked_user } from '../database_comunication/blocked_db.js';
+import { get_blocked_user, add_blocked_user, remove_blocked_user } from '../database_comunication/blocked_db.js';
 
 export default async function (fastify, opts) {
 
@@ -12,6 +12,7 @@ export default async function (fastify, opts) {
             }
 
             const users = await get_blocked_user(Number(id));
+            console.log(`Blocked users for ${id}:`, users);
             return reply.send(users);
         } catch (error) {
             console.error(error);
@@ -20,7 +21,7 @@ export default async function (fastify, opts) {
     });
     fastify.post('/blockuser', async (request, reply) => {
         try {
-            const { id, id_blocked } = request.query;
+            const { id, id_blocked } = request.body;
 
             if (!id || !id_blocked) {
                 return reply.code(400).send({ error: 'Missing id or id_blocked' });
@@ -30,6 +31,40 @@ export default async function (fastify, opts) {
             }
 
             await add_blocked_user(Number(id), Number(id_blocked));
+            console.log(`User ${id} blocked ${id_blocked}`);
+            return reply.send({ success: true });
+        } catch (error) {
+            console.error(error);
+            return reply.code(500).send({ error: 'Server error: ' + error.message });
+        }
+    });
+    fastify.delete('/unblockuser', async (request, reply) => {
+        try {
+            const { id, id_blocked } = request.body;
+
+            if (!id || !id_blocked) {
+                return reply.code(400).send({ error: 'Missing id or id_blocked' });
+            }
+
+            await remove_blocked_user(Number(id), Number(id_blocked));
+            return reply.send({ success: true });
+        } catch (error) {
+            console.error(error);
+            return reply.code(500).send({ error: 'Server error: ' + error.message });
+        }
+    });
+
+    // Backwards-compatible POST endpoint for clients that send a POST instead of DELETE
+    fastify.post('/unblockuser', async (request, reply) => {
+        try {
+            const { id, id_blocked } = request.body;
+
+            if (!id || !id_blocked) {
+                return reply.code(400).send({ error: 'Missing id or id_blocked' });
+            }
+
+            await remove_blocked_user(Number(id), Number(id_blocked));
+            console.log(`User ${id} unblocked ${id_blocked}`);
             return reply.send({ success: true });
         } catch (error) {
             console.error(error);

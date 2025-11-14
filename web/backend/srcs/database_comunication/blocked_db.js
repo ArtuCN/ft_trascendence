@@ -47,3 +47,24 @@ export async function add_blocked_user(userId, blockedId) {
         )
     })
 }
+export async function remove_blocked_user(userId, blockedId) {
+    return new Promise((resolve, reject) => {
+        const query = `
+        DELETE FROM blocked
+        WHERE id_user_1 = ? AND id_blocked = ?
+        `;
+         db.run(
+            query,
+            [userId, blockedId],
+            function (err)
+            {
+                if (err) {
+                console.error('Error while removing blocked user:', err);
+                reject(err);
+                } else {
+                resolve({ changes: this.changes });
+                }
+            }
+        )
+    })
+}

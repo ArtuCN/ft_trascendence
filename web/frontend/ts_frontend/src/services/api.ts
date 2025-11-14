@@ -334,6 +334,46 @@ export class ApiService {
     return await response.json();
   }
 
+  async blockUser(id: number, id_blocked: number): Promise<{ success: boolean }> {
+    const response = await this.makeAuthenticatedRequest('/blockuser', {
+      method: 'POST',
+      body: JSON.stringify({ id, id_blocked })
+    });
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || 'Failed to block user');
+    }
+
+    return await response.json();
+  }
+
+  async unblockUser(id: number, id_blocked: number): Promise<{ success: boolean; deleted?: number }> {
+    const response = await this.makeAuthenticatedRequest('/unblockuser', {
+      method: 'POST',
+      body: JSON.stringify({ id, id_blocked })
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || 'Failed to unblock user');
+    }
+
+    return await response.json();
+  }
+
+  async getBlockedUsers(id: number): Promise<User[]> {
+    const response = await this.makeAuthenticatedRequest(`/blocked?id=${id}`, {
+      method: 'GET'
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || 'Failed to fetch blocked users');
+    }
+
+    return await response.json();
+  }
+
   async logout(username: string): Promise<{ message: string }> {
     const response = await fetch(`${API_BASE_URL}/logout`, {
       method: 'POST',
