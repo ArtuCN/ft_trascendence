@@ -9,6 +9,20 @@
   <script src="babylon.js"></script>
   <script src="babylonjs.loaders.min.js"></script>
   <style>
+:root{
+  /* colori principali 3D */
+  --bg-start: #a2d4f5;
+  --bg-end:   #e0f7ff;
+  --title-color: #004d66;
+
+  --btn-start: #5dd39e;
+  --btn-end:   #3fbf7f;
+  --btn-hover-start: #76e7b6;
+  --btn-hover-end:   #4fd18d;
+
+  --canvas-border: #ffffff;
+  --score-color: #ffffff;
+}
 
     /* 3D */
     
@@ -23,7 +37,7 @@
       width: 100%;
       height: 100%;
       background: #000;
-      border: 4px solid white;
+      border: 4px solid var(--canvas-border);
       display: block;
     }
 
@@ -32,7 +46,7 @@
     html {
       height: 100%;
       width: 100%;
-      background: linear-gradient(to bottom, #a2d4f5, #e0f7ff);
+      background: linear-gradient(to bottom, var(--bg-start), var(--bg-end));
     }
 
     body {
@@ -60,7 +74,7 @@
       padding: 30px 0;
       margin: 0;
       font-size: 48px;
-      color: #004d66;
+      color: var(--title-color);
       text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.6);
     }
 
@@ -87,7 +101,7 @@
       margin: 10px;
       border: none;
       border-radius: 25px;
-      background: linear-gradient(to bottom, #5dd39e, #3fbf7f);
+      background: linear-gradient(to bottom, var(--btn-start), var(--btn-end));
       color: white;
       cursor: pointer;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -95,7 +109,7 @@
     }
 
     button:hover {
-      background: linear-gradient(to bottom, #76e7b6, #4fd18d);
+      background: linear-gradient(to bottom, var(--btn-hover-start), var(--btn-hover-end));
       transform: translateY(-2px);
     }
 
@@ -184,6 +198,17 @@
     margin: 0 20px;
   }
 
+  /* Score style (usa variabile colore) */
+  #score3d {
+  position:absolute;
+  top:20px;
+  left:50%;
+  transform:translateX(-50%);
+  color: var(--score-color);
+  font-size:2em;
+  z-index:10;
+  text-shadow:2px 2px 4px #000;
+}
   </style>
 </head>
   <body>

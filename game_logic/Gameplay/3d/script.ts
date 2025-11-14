@@ -18,6 +18,9 @@ let aiUpdateInterval = 100; // AI update frequency in ms
 let ball: any; // Will be instance of Ball class
 let players: any[] = []; // Will be array of Player instances
 
+// Particle system for the ball trail
+let ballParticleSystem: any = null;
+
 // Keyboard controls (needed by paddle movement)
 const keys: Record<string, boolean> = {};
 window.addEventListener('keydown', (e) => {
@@ -27,6 +30,18 @@ window.addEventListener('keyup', (e) => {
     keys[e.key] = false;
 });
 
+// Colori centralizzati per il 3D (usa BABYLON.Color3)
+const COLORS = {
+	// materiali
+   ballDiffuse:    new BABYLON.Color3(0.88, 0.92, 0.98),  // bianco glaciale un filo più profondo
+    ballEmissive:   new BABYLON.Color3(0.50, 0.82, 0.95),  // azzurro acqua più corposo
+    paddleDefault:  new BABYLON.Color3(0.78, 0.90, 0.98),  // bianco-blu delicatamente scurito
+    paddleRight:    new BABYLON.Color3(0.00, 0.60, 0.90),  // blu frutiger più intenso
+    paddleTop:      new BABYLON.Color3(0.00, 0.88, 0.78),  // turchese acqua leggermente più profondo
+    paddleBottom:   new BABYLON.Color3(0.28, 0.85, 0.82),  // acqua pastello più smorzato
+    ground:         new BABYLON.Color3(0.68, 0.92, 0.90)   // acqua chiarissimo ma meno brillante
+};
+
 // Function to create game objects using your classes
 function createGameObjects(scene: any) {
     console.log("Creating game objects...");
@@ -34,11 +49,54 @@ function createGameObjects(scene: any) {
     // Create Ball (simplified version of your Ball class)
     const ballMesh = BABYLON.MeshBuilder.CreateSphere("ball", {diameter: 0.5}, scene);
     const ballMaterial = new BABYLON.StandardMaterial("ballMaterial", scene);
-    ballMaterial.diffuseColor = new BABYLON.Color3(1, 1, 1);
-    ballMaterial.emissiveColor = new BABYLON.Color3(0.3, 0.3, 0.3);
+    ballMaterial.diffuseColor = COLORS.ballDiffuse;
+    ballMaterial.emissiveColor = COLORS.ballEmissive;
     ballMesh.material = ballMaterial;
     ballMesh.position = new BABYLON.Vector3(0, 0.5, 0);
-    
+
+    // ----------------------------------------------------------------------------
+    // Particle trail for the ball
+    // Requires a small particle texture at "textures/flare.png" (recommended).
+    // If you don't have the texture, reduce particleSystem.particleTexture to a plain color or add the file.
+    // ----------------------------------------------------------------------------
+    try {
+        ballParticleSystem = new BABYLON.ParticleSystem("ballTrail", 400, scene);
+        // Particle texture - place a small glowing sprite at public/textures/flare.png
+        ballParticleSystem.particleTexture = new BABYLON.Texture("textures/flare.png", scene);
+
+        // Make the emitter the ball mesh so particles follow it
+        ballParticleSystem.emitter = ballMesh;
+        ballParticleSystem.minEmitBox = new BABYLON.Vector3(0, 0, 0); // emission from center
+        ballParticleSystem.maxEmitBox = new BABYLON.Vector3(0, 0, 0);
+
+        // Colors, size, lifetime
+        ballParticleSystem.color1 = new BABYLON.Color4(1, 1, 1, 0.9);
+        ballParticleSystem.color2 = new BABYLON.Color4(0.8, 0.95, 1, 0.6);
+        ballParticleSystem.minSize = 0.04;
+        ballParticleSystem.maxSize = 0.16;
+        ballParticleSystem.minLifeTime = 0.2;
+        ballParticleSystem.maxLifeTime = 0.6;
+
+        // Emission and physics
+        ballParticleSystem.emitRate = 180;
+        ballParticleSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_ONEONE;
+        ballParticleSystem.gravity = new BABYLON.Vector3(0, 0, 0);
+        ballParticleSystem.direction1 = new BABYLON.Vector3(-0.2, 0, -0.2);
+        ballParticleSystem.direction2 = new BABYLON.Vector3(0.2, 0, 0.2);
+        ballParticleSystem.minAngularSpeed = 0;
+        ballParticleSystem.maxAngularSpeed = Math.PI;
+        ballParticleSystem.minEmitPower = 0.1;
+        ballParticleSystem.maxEmitPower = 0.6;
+        ballParticleSystem.updateSpeed = 0.01;
+
+        // Start emitting immediately (it follows the ball mesh)
+        ballParticleSystem.start();
+        console.log("✅ Ball particle system started");
+    } catch (err) {
+        console.warn("⚠️ Could not create ball particle system:", err);
+    }
+    // ----------------------------------------------------------------------------
+
     // Create a simple ball object that mimics your Ball class
     ball = {
         mesh: ballMesh,
@@ -166,8 +224,8 @@ function createGameObjects(scene: any) {
     const paddle1Mesh = BABYLON.MeshBuilder.CreateBox("paddle0", 
         {width: 0.3, height: 1, depth: 3}, scene);
     const paddle1Material = new BABYLON.StandardMaterial("paddle0Material", scene);
-    paddle1Material.diffuseColor = new BABYLON.Color3(1, 1, 1);
-    paddle1Material.emissiveColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+    paddle1Material.diffuseColor = COLORS.paddleDefault;
+    paddle1Material.emissiveColor = new BABYLON.Color3(0.2,0.2,0.2); // small tint kept
     paddle1Mesh.material = paddle1Material;
     paddle1Mesh.position = new BABYLON.Vector3(-8.8, 0.5, 0);
     
@@ -175,8 +233,8 @@ function createGameObjects(scene: any) {
     const paddle2Mesh = BABYLON.MeshBuilder.CreateBox("paddle1",
         {width: 0.3, height: 1, depth: 3}, scene);
     const paddle2Material = new BABYLON.StandardMaterial("paddle1Material", scene);
-    paddle2Material.diffuseColor = new BABYLON.Color3(1, 0, 0);
-    paddle2Material.emissiveColor = new BABYLON.Color3(0.2, 0, 0);
+    paddle2Material.diffuseColor = COLORS.paddleRight;
+    paddle2Material.emissiveColor = new BABYLON.Color3(0.2,0,0);
     paddle2Mesh.material = paddle2Material;
     paddle2Mesh.position = new BABYLON.Vector3(8.8, 0.5, 0);
     
@@ -244,8 +302,8 @@ function createGameObjects(scene: any) {
         const paddle3Mesh = BABYLON.MeshBuilder.CreateBox("paddle2",
             {width: 3, height: 1, depth: 0.3}, scene);
         const paddle3Material = new BABYLON.StandardMaterial("paddle2Material", scene);
-        paddle3Material.diffuseColor = new BABYLON.Color3(0, 0, 1);
-        paddle3Material.emissiveColor = new BABYLON.Color3(0, 0, 0.2);
+        paddle3Material.diffuseColor = COLORS.paddleTop;
+        paddle3Material.emissiveColor = new BABYLON.Color3(0,0,0.2);
         paddle3Mesh.material = paddle3Material;
         paddle3Mesh.position = new BABYLON.Vector3(0, 0.5, 5.7);
 
@@ -269,10 +327,13 @@ function createGameObjects(scene: any) {
         const paddle4Mesh = BABYLON.MeshBuilder.CreateBox("paddle3",
             {width: 3, height: 1, depth: 0.3}, scene);
         const paddle4Material = new BABYLON.StandardMaterial("paddle3Material", scene);
-        paddle4Material.diffuseColor = new BABYLON.Color3(1, 1, 0);
-        paddle4Material.emissiveColor = new BABYLON.Color3(0.2, 0.2, 0);
+        paddle4Material.diffuseColor = COLORS.paddleBottom;
+        paddle4Material.emissiveColor = new BABYLON.Color3(0.2,0.2,0);
+        // Assign material to the mesh (was missing previously)
         paddle4Mesh.material = paddle4Material;
+        // Ensure position is explicitly set before pushing the player
         paddle4Mesh.position = new BABYLON.Vector3(0, 0.5, -5.7);
+        console.log("Paddle4 initial position:", paddle4Mesh.position);
 
         players.push({
             id: 3,
@@ -464,6 +525,18 @@ function initBabylon() {
             console.warn("⚠️ camera.attachControl failed:", e);
         }
         
+        // Disabilita i controlli da tastiera della ArcRotateCamera (frecce)
+        // in modo che le freccette non muovano la camera: solo il mouse la controlla.
+        try {
+            camera.keysUp = [];
+            camera.keysDown = [];
+            camera.keysLeft = [];
+            camera.keysRight = [];
+            console.log("✅ Camera keyboard controls disabled (arrow keys won't move camera)");
+        } catch (e) {
+            console.warn("⚠️ Failed to clear camera key bindings:", e);
+        }
+        
         // Set camera limits to keep it reasonable
         camera.lowerRadiusLimit = 5;   // Min zoom distance
         camera.upperRadiusLimit = 25;  // Max zoom distance  
@@ -484,7 +557,7 @@ function initBabylon() {
         // Create the playing field
         const ground = BABYLON.MeshBuilder.CreateGround("ground", {width: 18, height: 12}, scene);
         const groundMaterial = new BABYLON.StandardMaterial("groundMat", scene);
-        groundMaterial.diffuseColor = new BABYLON.Color3(0.1, 0.8, 0.1); // Green field
+        groundMaterial.diffuseColor = COLORS.ground;
         ground.material = groundMaterial;
         console.log("✅ Playing field created");
 
