@@ -8,23 +8,13 @@ export default async function (fastify, opts) {
             if (!id) {
                 return reply.code(400).send({ error: 'Missing id' });
             }
-
             const users = await get_friends_by_user(Number(id));
-            // who_blocked_user now returns an array of ids (id_user_1) who blocked the given user
             const blocked = await who_blocked_user(Number(id));
-
-            // Normalize to numbers and create a Set for fast lookup
             const blockedSet = new Set((blocked || []).map(b => Number(b)));
-
-            // Filter out friends who have blocked the requester
             const filteredUsers = users.filter(user => {
                 const uid = Number(user.id);
                 return !blockedSet.has(uid);
             });
-            console.log(`Friends for ${id} (excluding blockers):`, filteredUsers);
-            console.log(`Blocked by users:`, blocked);
-            console.log(`All friends:`, users);
-
             return reply.send(filteredUsers);
         } catch (error) {
             console.error(error);
