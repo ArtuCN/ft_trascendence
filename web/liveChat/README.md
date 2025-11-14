@@ -1,26 +1,66 @@
 # Live Chat Application
 
-A real-time chat application built with TypeScript, Socket.IO, Fastify, and Vite. This application enables users to send broadcast messages, create private/group chats, and manage chat participants in real-time.
+A real-time chat application built with TypeScript, Socket.IO, Fastify, and Vite. This application enables users to create private/group chats, manage chat participants, and maintain persistent identities across reconnections.
 
 ## What This App Does
 
 This is a full-stack real-time messaging application that provides:
 
 - **Real-time Communication**: Instant message delivery using WebSocket technology
-- **Broadcast Messaging**: Send messages to all connected users
 - **Private/Group Chats**: Create chat rooms with specific recipients
+- **Persistent Identity**: Users maintain their identity across page refreshes and reconnections
 - **Chat Management**: Add or remove participants from existing chats
 - **Multi-user Support**: Track and connect with multiple online users
-- **Dynamic UI**: Interactive interface for chat creation and messaging
+- **Reconnection Handling**: Automatically rejoin chats after disconnection
 
 ## How It Works
 
-The application uses a client-server architecture:
+The application uses a client-server architecture with a **dual identity system** to handle ephemeral socket connections and persistent user identities.
 
-1. **Backend Server**: Fastify HTTP server running on a configurable port
-2. **WebSocket Layer**: Socket.IO server attached to the Fastify instance for real-time bidirectional communication
-3. **Frontend Client**: Vanilla TypeScript client that connects to the Socket.IO server
-4. **Event-Driven**: All interactions are handled through Socket.IO event emitters and listeners
+### Dual Identity System
+
+The core innovation of this chat system is separating **Socket Identity** from **User Identity**:
+
+```
+┌─────────────────────────────────┐
+│  User/Client ID (Permanent)     │
+│  - Number from database/auth    │
+│  - Survives reconnections       │
+│  - Stored in chats              │
+└────────────┬────────────────────┘
+             │
+             │ Mapped via clients[] array
+             ▼
+┌─────────────────────────────────┐
+│  Socket ID (Ephemeral)          │
+│  - String from Socket.IO        │
+│  - Changes on every connection  │
+│  - Used for routing messages    │
+└─────────────────────────────────┘
+```
+
+**Why This Matters:**
+- Socket IDs change on every page refresh/reconnection
+- Chats store **client IDs** (permanent) not socket IDs
+- The `clients[]` array maintains the mapping: `{id: client_id, socket: socket_id}`
+- When a user reconnects, they send their client ID to update the mapping
+- Messages are routed by looking up current socket IDs from client IDs
+
+### Reconnection Flow
+
+```
+1. User connects/reconnects
+   └─→ New socket.id assigned by Socket.IO
+
+2. Client sends save_client_id with permanent ID
+   └─→ Server updates: clients[index].socket = new_socket_id
+
+3. Client requests their chats (get_client_chat_ids)
+   └─→ Server looks up client_id by socket_id
+   └─→ Returns chats where client_id is in recipients
+
+4. User is back in all their chats with new socket
+```
 
 ### Architecture Flow
 
@@ -29,7 +69,54 @@ Client (Browser) <--WebSocket--> Socket.IO Server <--> Fastify Server
      |                                  |
      |                                  |
   DOM Updates                    Chat Management
-  User Actions                   Event Broadcasting
+  User Actions                   Client ID Mapping
+  localStorage (client_id)       Event Broadcasting
+```
+
+## Running the Application
+
+### Development Mode
+
+Run both frontend and backend with hot reload:
+```bash
+npm run dev
+```
+- Frontend: http://localhost:5173 (Vite dev server)
+- Backend: http://localhost:3000 (Fastify + Socket.IO)
+
+### Frontend Only
+```bash
+npm run front
+```
+Starts only the Vite dev server on port 5173.
+
+### Backend Only
+```bash
+npm run back
+```
+Starts only the backend server with hot reload using tsx watch.
+
+### Production Build
+
+```bash
+# Build the application
+npm run build
+
+# Preview production build
+npm run preview
+```
+
+The build command:
+1. Compiles TypeScript (`tsc -b`)
+2. Bundles frontend with Vite (`vite build`)
+
+### Environment Variables
+
+Create a `.env` file in the root directory:
+
+```env
+VITE_PORT=3000
+VITE_API_URL=http://localhost:3000
 ```
 
 ## Project Structure
@@ -37,7 +124,7 @@ Client (Browser) <--WebSocket--> Socket.IO Server <--> Fastify Server
 ### Configuration Files
 
 #### `package.json`
-Project configuration and dependencies. Defines scripts for development, build, and preview modes. Uses CommonJS module system.
+Project configuration and dependencies.
 
 **Key Dependencies**:
 - `fastify`: Fast HTTP server framework
@@ -48,28 +135,31 @@ Project configuration and dependencies. Defines scripts for development, build, 
 
 **Scripts**:
 - `npm run dev`: Runs both frontend and backend concurrently
-- `npm run front`: Runs only the Vite dev server
+- `npm run front`: Runs only the Vite dev server (port 5173)
 - `npm run back`: Runs only the backend server with hot reload
 - `npm run build`: Compiles TypeScript and builds production bundle
+- `npm run preview`: Preview production build
 
 ---
 
 ### Backend Files
 
 #### `src/lib/index.ts`
-**Entry point** for the backend server. Orchestrates the startup sequence by initializing both the Fastify HTTP server and the Socket.IO WebSocket server.
+**Entry point** for the backend server.
 
 **Responsibilities**:
-- Starts Fastify server
+- Starts Fastify HTTP server
 - Initializes Socket.IO after server is ready
 - Error handling for startup failures
 
 **Flow**: `main()` → `startServer()` → `startSocket()`
 
+**Location**: Backend server orchestration
+
 ---
 
 #### `src/lib/server.ts`
-**Fastify HTTP server** configuration and initialization. Sets up the HTTP layer that Socket.IO will attach to.
+**Fastify HTTP server** configuration.
 
 **Exports**:
 - `fastifyServer`: The underlying Node.js HTTP server instance
@@ -79,144 +169,194 @@ Project configuration and dependencies. Defines scripts for development, build, 
 **Endpoints**:
 - `GET /`: Basic health check endpoint returning `{ hello: 'world' }`
 
-**Connection**: Provides `fastifyServer` to `socket.ts` for Socket.IO attachment
+**Location**: HTTP server layer
 
 ---
 
 #### `src/lib/socket.ts`
-**Core Socket.IO server** implementation. Handles all real-time communication logic and chat management.
+**Core Socket.IO server** implementation. This is where all the chat logic lives.
 
 **Key Data Structures**:
-- `chats[]`: In-memory array storing all active chat rooms
-- `io`: Socket.IO server instance
+```typescript
+const chats: chat[] = [];      // All active chats
+const clients: client[] = [];  // Socket-to-client ID mapping
+
+interface chat {
+  chat_id: string;           // UUID
+  chat_name?: string;        // Optional name
+  recipients: number[];      // Array of CLIENT IDs (not socket IDs!)
+}
+
+interface client {
+  id: number;      // Permanent client/user ID
+  socket: string;  // Current socket ID (updated on reconnect)
+}
+```
+
+**Key Functions**:
+- `saveClientId(client_id, socket_id)`: Creates or updates client-to-socket mapping
+  - If client exists: updates socket ID (handles reconnection)
+  - If new client: adds to clients array
+- `startSocket()`: Initializes Socket.IO server with CORS config
+- `getAllSockets()`: Returns array of all connected socket IDs (dev only)
 
 **Socket Events Handled**:
 
 | Event | Direction | Description |
 |-------|-----------|-------------|
 | `connection` | Server | User connects to server |
-| `disconnect` | Server | User disconnects from server |
+| `disconnect` | Server | User disconnects (logs only, no cleanup yet) |
+| `save_client_id` | Client→Server | Register/update client ID to socket mapping |
 | `chat:message` | Client→Server | Broadcast message to all users |
-| `create_chat` | Client→Server | Create new chat with recipients |
-| `add_recipient` | Client→Server | Add user to existing chat |
-| `delete_recipient` | Client→Server | Remove user from chat |
-| `get_client_chat_ids` | Client→Server | Get all chats for current user |
+| `create_chat` | Client→Server | Create new chat with client IDs as recipients |
+| `add_recipient` | Client→Server | Add client to existing chat |
+| `delete_recipient` | Client→Server | Remove client from chat |
+| `get_client_chat_ids` | Client→Server | Get all chat IDs for requesting client |
 | `get_chat_object` | Client→Server | Get full chat object by ID or name |
-| `private_message` | Client→Server | Send message to specific recipients |
+| `private_message` | Client→Server | Send message to specific client IDs |
 | `get_sockets` | Client→Server | Get all connected socket IDs (dev only) |
+| `get_all_clients` | Client→Server | Get all registered client IDs (dev only) |
 
-**Functions**:
-- `startSocket()`: Initializes Socket.IO server with CORS config
-- `getAllSockets()`: Returns array of all connected socket IDs
+**Important Implementation Details**:
 
-**Connection**: Uses `fastifyServer` from `server.ts`, exports `io` for other modules
+1. **Chat Creation** (lines 52-76):
+   - Adds creator's client ID to recipients
+   - Generates UUID for chat_id
+   - Stores recipients as **client IDs** (numbers)
+   - Notifies all recipients by looking up their socket IDs
+
+2. **Message Routing** (lines 140-148):
+   - Accepts array of client IDs as recipients
+   - Filters `clients[]` to find matching client entries
+   - Emits to each client's current socket ID
+
+3. **Get Client Chats** (lines 114-125):
+   - **BUG**: Currently returns ALL chats with ANY connected client
+   - **Should**: Look up requesting socket's client ID, filter chats containing that ID
+
+**Location**: All real-time communication and chat management logic
 
 ---
 
 ### Frontend Files
 
 #### `src/main.ts`
-**Frontend entry point**. Initializes the client-side application when the DOM is ready.
-
-**Responsibilities**:
-- Waits for DOM to load
-- Creates App instance
-- Registers UI components (TestDiv and SocketComponent)
+**Frontend entry point**. Initializes the client application.
 
 **Flow**: `DOMContentLoaded` → `new App()` → `appendComponent()` for each component
+
+**Location**: Frontend initialization
 
 ---
 
 #### `src/App.ts`
-**Application root manager**. Provides a simple component system for mounting UI elements.
+**Application root manager**. Simple component system.
 
 **Class**: `App`
-- `root`: Reference to `#app` div (creates if doesn't exist)
-- `appendComponent(component)`: Mounts a component function to the root
+- `root`: Reference to `#app` div
+- `appendComponent(component)`: Mounts a component to the root
 
-**Type**: `Component` - Function that returns an HTMLElement
-
-**Connection**: Used by `main.ts` to mount components
+**Location**: Component mounting logic
 
 ---
 
 #### `src/lib/client-socket.ts`
-**Client-side Socket.IO wrapper**. Provides typed functions for all socket operations and manages the WebSocket connection.
+**Client-side Socket.IO wrapper**. All socket operations go through here.
 
 **Key Exports**:
-- `socket`: Socket.IO client instance connected to server
+- `socket`: Socket.IO client instance
 - `client_chat_ids`: Array of chat IDs the user belongs to
+- `client_id_local`: The user's permanent client ID
 
-**Functions**:
+**Reconnection Handling** (lines 10-17):
+```typescript
+socket.on("connect", async () => {
+  const storedId = localStorage.getItem("client_id_websocket");
+  if (storedId) {
+    // BUG: Should call saveClientId(storedId) first!
+    await getClientChats();
+  }
+  console.log("connected to socket server:", socket.id);
+});
+```
+
+**Key Functions**:
 
 | Function | Description | Returns |
 |----------|-------------|---------|
+| `saveClientId(client_id)` | Register client ID with server, store in localStorage | Promise\<number\> |
 | `sendMessage(msg)` | Broadcast message to all | void |
-| `sendPrivateMessage(recipients, msg)` | Send to specific users | void |
-| `getAllSockets()` | Request all connected sockets | void |
+| `sendPrivateMessage(chat_id, msg)` | Send to all recipients in a chat | void |
+| `getAllSockets()` | Request all connected sockets (dev) | void |
+| `getAllClients()` | Request all registered client IDs (dev) | void |
 | `getClientChats()` | Get user's chat IDs | Promise\<string[]\> |
 | `getChatObject(id, name?)` | Get chat details | Promise\<chat\> |
 | `getChatname(id)` | Get chat name by ID | Promise\<string\> |
-| `getChatIdFromName(name)` | Get chat ID by name | Promise\<string\> |
-| `startChat(recipients, ids?, name?)` | Create new chat | Promise\<string\> |
-| `addRecipient(chatId, recipient)` | Add user to chat | Promise\<string[]\> |
-| `deleteRecipient(chatId, clientId)` | Remove user from chat | Promise\<string\> |
+| `startChat(recipients, name?)` | Create new chat with client IDs | Promise\<string\> |
+| `addRecipient(chatId, recipient)` | Add client to chat | Promise\<number[]\> |
+| `deleteRecipient(chatId, clientId)` | Remove client from chat | Promise\<number\> |
 
-**Connection**: Used by `SocketComponent.ts` for all socket operations
+**Location**: All client-side socket operations and promises
 
 ---
 
 #### `src/components/SocketComponent.ts`
-**Main UI component** for the chat interface. Creates and manages all interactive elements.
+**Main UI component** for the chat interface.
 
 **UI Elements**:
-- Status display showing connection state
-- Input field for message typing
-- Select dropdown for choosing recipients (all connected sockets)
-- Select dropdown for choosing active chats
-- Buttons for: refresh, private send, start chat, add/delete recipient
-- Messages container for displaying chat history
+- Connection status display
+- Message input field
+- Client selector dropdown
+- Active chats dropdown
+- Buttons: send, start chat, add/delete recipient, refresh
+- Messages container
 
 **Event Handlers**:
-- `connect`: Updates status, fetches sockets and chats
+- `connect`: Updates status, fetches clients and chats
 - `disconnect`: Updates status
 - `get_sockets`: Populates recipient dropdown
+- `get_all_clients`: Populates client selector
 - `get_client_chat_ids`: Populates chat dropdown
+- `create_chat`: Updates chat list
 - `chat:message`: Displays broadcast messages
-- `private_message`: Displays private messages with sender info
-- Button clicks for chat management actions
+- `private_message`: Displays private messages
 
-**Connection**: Uses functions from `client-socket.ts`, returns HTMLElement mounted by `App`
-
----
-
-#### `src/components/Testdiv.ts`
-**Simple test component**. Returns a div with "hello" text. Used for development/testing purposes.
-
-**Connection**: Mounted by `main.ts` via `App`
+**Location**: All UI interaction logic
 
 ---
 
 ### Type Definitions
 
 #### `src/types/SocketTypes.ts`
-**TypeScript interfaces** for type safety across the application.
+TypeScript interfaces for type safety.
 
 **Interfaces**:
-- `startChatProps`: Parameters for creating a chat
-  - `recipients`: Array of socket IDs
-  - `recipient_ids?`: Optional array of user IDs
-  - `chat_name?`: Optional chat name
-- `chat`: Full chat object (extends startChatProps)
-  - `chat_id`: Unique identifier for the chat
+```typescript
+interface client {
+  id: number;      // Permanent client ID
+  socket: string;  // Current socket ID
+}
 
-**Connection**: Used by `socket.ts` and `client-socket.ts` for type safety
+interface chat {
+  chat_id: string;
+  chat_name?: string;
+  recipients: number[];  // Array of client IDs!
+}
+
+interface startChatProps {
+  recipients: number[];
+  chat_name?: string;
+}
+```
+
+**Location**: Shared type definitions
 
 ---
 
 ## File Connection Diagram
 
 ```
+Frontend:
 main.ts
   └─→ App.ts
        ├─→ Testdiv.ts
@@ -224,45 +364,14 @@ main.ts
             └─→ client-socket.ts
                  └─→ SocketTypes.ts
 
-index.ts (Backend)
+Backend:
+index.ts
   ├─→ server.ts
   │    └─→ Exports fastifyServer
   └─→ socket.ts
        ├─→ Uses fastifyServer
-       └─→ Uses SocketTypes.ts
-```
-
-## Running the Application
-
-### Development Mode
-```bash
-npm run dev
-```
-Runs both frontend (port 5173) and backend (configurable port, default 3000) concurrently.
-
-### Frontend Only
-```bash
-npm run front
-```
-
-### Backend Only
-```bash
-npm run back
-```
-
-### Production Build
-```bash
-npm run build
-npm run preview
-```
-
-## Environment Variables
-
-Create a `.env` file in the root directory:
-
-```env
-VITE_PORT=3000
-VITE_API_URL=http://localhost:3000
+       ├─→ Uses SocketTypes.ts
+       └─→ Manages chats[] and clients[]
 ```
 
 ## Technology Stack
@@ -275,17 +384,53 @@ VITE_API_URL=http://localhost:3000
 
 ## Features in Detail
 
+### Client Identity Management
+
+**Registration Flow**:
+1. Client connects and gets a socket ID
+2. Client calls `saveClientId(myClientId)` with permanent ID from auth/database
+3. Server stores or updates mapping: `{id: myClientId, socket: socketId}`
+4. Client ID is stored in localStorage for reconnection
+
+**Reconnection Flow**:
+1. Page refreshes → new socket connection
+2. Client retrieves stored client ID from localStorage
+3. Client calls `saveClientId(storedId)` to update socket mapping
+4. Client calls `getClientChats()` to reload chat list
+5. User is back in all chats automatically
+
 ### Chat Creation
-Users can create new chat rooms by selecting recipients from connected users. Each chat gets a unique UUID and maintains a list of participant socket IDs.
+
+Users create chats by selecting client IDs (not socket IDs). The chat stores these permanent IDs in the recipients array. Each chat gets a unique UUID.
 
 ### Dynamic Participant Management
-Chats support adding and removing participants dynamically. When participants are added/removed, all chat members are notified.
 
-### Message Types
-- **Broadcast**: Sent to all connected users
-- **Private/Group**: Sent only to participants of a specific chat
+Chats support adding and removing participants dynamically. All operations use client IDs. When participants are modified, the server looks up their current socket IDs and notifies them.
 
-### Development Tools
-- Hot reload for both frontend and backend
-- Socket ID visibility for debugging
-- Real-time connection status display
+### Message Routing
+
+Messages are sent to client IDs. The server:
+1. Receives message with recipient client IDs
+2. Filters `clients[]` array to find matching clients
+3. Looks up their current socket IDs
+4. Emits messages to those socket IDs
+
+This allows messages to reach users even if their socket ID changed since the chat was created.
+
+## Current Limitations
+
+1. **No Persistence**: All chats and client mappings lost on server restart
+2. **No Authentication**: Any client can claim any client ID
+3. **No Cleanup**: Disconnected clients remain in clients[] array
+4. **In-Memory Only**: No database integration yet
+5. **Bug in get_client_chat_ids**: Returns chats for all clients, not just the requester
+
+## Known Issues & TODOs
+
+- [ ] Fix `get_client_chat_ids` to filter by requesting client
+- [x] Fix reconnection logic to call `saveClientId()` before `getClientChats()`
+- [ ] Implement disconnect cleanup (remove from clients[] array)
+- [ ] Add authentication/authorization
+- [ ] Add database persistence
+- [ ] Add message history storage
+- [ ] Implement proper error handling
