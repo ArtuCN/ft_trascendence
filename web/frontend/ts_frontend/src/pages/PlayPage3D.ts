@@ -44,6 +44,8 @@ export class PlayPage3D {
     const controls = [
       'W / S - Giocatore 1 (sinistra)',
       'Frecce Su/Giù - Giocatore 2 (destra)', 
+      'D / F - Giocatore 3',
+      'J / K - Giocatore 4',
       'Spacebar - Pausa/Resume',
       'ESC - Menu principale'
     ];

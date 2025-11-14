@@ -52,17 +52,42 @@ function createGameObjects(scene: any) {
             // Check collision with paddles FIRST
             this.checkPaddleCollisions(players);
             
-            // Boundary checks for top/bottom walls
-            if (this.position.z > 6 || this.position.z < -6) {
-                this.velocity.z *= -1;
-                // Keep ball inside bounds
-                this.position.z = (this.position.z > 0 ? 1 : -1) * (6 - this.ballSize/2);
-                this.mesh.position.copyFrom(this.position);
+            // Boundary / goal logic
+            // If 4-player mode, treat Z-overflow as goals for player 3/4.
+            if (nbrPlayer === 4) {
+                if (this.position.z > 6) {
+                    // Ball passed beyond top edge -> assign point to player 3 (id 2)
+                    score3d[2] = (score3d[2] || 0) + 1;
+                    updateScoreDisplay();
+                    this.resetBall();
+                    return;
+                }
+                if (this.position.z < -6) {
+                    // Ball passed beyond bottom edge -> assign point to player 4 (id 3)
+                    score3d[3] = (score3d[3] || 0) + 1;
+                    updateScoreDisplay();
+                    this.resetBall();
+                    return;
+                }
+            } else {
+                // 2-player mode: bounce on top/bottom walls
+                if (this.position.z > 6 || this.position.z < -6) {
+                    this.velocity.z *= -1;
+                    // Keep ball inside bounds
+                    this.position.z = (this.position.z > 0 ? 1 : -1) * (6 - this.ballSize/2);
+                    this.mesh.position.copyFrom(this.position);
+                }
             }
             
             // Goal checks (reset ball)
-            if (this.position.x < -9 || this.position.x > 9) {
-                console.log("Goal scored! Resetting ball...");
+            if (this.position.x < -9) {
+                score3d[1] += 1; // Player 2 segna
+                updateScoreDisplay();
+                this.resetBall();
+            }
+            if (this.position.x > 9) {
+                score3d[0] += 1; // Player 1 segna
+                updateScoreDisplay();
                 this.resetBall();
             }
         },
@@ -213,7 +238,60 @@ function createGameObjects(scene: any) {
     
     players.push(player1);
     
-    console.log("✅ Game objects created (temporary simple version)");
+    // Add paddles for 4 player mode
+    if (nbrPlayer === 4) {
+        // Player 2 (top paddle)
+        const paddle3Mesh = BABYLON.MeshBuilder.CreateBox("paddle2",
+            {width: 3, height: 1, depth: 0.3}, scene);
+        const paddle3Material = new BABYLON.StandardMaterial("paddle2Material", scene);
+        paddle3Material.diffuseColor = new BABYLON.Color3(0, 0, 1);
+        paddle3Material.emissiveColor = new BABYLON.Color3(0, 0, 0.2);
+        paddle3Mesh.material = paddle3Material;
+        paddle3Mesh.position = new BABYLON.Vector3(0, 0.5, 5.7);
+
+        players.push({
+            id: 2,
+            mesh: paddle3Mesh,
+            position: paddle3Mesh.position,
+            drawAndMove: function() {
+                // Player 2 controls: D/F keys
+                if (keys['f'] || keys['F']) {
+                    if (this.position.x < 8) this.position.x += 0.15;
+                }
+                if (keys['d'] || keys['D']) {
+                    if (this.position.x > -8) this.position.x -= 0.15;
+                }
+                this.mesh.position.copyFrom(this.position);
+            }
+        });
+
+        // Player 3 (bottom paddle)
+        const paddle4Mesh = BABYLON.MeshBuilder.CreateBox("paddle3",
+            {width: 3, height: 1, depth: 0.3}, scene);
+        const paddle4Material = new BABYLON.StandardMaterial("paddle3Material", scene);
+        paddle4Material.diffuseColor = new BABYLON.Color3(1, 1, 0);
+        paddle4Material.emissiveColor = new BABYLON.Color3(0.2, 0.2, 0);
+        paddle4Mesh.material = paddle4Material;
+        paddle4Mesh.position = new BABYLON.Vector3(0, 0.5, -5.7);
+
+        players.push({
+            id: 3,
+            mesh: paddle4Mesh,
+            position: paddle4Mesh.position,
+            drawAndMove: function() {
+                // Player 3 controls: J/K keys
+                if (keys['k'] || keys['K']) {
+                    if (this.position.x < 8) this.position.x += 0.15;
+                }
+                if (keys['j'] || keys['J']) {
+                    if (this.position.x > -8) this.position.x -= 0.15;
+                }
+                this.mesh.position.copyFrom(this.position);
+            }
+        });
+    }
+
+    console.log("✅ Game objects created (supports up to 4 players)");
 }
 
 // Bot polling variables
@@ -377,6 +455,14 @@ function initBabylon() {
     try {
         // Create ArcRotate camera for better mouse controls
         camera = new BABYLON.ArcRotateCamera("camera1", -Math.PI/2, Math.PI/2.5, 12, BABYLON.Vector3.Zero(), scene);
+        // ATTACH CAMERA TO CANVAS so Babylon handles pointer input
+        // This enables standard arc-rotate mouse drag/zoom controls
+        try {
+            camera.attachControl(canvas, true);
+            console.log("✅ Camera attached to canvas for pointer controls");
+        } catch (e) {
+            console.warn("⚠️ camera.attachControl failed:", e);
+        }
         
         // Set camera limits to keep it reasonable
         camera.lowerRadiusLimit = 5;   // Min zoom distance
@@ -436,8 +522,31 @@ function initBabylon() {
     console.log("✅ Game loop started successfully");
 }
 
+// Punteggio dei giocatori
+let score3d: number[] = [];
+
+// Funzione per aggiornare il punteggio su schermo
+function updateScoreDisplay() {
+    const scoreDiv = document.getElementById("score3d");
+    if (!scoreDiv) return;
+
+    // Mostra dinamicamente i punteggi esistenti
+    if (!score3d || score3d.length === 0) {
+        scoreDiv.innerText = "";
+        return;
+    }
+
+    // Costruisci stringa punteggi in base al numero di giocatori
+    const labels = score3d.map((s, idx) => `Player ${idx + 1}: ${s}`);
+    scoreDiv.innerText = labels.join("   ");
+}
+
 // Start game function
 function startGame() {
+    // Inizializza array punteggi in base al numero di giocatori attuale
+    score3d = new Array(Math.max(2, nbrPlayer)).fill(0);
+
+    updateScoreDisplay();
     gameStarted = true;
     if (nbrPlayer === 1) startBotPolling();
     else stopBotPolling();
@@ -462,6 +571,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Get references to submenu buttons
     const button2P3D = document.getElementById("Play2P") as HTMLButtonElement;
     const buttonAI3D = document.getElementById("PlayAI") as HTMLButtonElement;
+    const button4P3D = document.getElementById("Play4P") as HTMLButtonElement;
     const buttonTournament3D = document.getElementById("Tournament") as HTMLButtonElement;
     const buttonMainMenu3D = document.getElementById("returnMenu") as HTMLButtonElement;
 
@@ -480,6 +590,7 @@ buttonLocalPlay3D.addEventListener("click", () => {
     buttonRemotePlay3D.style.display = "none";
     button2P3D.style.display = "inline-block";
     buttonAI3D.style.display = "inline-block";
+    button4P3D.style.display = "inline-block";
     buttonTournament3D.style.display = "inline-block";
     buttonMainMenu3D.style.display = "inline-block";
 });
@@ -494,12 +605,12 @@ buttonLocalPlay3D.addEventListener("click", () => {
         textPong3D.style.display = "none";
         canvasContainer3D.style.display = "block";
         
+        // Set player count BEFORE initializing Babylon
+        nbrPlayer = 2; // Set to 2 players
         // Initialize Babylon.js only when needed
         initBabylon();
-        
-        // Start 2 player 3D game
-        nbrPlayer = 2; // Set to 2 players
-        gameStarted = true;
+        // Properly start game (initializes score array etc.)
+        startGame();
         stopBotPolling();
         console.log("3D Local 2 Player Game Started!");
     });
@@ -514,15 +625,46 @@ buttonLocalPlay3D.addEventListener("click", () => {
         textPong3D.style.display = "none";
         canvasContainer3D.style.display = "block";
         
+        // Set player count BEFORE initializing Babylon
+        nbrPlayer = 1; // Set to 1 human player + AI
         // Initialize Babylon.js only when needed
         initBabylon();
-        
-        // Start AI game (Player 0 vs Bot)
-        nbrPlayer = 1; // Set to 1 human player + AI
-        gameStarted = true;
-        startBotPolling();
+        // Properly start game (initializes score array and bot polling)
+        startGame();
         console.log("🤖 3D VS Bot Game Started! nbrPlayer set to:", nbrPlayer);
     });
+
+    button4P3D.addEventListener("click", () => {
+        console.log("4 Player button clicked!");
+        // Nascondi submenu e mostra canvas
+        button2P3D.style.display = "none";
+        buttonAI3D.style.display = "none";
+        button4P3D.style.display = "none";
+        buttonTournament3D.style.display = "none";
+        buttonMainMenu3D.style.display = "none";
+        textPong3D.style.display = "none";
+        canvasContainer3D.style.display = "block";
+
+        // Imposta 4 giocatori e avvia la partita (nbrPlayer FIRST)
+        nbrPlayer = 4;
+        // Initialize Babylon and then start game so score3d is created
+        initBabylon();
+        startGame();
+        stopBotPolling(); // Nessun bot in 4P
+        console.log("3D 4 Player Game Started!");
+    });
+
+    // buttonTournament3D.addEventListener("click", () => {
+    //     // Mostra solo il bottone 4 Player per il torneo
+    //     button4P3D.style.display = "inline-block";
+    //     // ...eventuali altri bottoni...
+    // });
+
+    // // Quando torni al menu, nascondi di nuovo il bottone
+    // buttonMainMenu3D.addEventListener("click", () => {
+    //     button4P3D.style.display = "none";
+    //     // ...eventuali altri bottoni...
+    // });
 
     buttonMainMenu3D.addEventListener("click", () => {
     // Return to main menu
