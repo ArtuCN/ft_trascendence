@@ -91,6 +91,12 @@ export class Navbar {
       () => router.navigate('/play')
     );
 
+    const play3dButton = createButton(
+      'Play 3D',
+      'text-white px-3 py-2 rounded-md transition-all w-full text-center bg-orange-500 hover:bg-orange-600 focus:outline-none',
+      () => router.navigate('/play3D')
+    );
+
     const socialButton = createButton(
       'Social',
       'text-white px-3 py-2 rounded-md transition-all w-full text-center bg-orange-500 hover:bg-orange-600 focus:outline-none',
@@ -116,6 +122,7 @@ export class Navbar {
     container.appendChild(greeting);
     container.appendChild(profileButton);
     container.appendChild(playButton);
+    container.appendChild(play3dButton);
     container.appendChild(socialButton);
     container.appendChild(logoutButton);
 
