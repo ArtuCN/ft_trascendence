@@ -37,10 +37,10 @@ async def ai_decision_3d(data: AIRequest):
     ball_y = data.ball_y
     paddle_y = data.paddle_y
 
-    # Logica per il 3D (coordinate Z invertite)
-    if ball_y > paddle_y + 100000:
-        return {"key": "ArrowUp"}
-    elif ball_y < paddle_y - 100000:
+    # Soglia corretta per il 3D (simile al 2D)
+    if ball_y > paddle_y + 20:
         return {"key": "ArrowDown"}
+    elif ball_y < paddle_y - 20:
+        return {"key": "ArrowUp"}
     else:
         return {"key": None}

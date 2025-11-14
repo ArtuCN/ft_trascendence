@@ -177,60 +177,37 @@ function createGameObjects(scene: any) {
         id: 1,
         mesh: paddle2Mesh,
         position: paddle2Mesh.position,
-        lastAIUpdate: Date.now(),
         drawAndMove: function() {
-            if (nbrPlayer === 1) {
-                // AI Mode: Get AI decision periodically
-                console.log("🤖 Player 1 in AI mode (nbrPlayer=" + nbrPlayer + ")");
-                const now = Date.now();
-                if (now - this.lastAIUpdate > aiUpdateInterval) {
-                    console.log("🤖 AI update triggered. Ball Z:", ball ? ball.position.z : "no ball", "Paddle Z:", this.position.z);
-                    this.updateAI();
-                    this.lastAIUpdate = now;
+            if (nbrPlayer === 1 && typeof botKey === "string") {
+                console.log(`[BOT] drawAndMove: botKey=${botKey}, position.z=${this.position.z}`);
+                if (botKey === "ArrowDown" && this.position.z < 4.5) {
+                    this.position.z += 0.15;
+                    console.log(`[BOT] Moving DOWN to ${this.position.z}`);
                 }
-            } else {
+                if (botKey === "ArrowUp" && this.position.z > -4.5) {
+                    this.position.z -= 0.15;
+                    console.log(`[BOT] Moving UP to ${this.position.z}`);
+                }
+                // Clamp position
+                if (this.position.z > 4.5) {
+                    this.position.z = 4.5;
+                    console.log(`[BOT] Clamped DOWN to ${this.position.z}`);
+                }
+                if (this.position.z < -4.5) {
+                    this.position.z = -4.5;
+                    console.log(`[BOT] Clamped UP to ${this.position.z}`);
+                }
+                this.mesh.position.copyFrom(this.position);
+            } else if (nbrPlayer !== 1) {
                 // Human Mode: Arrow keys  
-                console.log("👤 Player 1 in human mode (nbrPlayer=" + nbrPlayer + ")");
                 if (keys['ArrowUp']) {
                     if (this.position.z < 4.5) this.position.z += 0.15;
                 }
                 if (keys['ArrowDown']) {
                     if (this.position.z > -4.5) this.position.z -= 0.15;
                 }
+                this.mesh.position.copyFrom(this.position);
             }
-            this.mesh.position.copyFrom(this.position);
-        },
-        updateAI: function() {
-            console.log("🔧 updateAI called");
-            if (!ball) {
-                console.log("🤖 AI update: No ball found");
-                return;
-            }
-            
-            // Scale 3D coordinates to 2D pixel-like values for AI (multiply by 100)
-            const scaledBallY = ball.position.z * 100;
-            const scaledPaddleY = this.position.z * 100;
-            
-            console.log("🤖 Requesting AI decision for ball_y:", scaledBallY, "paddle_y:", scaledPaddleY, "(scaled from", ball.position.z, ",", this.position.z, ")");
-            
-            // Get AI decision based on ball and paddle positions
-            const self = this;
-            getAIDecision(scaledBallY, scaledPaddleY, function(aiDecision) {
-                console.log("🤖 AI decision received:", aiDecision);
-                if (aiDecision === 'ArrowUp' && self.position.z < 4.5) {
-                    self.position.z += 0.15;
-                    console.log("🤖 AI moving paddle UP to:", self.position.z);
-                    self.mesh.position.copyFrom(self.position);
-                } else if (aiDecision === 'ArrowDown' && self.position.z > -4.5) {
-                    self.position.z -= 0.15;
-                    console.log("🤖 AI moving paddle DOWN to:", self.position.z);
-                    self.mesh.position.copyFrom(self.position);
-                } else if (aiDecision === null) {
-                    console.log("🤖 AI staying in position");
-                } else {
-                    console.log("🤖 AI decision not applicable:", aiDecision, "paddle z:", self.position.z, "limits: -4.5 to 4.5");
-                }
-            });
         }
     };
     
@@ -239,31 +216,60 @@ function createGameObjects(scene: any) {
     console.log("✅ Game objects created (temporary simple version)");
 }
 
-// Function to get AI decision from the backend (using callbacks for ES5 compatibility)
-function getAIDecision(ballZ: number, paddleZ: number, callback: (decision: string | null) => void) {
-    fetch('/ai/3d', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            ball_y: ballZ,      // In 3D, Z is the vertical axis for paddles
-            paddle_y: paddleZ   // Current paddle position
-        })
-    })
-    .then(response => {
+// Bot polling variables
+let botPollingId: number | null = null;
+let botKey: string | null = null;
+
+// Start bot polling (call this when starting AI mode)
+function startBotPolling() {
+    if (botPollingId !== null) {
+        clearInterval(botPollingId);
+    }
+    if (!gameStarted) {
+        console.log("[BOT] Polling not started: game not running");
+        return;
+    }
+    console.log("[BOT] Starting polling...");
+    botPollingId = window.setInterval(async () => {
+        const ballY = ball ? ball.position.z * 100 : 0;
+        const paddleY = players[1] ? players[1].position.z * 100 : 0;
+        console.log(`[BOT] Polling: ballY=${ballY}, paddleY=${paddleY}`);
+        botKey = await sendBotData(ballY, paddleY);
+        console.log(`[BOT] AI decision received: ${botKey}`);
+    }, 80);
+}
+
+// Stop bot polling (call this when stopping AI mode)
+function stopBotPolling() {
+    if (botPollingId !== null) {
+        clearInterval(botPollingId);
+        botPollingId = null;
+    }
+}
+
+// Send bot data and get decision (returns a Promise)
+async function sendBotData(ballY: number, paddleY: number): Promise<string | null> {
+    try {
+        console.log(`[BOT] Sending data to backend: ballY=${ballY}, paddleY=${paddleY}`);
+        const response = await fetch('/ai/3d', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ball_y: ballY, paddle_y: paddleY })
+        });
         if (!response.ok) {
-            throw new Error('HTTP error! status: ' + response.status);
+            console.log(`[BOT] Backend response not ok: ${response.status}`);
+            return null;
         }
-        return response.json();
-    })
-    .then(data => {
-        callback(data.key);
-    })
-    .catch(error => {
-        console.error('AI request failed:', error);
-        callback(null);
-    });
+        const data = await response.json();
+        console.log(`[BOT] Backend response: ${JSON.stringify(data)}`);
+        // Stampa sempre la decisione ricevuta
+        console.log(`[BOT] AI decision received: ${data.key}`);
+        return data.key;
+    } catch (error) {
+        console.error('[BOT] AI request failed:', error);
+        console.log(`[BOT] AI decision received: null`);
+        return null;
+    }
 }
 
 // Function to setup manual camera controls
@@ -399,7 +405,10 @@ function initBabylon() {
         // Create game objects using your classes
         createGameObjects(scene);
         console.log("✅ Game objects created using your classes");
-        
+
+        // Start bot polling ONLY if AI mode is active and objects are ready
+        if (nbrPlayer === 1) startBotPolling();
+        else stopBotPolling();
     } catch (error) {
         console.error("❌ Error creating 3D objects:", error);
         return;
@@ -430,6 +439,8 @@ function initBabylon() {
 // Start game function
 function startGame() {
     gameStarted = true;
+    if (nbrPlayer === 1) startBotPolling();
+    else stopBotPolling();
     console.log("3D Pong Game Started!");
 }
 
@@ -489,6 +500,7 @@ buttonLocalPlay3D.addEventListener("click", () => {
         // Start 2 player 3D game
         nbrPlayer = 2; // Set to 2 players
         gameStarted = true;
+        stopBotPolling();
         console.log("3D Local 2 Player Game Started!");
     });
 
@@ -508,6 +520,7 @@ buttonLocalPlay3D.addEventListener("click", () => {
         // Start AI game (Player 0 vs Bot)
         nbrPlayer = 1; // Set to 1 human player + AI
         gameStarted = true;
+        startBotPolling();
         console.log("🤖 3D VS Bot Game Started! nbrPlayer set to:", nbrPlayer);
     });
 
