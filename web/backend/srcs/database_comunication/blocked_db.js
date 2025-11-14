@@ -68,3 +68,22 @@ export async function remove_blocked_user(userId, blockedId) {
         )
     })
 }
+
+export async function who_blocked_user(id) {
+    return new Promise((resolve, reject) => {
+        const query = `
+        SELECT id_user_1
+        FROM blocked
+        WHERE id_blocked = ?
+        `;
+        db.all(query, [id], function (err, rows) {
+            if (err) {
+                console.error('Error while checking blocked user:', err);
+                return reject(err);
+            }
+            // rows is an array of objects like { id_user_1: <number> }
+            const ids = (rows || []).map(r => r.id_user_1);
+            resolve(ids);
+        });
+    })
+}

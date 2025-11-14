@@ -1,5 +1,5 @@
 import { add_friendship, get_friends_by_user, remove_friendship, get_all_friendships } from "../database_comunication/friendship_db.js";
-
+import { who_blocked_user } from "../database_comunication/blocked_db.js";
 export default async function (fastify, opts) {
 
     fastify.get('/friend', async (request, reply) => {
@@ -10,7 +10,22 @@ export default async function (fastify, opts) {
             }
 
             const users = await get_friends_by_user(Number(id));
-            return reply.send(users);
+            // who_blocked_user now returns an array of ids (id_user_1) who blocked the given user
+            const blocked = await who_blocked_user(Number(id));
+
+            // Normalize to numbers and create a Set for fast lookup
+            const blockedSet = new Set((blocked || []).map(b => Number(b)));
+
+            // Filter out friends who have blocked the requester
+            const filteredUsers = users.filter(user => {
+                const uid = Number(user.id);
+                return !blockedSet.has(uid);
+            });
+            console.log(`Friends for ${id} (excluding blockers):`, filteredUsers);
+            console.log(`Blocked by users:`, blocked);
+            console.log(`All friends:`, users);
+
+            return reply.send(filteredUsers);
         } catch (error) {
             console.error(error);
             return reply.code(500).send({ error: 'Server error: ' + error.message });
