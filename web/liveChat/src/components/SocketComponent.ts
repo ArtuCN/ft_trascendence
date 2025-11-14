@@ -1,5 +1,6 @@
 import {socket,
 		sendMessage,
+		saveClientId,
 		sendPrivateMessage,
 		getAllSockets,
 		getChatObject,
@@ -8,34 +9,49 @@ import {socket,
 		deleteRecipient,
         getClientChats,
 		client_chat_ids,
+        getAllClients,
 		} from "../lib/client-socket";
 import { chat } from "@/types/SocketTypes";
 
 export default function SocketComponent(): HTMLElement {
+	//main elements
 	const element = document.createElement("div");
 	const status = document.createElement("p");
+
+	//inputs/selects
 	const input = document.createElement("input");
 	const selectChat = document.createElement("select");
 	const select = document.createElement("select");
+	const clientId = document.createElement("input");
+
+	//buttons
 	const button = document.createElement("button");
 	const buttonPrivate = document.createElement("button");
 	const buttonChat = document.createElement("button");
 	const buttonAddRecipient = document.createElement("button");
 	const buttonDeleteRecipient = document.createElement("button");
+	const buttonClientId = document.createElement("button");
+
+	//logs
 	const messages = document.createElement("div");
 
 	//this only for dev -- done differently in production
 	let sockets: string[] = [];
+	let clients: number[] = [];
 	let curr_chat: string = "";
 	
 
 	status.textContent = "Connecting to socket ...";
 	input.placeholder = "type message";
+	clientId.placeholder = "client id";
+
+	//button values placeholders
 	button.textContent = "refresh";
 	buttonPrivate.textContent = "private send";
 	buttonChat.textContent = "start chat";
 	buttonAddRecipient.textContent = "add new recipient";
 	buttonDeleteRecipient.textContent = "delete recipient";
+	buttonClientId.textContent = "client id";
 
 	//styling
 	select.style.margin = "0 8px";
@@ -44,7 +60,7 @@ export default function SocketComponent(): HTMLElement {
 	element.style.gridTemplateColumns = "1fr 1fr 1fr";
 	element.style.gap = "8px";
 
-	function clientChats() {
+	function updateElementclientChats() {
 		selectChat.innerHTML = "";
 		client_chat_ids.forEach( id => {
 			const option = document.createElement("option");
@@ -56,48 +72,51 @@ export default function SocketComponent(): HTMLElement {
 
 	socket.on("connect", async () => {
 		status.textContent = `connected to: ${socket.id}`;
-		getAllSockets();
+		// getAllSockets();
+		getAllClients();
 		await getClientChats();
-		clientChats();
+		updateElementclientChats();
 	});
 
 	socket.on("disconnect", () => {
 		status.textContent = `disconnected from: ${socket.id}`;
 	});
 
-	socket.on("get_sockets", (allSockets: string[]) => {
-		sockets = allSockets;
+	socket.on("get_all_clients", (allClientIds: number[]) => {
+		clients = allClientIds;
 		select.innerHTML = "";
-		sockets.forEach(id => {
+		clients.forEach(id => {
 			const option = document.createElement("option");
-			option.value = id;
-			option.textContent = id;
+			option.value = id.toString();
+			option.textContent = id.toString();
 			select.appendChild(option);
 		});
-		console.log("sockets: ", allSockets);
+		console.log("clients: ", allClientIds);
 	});
 
+
+
 	socket.on("get_client_chat_ids", (chat_ids) => {
-		clientChats();
+		updateElementclientChats();
 	});
 
 	buttonChat.addEventListener("click", async () => {
 		if (!select.value)
 			return ;
-		const recipients: string[] = [select.value];
+		const recipients: number[] = [Number(select.value.trim())];
 		const chatId = await startChat(recipients);
 		console.log("curr_chat: " + chatId + ", recipients: " + recipients);
 		const line = document.createElement("p");
 		line.textContent = "curr_chat: " + chatId + ", recipients: " + recipients;
 		messages.appendChild(line);
 		await getClientChats();
-		clientChats();
+		updateElementclientChats();
 	});
 
 	buttonAddRecipient.addEventListener("click", async () => {
 		if (!select.value || !selectChat.value)
 			return ;
-		const recipients = await addRecipient(selectChat.value, select.value);
+		const recipients = await addRecipient(selectChat.value, Number(select.value));
 		console.log("recipients: ", recipients);
 		const line = document.createElement("p");
 		line.textContent = "new recipients: " + recipients;
@@ -108,7 +127,7 @@ export default function SocketComponent(): HTMLElement {
 	buttonDeleteRecipient.addEventListener("click", async () => {
 		if (!select.value || !selectChat.value)
 			return ;
-		const deleted_id = await deleteRecipient(selectChat.value, select.value);
+		const deleted_id = await deleteRecipient(selectChat.value, Number(select.value));
 		console.log("recipient deleted: ", deleted_id);
 		const line = document.createElement("p");
 		line.textContent = "deleted recipient: " + deleted_id;
@@ -116,7 +135,8 @@ export default function SocketComponent(): HTMLElement {
 	});
 
 	button.addEventListener("click", async () => {
-		getAllSockets();
+		// getAllSockets();
+		getAllClients();
 		await getClientChats();
 	});
 
@@ -124,13 +144,20 @@ export default function SocketComponent(): HTMLElement {
 		const msg = input.value.trim();
 		const id = selectChat.value.trim();
 		if (msg && id) {
-			const tmp_chat = await getChatObject(id);
-			console.log("tmp_chat", tmp_chat);
-			// @ts-ignore
-			if (tmp_chat && Array.isArray(tmp_chat.recipients)) {
-			// @ts-ignore
-				sendPrivateMessage(tmp_chat.recipients, msg);
-				input.value = "";
+			sendPrivateMessage(id, msg);
+			input.value = "";
+		}
+	});
+
+	buttonClientId.addEventListener("click", async () => {
+		const id : number = Number(input.value.trim());
+		if (id) {
+			const saved_id : number = await saveClientId(id) as number;
+			input.value = "";
+			if (saved_id === id) {
+				const line = document.createElement("p");
+				line.textContent = "id was saved: " + id.toString();
+				messages.appendChild(line);
 			}
 		}
 	});
@@ -146,6 +173,6 @@ export default function SocketComponent(): HTMLElement {
 		messages.appendChild(line);
 	});
 
-	element.append(status, select, buttonChat, selectChat, input, button, buttonPrivate, buttonAddRecipient, buttonDeleteRecipient, messages);
+	element.append(status, select, buttonChat, selectChat, input, button, buttonPrivate, buttonAddRecipient, buttonClientId, buttonDeleteRecipient, messages);
 	return (element);
 }
