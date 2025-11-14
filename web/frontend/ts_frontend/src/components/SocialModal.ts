@@ -4,8 +4,9 @@ import { apiService } from '../services/api.js';
 import { User } from '../types/index.js';
 
 const COLORS = {
-  primary: '#E67923',
-  dark: '#2A2A2A',
+  // Fruitiger / Aero inspired cool-blue palette
+  primary: '#00B4D8',  // cyan accent
+  dark: '#062A3A',     // deep cool background
   white: '#ffffff'
 };
 
@@ -137,7 +138,7 @@ export class SocialModal {
         }`,
         style: this.selectedFriend?.id === friend.id 
           ? `background-color: ${COLORS.primary}30;` 
-          : 'background-color: rgba(255, 255, 255, 0.1);'
+          : 'background-color: rgba(255, 255, 255, 0.06);'
       });
 
       friendItem.innerHTML = `
@@ -271,7 +272,7 @@ export class SocialModal {
       });
 
       const messageInput = createElement('input', {
-        className: 'flex-1 px-3 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500',
+        className: 'flex-1 px-3 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-sky-400',
         placeholder: 'Scrivi un messaggio...'
       }) as HTMLInputElement;
 

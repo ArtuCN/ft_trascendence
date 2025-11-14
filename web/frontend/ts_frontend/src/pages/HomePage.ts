@@ -13,16 +13,16 @@ export class HomePage {
     });
 
     const title = createElement('h1', {
-      className: 'text-3xl font-bold text-gray-800 mb-6',
+      className: 'text-3xl font-bold mb-6 text-sky-900',
       innerHTML: 'Benvenuto a ft_transcendence'
     });
 
     const mainCard = createElement('div', {
-      className: 'bg-white rounded-lg shadow-md p-8'
+      className: 'bg-white/80 rounded-lg shadow-md p-8 border border-sky-100'
     });
 
     const description = createElement('p', {
-      className: 'text-gray-600 text-lg mb-8',
+      className: 'text-sky-700 text-lg mb-8',
       innerHTML: 'Il classico gioco Pong reimplementato con tecnologie moderne. Sfida i tuoi amici o gioca contro l\'IA!'
     });
 
@@ -34,32 +34,32 @@ export class HomePage {
       { 
         title: 'Gioco Locale', 
         description: 'Due giocatori sullo stesso computer',
-        bgClass: 'bg-blue-50', 
-        textClass: 'text-blue-800',
+        bgClass: 'bg-sky-50', 
+        textClass: 'text-sky-800',
       },
       { 
         title: 'Gioco Online', 
         description: 'Sfida giocatori da tutto il mondo',
-        bgClass: 'bg-green-50', 
-        textClass: 'text-green-800',
+        bgClass: 'bg-cyan-50', 
+        textClass: 'text-cyan-800',
       },
       { 
         title: 'VS Intelligenza Artificiale', 
         description: 'Metti alla prova le tue abilità contro l\'IA',
-        bgClass: 'bg-purple-50', 
-        textClass: 'text-purple-800',
+        bgClass: 'bg-blue-50', 
+        textClass: 'text-blue-800',
       },
       { 
         title: 'Torneo', 
         description: 'Partecipa a tornei competitivi',
-        bgClass: 'bg-orange-50', 
-        textClass: 'text-orange-800',
+        bgClass: 'bg-indigo-50', 
+        textClass: 'text-indigo-800',
       }
     ];
 
     gameModes.forEach(mode => {
       const modeCard = createElement('div', {
-        className: `${mode.bgClass} p-6 rounded-lg border border-gray-200 hover:shadow-md transition-shadow cursor-pointer`
+        className: `${mode.bgClass} p-6 rounded-lg border border-sky-100 hover:shadow-lg transition-shadow cursor-pointer`
       });
 
       const modeTitle = createElement('h3', {
@@ -68,7 +68,7 @@ export class HomePage {
       });
 
       const modeDescription = createElement('p', {
-        className: 'text-gray-600 text-sm',
+        className: 'text-sky-600 text-sm',
         innerHTML: mode.description
       });
 

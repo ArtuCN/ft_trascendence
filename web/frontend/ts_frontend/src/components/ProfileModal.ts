@@ -6,7 +6,7 @@ import { apiService } from '../services/api.js';
 import { blockchainService } from '../services/blockchainService.js';
 
 const COLORS = {
-  primary: '#E67923',
+  primary: '#00B4D8',
   dark: '#2A2A2A',
   white: '#ffffff'
 };
