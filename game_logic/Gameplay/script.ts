@@ -128,6 +128,7 @@ ws.onopen = () => {
 
 ws.onmessage = (event) => {
 	const message = JSON.parse(event.data);
+	console.log("Received message:", message);
 	if (message.type === "waiting") {
 		console.log("Waiting for an opponent...");
 	}
@@ -164,6 +165,9 @@ ws.onmessage = (event) => {
 	if (message.type === "set_ball") {
 		Pebble.applyState(message);
 	}
+	if (message.type === "reconnected") {
+		Pebble.applyState(message.ball);
+	}
 	if (message.type === 'goal') {
 		playerGoals[0] = message.score[0];
 		playerGoals[1] = message.score[1];
@@ -172,11 +176,8 @@ ws.onmessage = (event) => {
 		drawScore(nbrPlayer);
 	}
 	if (message.type === 'victory') {
-		showVictoryScreen(players[message.winner]);
-	}
-	if (message.type === 'opponent_disconnected') {
-		alert(`Opponent disconnected: ${message.playerId}`);
 		stopGame();
+		showVictoryScreen(players[message.winner]);
 	}
 };
 
