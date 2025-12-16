@@ -14,9 +14,16 @@ let playerGoals = [0, 0, 0, 0]; // Scores for up to 4 players
 let isAIMode = false; // Flag to check if AI mode is active
 let aiUpdateInterval = 100; // AI update frequency in ms
 
+// Field dimensions (adjustable for 4-player square field)
+let FIELD_WIDTH_3D = 18;
+let FIELD_HEIGHT_3D = 12;
+const FIELD_DEPTH_3D = 0.5;
+
 // Game objects using your classes
 let ball: any; // Will be instance of Ball class
 let players: any[] = []; // Will be array of Player instances
+// Corner obstacle cubes (created in initBabylon when nbrPlayer === 4)
+let cornerCubes: any[] = [];
 
 // Particle system for the ball trail
 let ballParticleSystem: any = null;
@@ -39,7 +46,7 @@ const COLORS = {
     paddleRight:    new BABYLON.Color3(0.00, 0.60, 0.90),  // blu frutiger più intenso
     paddleTop:      new BABYLON.Color3(0.00, 0.88, 0.78),  // turchese acqua leggermente più profondo
     paddleBottom:   new BABYLON.Color3(0.28, 0.85, 0.82),  // acqua pastello più smorzato
-    ground:         new BABYLON.Color3(0.68, 0.92, 0.90)   // acqua chiarissimo ma meno brillante
+    ground:         new BABYLON.Color3(0.36, 0.68, 0.78)   // azzurro più profondo e leggermente più scuro
 };
 
 // Function to create game objects using your classes
@@ -110,17 +117,20 @@ function createGameObjects(scene: any) {
             // Check collision with paddles FIRST
             this.checkPaddleCollisions(players);
             
-            // Boundary / goal logic
+            // Boundary / goal logic (use dynamic field half-sizes)
+            const halfW = FIELD_WIDTH_3D / 2;
+            const halfH = FIELD_HEIGHT_3D / 2;
+
             // If 4-player mode, treat Z-overflow as goals for player 3/4.
             if (nbrPlayer === 4) {
-                if (this.position.z > 6) {
+                if (this.position.z > halfH) {
                     // Ball passed beyond top edge -> assign point to player 3 (id 2)
                     score3d[2] = (score3d[2] || 0) + 1;
                     updateScoreDisplay();
                     this.resetBall();
                     return;
                 }
-                if (this.position.z < -6) {
+                if (this.position.z < -halfH) {
                     // Ball passed beyond bottom edge -> assign point to player 4 (id 3)
                     score3d[3] = (score3d[3] || 0) + 1;
                     updateScoreDisplay();
@@ -129,21 +139,21 @@ function createGameObjects(scene: any) {
                 }
             } else {
                 // 2-player mode: bounce on top/bottom walls
-                if (this.position.z > 6 || this.position.z < -6) {
+                if (this.position.z > halfH || this.position.z < -halfH) {
                     this.velocity.z *= -1;
                     // Keep ball inside bounds
-                    this.position.z = (this.position.z > 0 ? 1 : -1) * (6 - this.ballSize/2);
+                    this.position.z = (this.position.z > 0 ? 1 : -1) * (halfH - this.ballSize/2);
                     this.mesh.position.copyFrom(this.position);
                 }
             }
             
             // Goal checks (reset ball)
-            if (this.position.x < -9) {
+            if (this.position.x < -halfW) {
                 score3d[1] += 1; // Player 2 segna
                 updateScoreDisplay();
                 this.resetBall();
             }
-            if (this.position.x > 9) {
+            if (this.position.x > halfW) {
                 score3d[0] += 1; // Player 1 segna
                 updateScoreDisplay();
                 this.resetBall();
@@ -198,6 +208,38 @@ function createGameObjects(scene: any) {
                     this.velocity.z *= 1.02;
                 }
             });
+
+            // Check collision with corner cubes (treat cubes as AABB)
+            cornerCubes.forEach((cube: any) => {
+                try {
+                    const boxPos = cube.position;
+                    const half = (cube.metadata && cube.metadata.halfSize) ? cube.metadata.halfSize : 0.5;
+
+                    // Compute overlap on X and Z between sphere center and box
+                    const dx = Math.abs(this.position.x - boxPos.x);
+                    const dz = Math.abs(this.position.z - boxPos.z);
+                    const overlapX = half + ballRadius - dx;
+                    const overlapZ = half + ballRadius - dz;
+
+                    if (overlapX > 0 && overlapZ > 0) {
+                        // collision detected: decide axis of minimum penetration
+                        if (overlapX < overlapZ) {
+                            // push on X
+                            if (this.position.x > boxPos.x) this.position.x = boxPos.x + half + ballRadius + 0.1;
+                            else this.position.x = boxPos.x - half - ballRadius - 0.1;
+                            this.velocity.x *= -1;
+                        } else {
+                            // push on Z
+                            if (this.position.z > boxPos.z) this.position.z = boxPos.z + half + ballRadius + 0.1;
+                            else this.position.z = boxPos.z - half - ballRadius - 0.1;
+                            this.velocity.z *= -1;
+                        }
+                        this.mesh.position.copyFrom(this.position);
+                    }
+                } catch (e) {
+                    // ignore per-cube errors
+                }
+            });
         },
         
         resetBall: function() {
@@ -227,7 +269,7 @@ function createGameObjects(scene: any) {
     paddle1Material.diffuseColor = COLORS.paddleDefault;
     paddle1Material.emissiveColor = new BABYLON.Color3(0.2,0.2,0.2); // small tint kept
     paddle1Mesh.material = paddle1Material;
-    paddle1Mesh.position = new BABYLON.Vector3(-8.8, 0.5, 0);
+    paddle1Mesh.position = new BABYLON.Vector3(-FIELD_WIDTH_3D / 2 + 0.2, 0.5, 0);
     
     // Player 1 (right paddle)  
     const paddle2Mesh = BABYLON.MeshBuilder.CreateBox("paddle1",
@@ -236,7 +278,7 @@ function createGameObjects(scene: any) {
     paddle2Material.diffuseColor = COLORS.paddleRight;
     paddle2Material.emissiveColor = new BABYLON.Color3(0.2,0,0);
     paddle2Mesh.material = paddle2Material;
-    paddle2Mesh.position = new BABYLON.Vector3(8.8, 0.5, 0);
+    paddle2Mesh.position = new BABYLON.Vector3(FIELD_WIDTH_3D / 2 - 0.2, 0.5, 0);
     
     // Create simple player objects that mimic your Player class
     players.push({
@@ -245,11 +287,31 @@ function createGameObjects(scene: any) {
         position: paddle1Mesh.position,
         drawAndMove: function() {
             // Player 0 controls: W/S keys
+            const step = 0.15;
+            const paddleHalfX = 0.3 / 2;
+            const paddleHalfY = 1 / 2;
+            const paddleHalfZ = 3 / 2;
+            const cubeHalf = (nbrPlayer === 4 && cornerCubes.length > 0 && cornerCubes[0].metadata) ? cornerCubes[0].metadata.halfSize : 0;
+            const margin = 0.2;
+            const vLimit = FIELD_HEIGHT_3D / 2 - paddleHalfZ - cubeHalf - margin;
+
             if (keys['w'] || keys['W']) {
-                if (this.position.z < 4.5) this.position.z += 0.15;
+                const candidateZ = this.position.z + step;
+                if (candidateZ <= vLimit) {
+                    const boxPos = new BABYLON.Vector3(this.position.x, this.position.y, candidateZ);
+                    if (!ball || !sphereIntersectsBox(ball.position, ball.ballSize/2, boxPos, paddleHalfX, paddleHalfY, paddleHalfZ)) {
+                        this.position.z = candidateZ;
+                    }
+                }
             }
             if (keys['s'] || keys['S']) {
-                if (this.position.z > -4.5) this.position.z -= 0.15;
+                const candidateZ = this.position.z - step;
+                if (candidateZ >= -vLimit) {
+                    const boxPos = new BABYLON.Vector3(this.position.x, this.position.y, candidateZ);
+                    if (!ball || !sphereIntersectsBox(ball.position, ball.ballSize/2, boxPos, paddleHalfX, paddleHalfY, paddleHalfZ)) {
+                        this.position.z = candidateZ;
+                    }
+                }
             }
             this.mesh.position.copyFrom(this.position);
         }
@@ -261,33 +323,59 @@ function createGameObjects(scene: any) {
         mesh: paddle2Mesh,
         position: paddle2Mesh.position,
         drawAndMove: function() {
+            const step = 0.15;
+            const paddleHalfX = 0.3 / 2;
+            const paddleHalfY = 1 / 2;
+            const paddleHalfZ = 3 / 2;
+            const cubeHalf = (nbrPlayer === 4 && cornerCubes.length > 0 && cornerCubes[0].metadata) ? cornerCubes[0].metadata.halfSize : 0;
+            const margin = 0.2;
+            const vLimit = FIELD_HEIGHT_3D / 2 - paddleHalfZ - cubeHalf - margin;
+
             if (nbrPlayer === 1 && typeof botKey === "string") {
                 console.log(`[BOT] drawAndMove: botKey=${botKey}, position.z=${this.position.z}`);
-                if (botKey === "ArrowDown" && this.position.z < 4.5) {
-                    this.position.z += 0.15;
-                    console.log(`[BOT] Moving DOWN to ${this.position.z}`);
+                if (botKey === "ArrowDown") {
+                    const candidateZ = this.position.z + step;
+                    if (candidateZ <= vLimit) {
+                        const boxPos = new BABYLON.Vector3(this.position.x, this.position.y, candidateZ);
+                        if (!ball || !sphereIntersectsBox(ball.position, ball.ballSize/2, boxPos, paddleHalfX, paddleHalfY, paddleHalfZ)) {
+                            this.position.z = candidateZ;
+                            console.log(`[BOT] Moving DOWN to ${this.position.z}`);
+                        }
+                    }
                 }
-                if (botKey === "ArrowUp" && this.position.z > -4.5) {
-                    this.position.z -= 0.15;
-                    console.log(`[BOT] Moving UP to ${this.position.z}`);
+                if (botKey === "ArrowUp") {
+                    const candidateZ = this.position.z - step;
+                    if (candidateZ >= -vLimit) {
+                        const boxPos = new BABYLON.Vector3(this.position.x, this.position.y, candidateZ);
+                        if (!ball || !sphereIntersectsBox(ball.position, ball.ballSize/2, boxPos, paddleHalfX, paddleHalfY, paddleHalfZ)) {
+                            this.position.z = candidateZ;
+                            console.log(`[BOT] Moving UP to ${this.position.z}`);
+                        }
+                    }
                 }
                 // Clamp position
-                if (this.position.z > 4.5) {
-                    this.position.z = 4.5;
-                    console.log(`[BOT] Clamped DOWN to ${this.position.z}`);
-                }
-                if (this.position.z < -4.5) {
-                    this.position.z = -4.5;
-                    console.log(`[BOT] Clamped UP to ${this.position.z}`);
-                }
+                if (this.position.z > vLimit) this.position.z = vLimit;
+                if (this.position.z < -vLimit) this.position.z = -vLimit;
                 this.mesh.position.copyFrom(this.position);
             } else if (nbrPlayer !== 1) {
                 // Human Mode: Arrow keys  
                 if (keys['ArrowUp']) {
-                    if (this.position.z < 4.5) this.position.z += 0.15;
+                    const candidateZ = this.position.z + step;
+                    if (candidateZ <= vLimit) {
+                        const boxPos = new BABYLON.Vector3(this.position.x, this.position.y, candidateZ);
+                        if (!ball || !sphereIntersectsBox(ball.position, ball.ballSize/2, boxPos, paddleHalfX, paddleHalfY, paddleHalfZ)) {
+                            this.position.z = candidateZ;
+                        }
+                    }
                 }
                 if (keys['ArrowDown']) {
-                    if (this.position.z > -4.5) this.position.z -= 0.15;
+                    const candidateZ = this.position.z - step;
+                    if (candidateZ >= -vLimit) {
+                        const boxPos = new BABYLON.Vector3(this.position.x, this.position.y, candidateZ);
+                        if (!ball || !sphereIntersectsBox(ball.position, ball.ballSize/2, boxPos, paddleHalfX, paddleHalfY, paddleHalfZ)) {
+                            this.position.z = candidateZ;
+                        }
+                    }
                 }
                 this.mesh.position.copyFrom(this.position);
             }
@@ -305,7 +393,7 @@ function createGameObjects(scene: any) {
         paddle3Material.diffuseColor = COLORS.paddleTop;
         paddle3Material.emissiveColor = new BABYLON.Color3(0,0,0.2);
         paddle3Mesh.material = paddle3Material;
-        paddle3Mesh.position = new BABYLON.Vector3(0, 0.5, 5.7);
+        paddle3Mesh.position = new BABYLON.Vector3(0, 0.5, FIELD_HEIGHT_3D / 2 - 0.3);
 
         players.push({
             id: 2,
@@ -313,11 +401,31 @@ function createGameObjects(scene: any) {
             position: paddle3Mesh.position,
             drawAndMove: function() {
                 // Player 2 controls: D/F keys
+                // horizontal limit based on field height (top/bottom paddles move along X relative to field height)
+                const paddleHalfX = 3 / 2;
+                const cubeHalf = (nbrPlayer === 4 && cornerCubes.length > 0 && cornerCubes[0].metadata) ? cornerCubes[0].metadata.halfSize : 0;
+                const margin = 0.2;
+                const hLimit = FIELD_HEIGHT_3D / 2 - paddleHalfX - cubeHalf - margin;
+                const step = 0.15;
+                const paddleHalfY = 1 / 2;
+                const paddleHalfZ = 0.3 / 2;
                 if (keys['f'] || keys['F']) {
-                    if (this.position.x < 8) this.position.x += 0.15;
+                    const candidateX = this.position.x + step;
+                    if (candidateX <= hLimit) {
+                        const boxPos = new BABYLON.Vector3(candidateX, this.position.y, this.position.z);
+                        if (!ball || !sphereIntersectsBox(ball.position, ball.ballSize/2, boxPos, paddleHalfX, paddleHalfY, paddleHalfZ)) {
+                            this.position.x = candidateX;
+                        }
+                    }
                 }
                 if (keys['d'] || keys['D']) {
-                    if (this.position.x > -8) this.position.x -= 0.15;
+                    const candidateX = this.position.x - step;
+                    if (candidateX >= -hLimit) {
+                        const boxPos = new BABYLON.Vector3(candidateX, this.position.y, this.position.z);
+                        if (!ball || !sphereIntersectsBox(ball.position, ball.ballSize/2, boxPos, paddleHalfX, paddleHalfY, paddleHalfZ)) {
+                            this.position.x = candidateX;
+                        }
+                    }
                 }
                 this.mesh.position.copyFrom(this.position);
             }
@@ -332,7 +440,7 @@ function createGameObjects(scene: any) {
         // Assign material to the mesh (was missing previously)
         paddle4Mesh.material = paddle4Material;
         // Ensure position is explicitly set before pushing the player
-        paddle4Mesh.position = new BABYLON.Vector3(0, 0.5, -5.7);
+        paddle4Mesh.position = new BABYLON.Vector3(0, 0.5, -FIELD_HEIGHT_3D / 2 + 0.3);
         console.log("Paddle4 initial position:", paddle4Mesh.position);
 
         players.push({
@@ -341,11 +449,31 @@ function createGameObjects(scene: any) {
             position: paddle4Mesh.position,
             drawAndMove: function() {
                 // Player 3 controls: J/K keys
+                // horizontal limit based on field height (top/bottom paddles move along X relative to field height)
+                    const paddleHalfX = 3 / 2;
+                    const cubeHalf = (nbrPlayer === 4 && cornerCubes.length > 0 && cornerCubes[0].metadata) ? cornerCubes[0].metadata.halfSize : 0;
+                    const margin = 0.2;
+                    const hLimit = FIELD_HEIGHT_3D / 2 - paddleHalfX - cubeHalf - margin;
+                const step = 0.15;
+                const paddleHalfY = 1 / 2;
+                const paddleHalfZ = 0.3 / 2;
                 if (keys['k'] || keys['K']) {
-                    if (this.position.x < 8) this.position.x += 0.15;
+                    const candidateX = this.position.x + step;
+                    if (candidateX <= hLimit) {
+                        const boxPos = new BABYLON.Vector3(candidateX, this.position.y, this.position.z);
+                        if (!ball || !sphereIntersectsBox(ball.position, ball.ballSize/2, boxPos, paddleHalfX, paddleHalfY, paddleHalfZ)) {
+                            this.position.x = candidateX;
+                        }
+                    }
                 }
                 if (keys['j'] || keys['J']) {
-                    if (this.position.x > -8) this.position.x -= 0.15;
+                    const candidateX = this.position.x - step;
+                    if (candidateX >= -hLimit) {
+                        const boxPos = new BABYLON.Vector3(candidateX, this.position.y, this.position.z);
+                        if (!ball || !sphereIntersectsBox(ball.position, ball.ballSize/2, boxPos, paddleHalfX, paddleHalfY, paddleHalfZ)) {
+                            this.position.x = candidateX;
+                        }
+                    }
                 }
                 this.mesh.position.copyFrom(this.position);
             }
@@ -480,6 +608,14 @@ function setupManualCameraControls(camera: any, canvas: HTMLCanvasElement) {
     console.log("   - Mouse wheel to zoom in/out");
 }
 
+// Helper: check sphere-AABB overlap. boxHalfX/Y/Z are half-sizes of the box.
+function sphereIntersectsBox(spherePos: any, radius: number, boxPos: any, boxHalfX: number, boxHalfY: number, boxHalfZ: number) {
+    const dx = Math.max(Math.abs(spherePos.x - boxPos.x) - boxHalfX, 0);
+    const dy = Math.max(Math.abs(spherePos.y - boxPos.y) - boxHalfY, 0);
+    const dz = Math.max(Math.abs(spherePos.z - boxPos.z) - boxHalfZ, 0);
+    return (dx*dx + dy*dy + dz*dz) <= (radius * radius);
+}
+
 // Function to initialize Babylon.js scene
 function initBabylon() {
     console.log("🚀 Initializing Babylon.js...");
@@ -507,6 +643,8 @@ function initBabylon() {
 
         // Create scene
         scene = new BABYLON.Scene(engine);
+        // Set darker azure background for the scene
+        scene.clearColor = new BABYLON.Color4(0.20, 0.45, 0.70, 1.0);
         console.log("✅ Scene created successfully");
     } catch (error) {
         console.error("❌ Error creating engine/scene:", error);
@@ -554,12 +692,55 @@ function initBabylon() {
         const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
         console.log("✅ Light created");
 
-        // Create the playing field
-        const ground = BABYLON.MeshBuilder.CreateGround("ground", {width: 18, height: 12}, scene);
+        // Create the playing field (use dynamic field size variables)
+        const ground = BABYLON.MeshBuilder.CreateGround("ground", {width: FIELD_WIDTH_3D, height: FIELD_HEIGHT_3D}, scene);
         const groundMaterial = new BABYLON.StandardMaterial("groundMat", scene);
         groundMaterial.diffuseColor = COLORS.ground;
+        // Reduce shiny reflections on the ground: lower specular color and power
+        groundMaterial.specularColor = new BABYLON.Color3(0.03, 0.03, 0.03);
+        groundMaterial.specularPower = 8;
         ground.material = groundMaterial;
         console.log("✅ Playing field created");
+
+        // Create corner cubes only when in 4-player mode
+        if (nbrPlayer === 4) {
+            // --------------------------------------------------------------------
+            // Corner cubes: one cube in each corner of the playing field
+            // Positioned using FIELD_WIDTH_3D and FIELD_HEIGHT_3D so they follow
+            // changes (e.g. when 4-player makes the field square).
+            // --------------------------------------------------------------------
+            try {
+                const halfW = FIELD_WIDTH_3D / 2;
+                const halfH = FIELD_HEIGHT_3D / 2;
+                const cornerSize = 1.5; // doubled size
+                const cornerY = cornerSize / 2; // sit on the ground
+
+                const cornerColors = [COLORS.paddleRight, COLORS.paddleTop, COLORS.paddleBottom, COLORS.paddleDefault];
+
+                const cornerPositions = [
+                    new BABYLON.Vector3(-halfW + cornerSize/2, cornerY, -halfH + cornerSize/2), // bottom-left
+                    new BABYLON.Vector3(halfW - cornerSize/2, cornerY, -halfH + cornerSize/2),  // bottom-right
+                    new BABYLON.Vector3(-halfW + cornerSize/2, cornerY, halfH - cornerSize/2),  // top-left
+                    new BABYLON.Vector3(halfW - cornerSize/2, cornerY, halfH - cornerSize/2)    // top-right
+                ];
+
+                cornerPositions.forEach((pos, idx) => {
+                    const cube = BABYLON.MeshBuilder.CreateBox(`cornerCube${idx}`, {size: cornerSize}, scene);
+                    const mat = new BABYLON.StandardMaterial(`cornerMat${idx}`, scene);
+                    // Use predefined palette colors for consistency
+                    mat.diffuseColor = cornerColors[idx % cornerColors.length];
+                    cube.material = mat;
+                    cube.position = pos;
+                    // mark with half-size for collision checks and register
+                    (cube as any).metadata = { halfSize: cornerSize / 2 };
+                    cornerCubes.push(cube);
+                });
+
+                console.log("✅ Corner cubes created (4-player)");
+            } catch (err) {
+                console.warn("⚠️ Could not create corner cubes:", err);
+            }
+        }
 
         // Create game objects using your classes
         createGameObjects(scene);
@@ -577,6 +758,7 @@ function initBabylon() {
 
     // Force immediate render to test
     scene.render();
+    scene.clearColor = new BABYLON.Color4(0.40, 0.45, 0.70, 1.0);
     console.log("✅ First render executed");
 
     // Game loop using your classes - MOVED INSIDE initBabylon()
@@ -720,6 +902,8 @@ buttonLocalPlay3D.addEventListener("click", () => {
 
         // Imposta 4 giocatori e avvia la partita (nbrPlayer FIRST)
         nbrPlayer = 4;
+        // Make the 3D field square for 4 players
+        FIELD_HEIGHT_3D = FIELD_WIDTH_3D;
         // Initialize Babylon and then start game so score3d is created
         initBabylon();
         startGame();
