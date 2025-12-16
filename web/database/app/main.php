@@ -37,6 +37,7 @@ $db->exec("CREATE TABLE IF NOT EXISTS game_match (
     number_of_players INTEGER
 )");
 
+//$db->exec("DROP TABLE IF EXISTS friendship");
 $db->exec("CREATE TABLE IF NOT EXISTS friendship (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     id_user_1 INTEGER,
