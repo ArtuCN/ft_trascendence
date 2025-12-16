@@ -1,9 +1,7 @@
 import sqlite3 from 'sqlite3';
-import models from '../models/models.js'
 
 const { verbose } = sqlite3;
 import path, { resolve } from 'path';
-import { rejects } from 'assert';
 
 
 const dbPath = path.resolve('/app/data/database.sqlite');
@@ -44,7 +42,7 @@ async function insertMatchInDB(id_tournament, number_of_players)
     })
 }
 
-async function insertPlayerMatchStats(id_user, id_match, goal_scored, goal_taken)
+export async function insertPlayerMatchStats(id_user, id_match, goal_scored, goal_taken)
 {
     return new Promise((resolve, reject) =>
     {

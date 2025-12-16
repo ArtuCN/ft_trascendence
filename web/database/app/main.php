@@ -73,8 +73,7 @@ $db->exec("CREATE TABLE IF NOT EXISTS player_match_stats(
     id_match INTEGER,
     goal_scored INTEGER DEFAULT 0,
     goal_taken INTEGER DEFAULT 0,
-    FOREIGN KEY (id_user) REFERENCES user(id),
-    FOREIGN KEY (id_match) REFERENCES game_match(id)
+    FOREIGN KEY (id_user) REFERENCES user(id)
 )");
 
 //$db->exec("DROP TABLE IF EXISTS player_all_time_stats");

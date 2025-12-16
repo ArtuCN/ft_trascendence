@@ -1,5 +1,5 @@
 // controllers/match.js
-import { insertMatch, getAllMatches, getMatchById, getPlayerMatchStats, getPlayerByMatchId } from '../database_comunication/match_db.js';
+import { insertMatch, getAllMatches, getMatchById, getPlayerMatchStats, getPlayerByMatchId, insertPlayerMatchStats, upsertStatsAfterMatch } from '../database_comunication/match_db.js';
 import { getAllMatchesOfPlayer } from '../database_comunication/user_db.js';
 export default async function (fastify, opts) {
   fastify.get('/allmatch', async (request, reply) => {
@@ -62,7 +62,7 @@ export default async function (fastify, opts) {
   fastify.post('/match', async (request, reply) => {
     try {
       const { id_tournament, users_ids, users_goal_scored, users_goal_taken } = request.body;
-
+      
       // Allow id_tournament to be null for non-tournament matches
       if (users_ids === undefined || users_goal_scored === undefined || users_goal_taken === undefined) {
         return reply.code(400).send({ error: 'Missing required fields in request body' });
@@ -76,11 +76,53 @@ export default async function (fastify, opts) {
       if (users_ids.length !== users_goal_scored.length || users_ids.length !== users_goal_taken.length) {
         return reply.code(400).send({ error: 'Array lengths must match' });
       }
+const invalidIndex = users_ids.findIndex(id => id === -1);
 
-      console.log('📊 Saving match:', { id_tournament, users_ids, users_goal_scored, users_goal_taken });
+if (invalidIndex !== -1) {
+  console.log('⚠️ Partial match: saving ONLY player stats');
 
-      const result = await insertMatch(id_tournament, users_ids, users_goal_scored, users_goal_taken);
-      reply.send(result);
+  // filtra solo utenti validi
+  const validPlayers = users_ids
+    .map((id, i) => ({
+      id,
+      goalsScored: users_goal_scored[i],
+      goalsTaken: users_goal_taken[i],
+    }))
+    .filter(p => p.id !== -1);
+
+  for (const player of validPlayers) {
+    console.log(`📊 Saving stats for player ${player.id}: scored ${player.goalsScored}, taken ${player.goalsTaken}`);
+    const res = await insertPlayerMatchStats(
+      player.id,
+      0,
+      player.goalsScored,
+      player.goalsTaken
+    );
+
+    if (res?.error) {
+      return reply.code(500).send({ error: res.error });
+    }
+
+    const upd = await upsertStatsAfterMatch(
+      player.id,
+      player.goalsScored,
+      player.goalsTaken,
+      0
+    );
+
+    if (upd?.error) {
+      return reply.code(500).send({ error: upd.error });
+    }
+  }
+
+  return reply.send({ success: true, partial: true });
+}
+      else {
+        console.log('📊 Saving match:', { id_tournament, users_ids, users_goal_scored, users_goal_taken });
+
+        const result = await insertMatch(id_tournament, users_ids, users_goal_scored, users_goal_taken);
+        reply.send(result);
+      }
     } catch (error) {
       console.log(error);
       reply.code(500).send({ error: 'Internal Server Error ' + error });

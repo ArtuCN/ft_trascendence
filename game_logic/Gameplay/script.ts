@@ -430,9 +430,9 @@ startGameButton.addEventListener('click', () => {
 			const input = document.getElementById(`playerNameInput${i}`) as HTMLInputElement;
 			const playerName = input.value.trim() || `Player${i + 1}`;
 			if (i === 1) {
-				players.push(new Player(playerName, i, 0, "vertical"));
+				players.push(new Player(playerName, i, -1, "vertical"));
 			} else {
-				players.push(new Player(playerName, i, 0, "horizontal"));
+				players.push(new Player(playerName, i, -1, "horizontal"));
 			}
 		}
 		playerGoals = new Array(nbrPlayer).fill(0);
