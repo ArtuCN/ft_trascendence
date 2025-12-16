@@ -75,49 +75,107 @@ Client (Browser) <--WebSocket--> Socket.IO Server <--> Fastify Server
 
 ## Running the Application
 
-### Development Mode
+### Docker Deployment (Recommended for Production)
 
-Run both frontend and backend with hot reload:
+The LiveChat service is fully containerized and integrated into the main Docker Compose infrastructure.
+
+**Prerequisites**: Docker and Docker Compose installed.
+
+**From project root**:
+```bash
+# Build the LiveChat container
+docker-compose build livechat
+
+# Start all services (including LiveChat)
+docker-compose up -d
+
+# View LiveChat logs
+docker-compose logs -f livechat
+
+# Stop services
+docker-compose down
+```
+
+**Access Points** (when running in Docker):
+- LiveChat REST API: `https://localhost/chat/`
+- LiveChat WebSocket: `https://localhost/socket.io/`
+- Internal (container-to-container): `http://livechat:4555`
+
+**Docker Configuration**:
+- Container name: `livechat`
+- Internal port: `4555`
+- Network: `transcendnet`
+- Volumes: Hot-reload enabled for `src/`, persistent `node_modules`
+- Dependencies: Waits for `database` and `backend` to be ready
+
+
+---
+
+### Local Development Mode
+
+**Without Docker** - Run directly on your machine for development:
+
+#### Full Stack (Frontend + Backend)
 ```bash
 npm run dev
 ```
 - Frontend: http://localhost:5173 (Vite dev server)
-- Backend: http://localhost:3000 (Fastify + Socket.IO)
+- Backend: http://localhost:4555 (Fastify + Socket.IO)
 
-### Frontend Only
+#### Frontend Only
 ```bash
 npm run front
 ```
 Starts only the Vite dev server on port 5173.
 
-### Backend Only
+#### Backend Only
 ```bash
 npm run back
 ```
-Starts only the backend server with hot reload using tsx watch.
+Starts only the backend server with hot reload using nodemon.
 
-### Production Build
-
-```bash
-# Build the application
-npm run build
-
-# Preview production build
-npm run preview
-```
-
-The build command:
-1. Compiles TypeScript (`tsc -b`)
-2. Bundles frontend with Vite (`vite build`)
+---
 
 ### Environment Variables
 
-Create a `.env` file in the root directory:
+LiveChat uses different environment files for different deployment modes:
+
+#### For Docker Deployment
+Use `env_example_docker.txt` as template for `.env.docker`:
 
 ```env
-VITE_PORT=3000
-VITE_API_URL=http://localhost:3000
+# Container-to-container communication
+VITE_API_URL="http://livechat:4555"
+HOST="http://livechat"
+VITE_PORT=4555
+VITE_FRONTEND_URL="http://localhost:5173"
+JWT_SECRET="your_secret_key"
+FRONTEND_URL="http://localhost:5173"
 ```
+
+#### For Local Development
+Use `env_example_local.txt` as template for `.env`:
+
+```env
+# Local machine communication
+HOST="127.0.0.1"
+VITE_API_URL="http://localhost:4555"
+VITE_PORT=4555
+VITE_FRONTEND_URL="http://localhost:5173"
+JWT_SECRET="your_secret_key"
+FRONTEND_URL="http://localhost:5173"
+```
+
+**Key Differences**:
+- Docker uses container names (`livechat`) for internal communication
+- Local uses `localhost` or `127.0.0.1`
+- Port remains `4555` in both cases
+
+---
+
+### Integration with Other Services
+
+To integrate LiveChat into your frontend or backend service, see the **`LIVECHAT_INTEGRATION_GUIDE.md`** file in this directory.
 
 ## Project Structure
 

@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 import "dotenv/config";
 
 export const PORT: number = Number(process.env.VITE_PORT) || 3000;
+export const HOST = process.env.HOST || "127.0.0.1";
+export const JWT_SECRET = process.env.JWT_SECRET || "";
 // export const PORT = 3001;
 const fastify = Fastify();
 
@@ -20,7 +22,7 @@ fastify.get("/", async (request: FastifyRequest, reply: FastifyReply) => {
 
 export async function startServer() {
 	return new Promise<void>((resolve, reject) => {
-		fastify.listen({ port: PORT }, (err: Error | null, address: string) => {
+		fastify.listen({ port: PORT, host: HOST }, (err: Error | null, address: string) => {
 			if (err) return reject(err);
 
 			console.log(`Fastify server running at ${address} and port ${PORT}`);
