@@ -13,6 +13,7 @@ services:
       - frontend
       - backend
       - gameplay
+      - livechat
     networks:
       - transcendnet
       - netplay
@@ -71,6 +72,27 @@ services:
       - backend
     restart: on-failure
 
+  livechat:
+    build:
+      context: ./web/liveChat
+    image: livechat-fastify:0.1
+    container_name: livechat
+    env_file: ./web/liveChat/.env.docker
+    networks:
+      - transcendnet
+    volumes:
+      - ./web/liveChat/src:/app/src
+      - ./web/liveChat/package.json:/app/package.json
+      - ./web/liveChat/tsconfig.json:/app/tsconfig.json
+      - livechat_node_modules:/app/node_modules
+      - shared_db_volume:/app/data
+    expose:
+      - "4555"
+    depends_on:
+      - database
+      - backend
+    restart: on-failure
+
   gameplay:
     container_name: gameplay
     build:
@@ -112,6 +134,9 @@ volumes:
     driver: local
   ai_data:
     name: ai_data
+    driver: local
+  livechat_node_modules:
+    name: livechat_node_modules
     driver: local
 
 networks:
