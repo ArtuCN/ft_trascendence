@@ -25,6 +25,7 @@ export class SocialModal {
   private friendIdInput: string = '';
   
   private friends: User[] = [];
+  private blockedFriends: User[] = [];
 
   private messages: { [key: number]: Message[] } = {
     1: [
@@ -51,6 +52,15 @@ export class SocialModal {
     if (user?.id) {
       try {
         this.friends = await apiService.getFriends(Number(user.id));
+        // fetch blocked users and mark friends accordingly (if backend provides)
+        try {
+          this.blockedFriends = await apiService.getBlockedUsers(Number(user.id));
+          const blockedIds = new Set(this.blockedFriends.map(b => Number((b as any).id_blocked)));
+          this.friends = this.friends.map(f => ({ ...(f as any), blocked: blockedIds.has(Number((f as any).id)) } as User));
+        } catch (e) {
+          // if blocked list endpoint not available, ignore
+          console.warn('Could not fetch blocked users:', e);
+        }
       } catch (error) {
         console.error('Errore nel caricamento degli amici:', error);
         this.friends = [];
@@ -132,6 +142,20 @@ export class SocialModal {
     });
 
     this.friends.forEach(friend => {
+      const isBlocked = (friend as any).blocked === true;
+      // Determine online status from last_active (if present). Consider online if active within last 2 minutes.
+      let isOnline = false;
+      try {
+        const lastActiveRaw = (friend as any).last_active || (friend as any).lastActive || null;
+        if (lastActiveRaw) {
+          const lastMs = isNaN(Number(lastActiveRaw)) ? Date.parse(String(lastActiveRaw)) : Number(lastActiveRaw);
+          if (!isNaN(lastMs)) {
+            isOnline = (Date.now() - lastMs) < 2 * 60 * 1000;
+          }
+        }
+      } catch (e) {
+        isOnline = false;
+      }
       const friendItem = createElement('div', {
         className: `p-3 rounded cursor-pointer transition-colors ${
           this.selectedFriend?.id === friend.id ? 'bg-opacity-30' : 'bg-opacity-10'
@@ -141,10 +165,36 @@ export class SocialModal {
           : 'background-color: rgba(255, 255, 255, 0.06);'
       });
 
+      // Render friend name and two buttons (Blocca / Sblocca). One is disabled depending on blocked state.
       friendItem.innerHTML = `
         <div class="flex items-center justify-between">
-          <span class="font-medium">${friend.username}</span>
-          <span class="w-3 h-3 rounded-full bg-gray-400"></span>
+          <div class="flex items-center gap-3">
+            <span class="font-medium">${friend.username}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              class="friend-block-btn px-3 py-1 rounded text-sm text-white ${isBlocked ? 'bg-gray-500 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'} focus:outline-none"
+              title="Blocca ${friend.username}"
+              aria-label="Blocca ${friend.username}"
+              ${isBlocked ? 'disabled' : ''}
+            >
+              Blocca
+            </button>
+
+            <button
+              type="button"
+              class="friend-unblock-btn px-3 py-1 rounded text-sm text-white ${isBlocked ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-500 cursor-not-allowed'} focus:outline-none"
+              title="Sblocca ${friend.username}"
+              aria-label="Sblocca ${friend.username}"
+              ${isBlocked ? '' : 'disabled'}
+            >
+              Sblocca
+            </button>
+
+            <span class="ml-2 w-3 h-3 rounded-full ${isOnline ? 'bg-green-500' : 'bg-gray-400'}" aria-hidden="true"></span>
+            <span class="ml-3 text-sm font-semibold ${isBlocked ? 'text-red-400' : 'text-green-400'}">${isBlocked ? 'Utente bloccato' : 'Utente non bloccato'}</span>
+          </div>
         </div>
       `;
 
@@ -152,6 +202,24 @@ export class SocialModal {
         this.selectedFriend = friend;
         this.refreshModal();
       });
+
+
+      const blockBtn = friendItem.querySelector('.friend-block-btn') as HTMLButtonElement | null;
+      const unblockBtn = friendItem.querySelector('.friend-unblock-btn') as HTMLButtonElement | null;
+      if (blockBtn) {
+        blockBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if ((blockBtn as HTMLButtonElement).disabled) return;
+          this.BlockUser(friend);
+        });
+      }
+      if (unblockBtn) {
+        unblockBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if ((unblockBtn as HTMLButtonElement).disabled) return;
+          this.UnblockUser(friend);
+        });
+      }
 
       friendsListContainer.appendChild(friendItem);
     });
@@ -357,6 +425,7 @@ export class SocialModal {
       this.friendIdInput = '';
       
       // Ricarica la lista degli amici
+      this.blockedFriends = await apiService.getBlockedUsers(Number(user.id));
       this.friends = await apiService.getFriends(Number(user.id));
       this.refreshModal();
     } catch (error: any) {
@@ -369,6 +438,54 @@ export class SocialModal {
     document.body.removeChild(this.modalElement);
     this.modalElement = this.createModal();
     document.body.appendChild(this.modalElement);
+  }
+
+  private async BlockUser(friend: User): Promise<void> {
+    if (!friend) return;
+    const confirmed = confirm(`Vuoi bloccare ${friend.username}?`);
+    if (!confirmed) return;
+
+    try {
+      if (apiService && typeof (apiService as any).blockUser === 'function') {
+        const { user } = authState.getState();
+        if (user?.id) {
+          // Call backend to block the user, then refresh lists from server
+          await (apiService as any).blockUser(Number(user.id), Number(friend.id));
+          this.blockedFriends = await apiService.getBlockedUsers(Number(user.id));
+          this.friends = await apiService.getFriends(Number(user.id));
+            const blockedIds = new Set(this.blockedFriends.map(b => Number((b as any).id_blocked)));
+            this.friends = this.friends.map(f => ({ ...(f as any), blocked: blockedIds.has(Number((f as any).id)) } as User));
+        }
+        this.refreshModal();
+      } else {
+        alert(`Azione per ${friend.username}`);
+      }
+    } catch (err: any) {
+      console.error('Errore BlockUser:', err);
+      alert('Errore: ' + (err?.message ?? err));
+    }
+  }
+  private async UnblockUser(friend: User): Promise<void> {
+    if (!friend) return;
+    const confirmed = confirm(`Vuoi sbloccare ${friend.username}?`);
+    if (!confirmed) return;
+
+    try {
+      if (apiService && typeof (apiService as any).unblockUser === 'function') {
+        const { user } = authState.getState();
+        if (user?.id) {
+          // Call backend to unblock the user, then refresh lists from server
+          await (apiService as any).unblockUser(Number(user.id), Number(friend.id));
+          this.blockedFriends = await apiService.getBlockedUsers(Number(user.id));
+          this.friends = await apiService.getFriends(Number(user.id));
+            const blockedIds = new Set(this.blockedFriends.map(b => Number((b as any).id_blocked)));
+            this.friends = this.friends.map(f => ({ ...(f as any), blocked: blockedIds.has(Number((f as any).id)) } as User));
+        }
+      }
+    } catch (err: any) {
+      console.error('Errore UnblockUser:', err);
+      alert('Errore: ' + (err?.message ?? err));
+    }
   }
 
   destroy(): void {

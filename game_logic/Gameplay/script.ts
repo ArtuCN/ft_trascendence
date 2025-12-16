@@ -25,6 +25,11 @@ const buttonNbrPlayer = document.getElementById("nbrPlayer") as HTMLSelectElemen
 const buttonMainMenu = document.getElementById("returnMenu") as HTMLButtonElement;
 const startTournamentButton = document.getElementById("StartTournament") as HTMLButtonElement;
 export const buttonPlayGame = document.getElementById("PlayGame") as HTMLButtonElement;
+const playerNamesModal = document.getElementById("playerName") as HTMLDivElement;
+const playerInputsContainer = document.getElementById("playerInputsContainer") as HTMLDivElement;
+const startGameButton = document.getElementById("startGameButton") as HTMLButtonElement;
+const cancelButton = document.getElementById("cancelButton") as HTMLButtonElement;
+const modalTitle = document.getElementById("modalTitle") as HTMLHeadingElement;
 
 export let nbrPlayer: number = 0;
 export let countPlayers: number = 0;
@@ -62,6 +67,9 @@ export let currentRound = "quarterfinals";
 export let currentMatchIndex = 0;
 export let animationFrameId: number | null = null;
 export let online: boolean = false;
+
+const userId = getCurrentUserId();
+const username = getCurrentUsername();
 
 // Usa hostname corrente invece di IP hardcoded
 const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -120,6 +128,7 @@ ws.onopen = () => {
 
 ws.onmessage = (event) => {
 	const message = JSON.parse(event.data);
+	console.log("Received message:", message);
 	if (message.type === "waiting") {
 		console.log("Waiting for an opponent...");
 	}
@@ -156,6 +165,9 @@ ws.onmessage = (event) => {
 	if (message.type === "set_ball") {
 		Pebble.applyState(message);
 	}
+	if (message.type === "reconnected") {
+		Pebble.applyState(message.ball);
+	}
 	if (message.type === 'goal') {
 		playerGoals[0] = message.score[0];
 		playerGoals[1] = message.score[1];
@@ -164,11 +176,8 @@ ws.onmessage = (event) => {
 		drawScore(nbrPlayer);
 	}
 	if (message.type === 'victory') {
-		showVictoryScreen(players[message.winner]);
-	}
-	if (message.type === 'opponent_disconnected') {
-		alert(`Opponent disconnected: ${message.playerId}`);
 		stopGame();
+		showVictoryScreen(players[message.winner]);
 	}
 };
 
@@ -234,6 +243,27 @@ function resetBracket() {
 	];
 
 	final = { player1: null, player2: null, matchWinner: null, users_goal: [0, 0], users_goal_recived: [0, 0], round: "" };
+}
+
+function showPlayerName(numberPlayers: number, gameType: 'local' | 'tournament') {
+	playerInputsContainer.innerHTML = '';
+	modalTitle.textContent = gameType === 'local' ? 'Inserisci i nomi dei giocatori' : 'Inserisci i nomi dei partecipanti al torneo';
+	for (let i = 1; i < numberPlayers; i++) {
+		const laber = document.createElement('label');
+		laber.style.display = 'block';
+		laber.style.marginTop = '10px';
+		laber.textContent = `Player Name ${i}: `;
+		const input = document.createElement('input');
+		input.type = 'text';
+		input.placeholder = `Player Name ${i + 1}`;
+		input.id = `playerNameInput${i}`;
+		input.style.display = 'block';
+		input.style.margin = '10px auto';
+		playerInputsContainer.appendChild(laber);
+		playerInputsContainer.appendChild(input);
+		playerInputsContainer.appendChild(document.createElement('br'));
+	}
+	playerNamesModal.style.display = 'block';
 }
 
 export function advanceWinner(winner: Player) {
@@ -389,10 +419,41 @@ function playCurrentMatch() {
 	}
 }
 
+startGameButton.addEventListener('click', () => {
+	playerNamesModal.style.display = 'none';
+	textPong.style.display = "none";
+	if (!Tournament) {
+		canvas_container.style.display = "block";
+		canvas.style.display = "block";
+		players.push(new Player(username, 0, userId, "vertical"));
+		for (let i = 1; i < nbrPlayer; i++) {
+			const input = document.getElementById(`playerNameInput${i}`) as HTMLInputElement;
+			const playerName = input.value.trim() || `Player${i + 1}`;
+			if (i === 1) {
+				players.push(new Player(playerName, i, 0, "vertical"));
+			} else {
+				players.push(new Player(playerName, i, 0, "horizontal"));
+			}
+		}
+		playerGoals = new Array(nbrPlayer).fill(0);
+		playerGoalsRecived = new Array(nbrPlayer).fill(0);
+		canvas_container.style.display = "block";
+		Pebble = new Ball();
+		startGame();
+		draw();
+	}
+});
+
+cancelButton.addEventListener('click', () => {
+	playerNamesModal.style.display = 'none';
+	buttonMainMenu.click();
+});
+
 buttonLocalPlay.addEventListener("click", () => {
 	buttonLocalPlay.style.display = "none";
 	buttonRemotePlay.style.display = "none";
 	button2PLocal.style.display = "inline-block";
+	button4P.style.display = "inline-block";
 	buttonAi.style.display = "inline-block";
 	buttonTournament.style.display = "inline-block";
 	buttonMainMenu.style.display = "inline-block";
@@ -402,8 +463,6 @@ buttonRemotePlay.addEventListener("click", () => {
 	buttonLocalPlay.style.display = "none";
 	buttonRemotePlay.style.display = "none";
 	button2PRemote.style.display = "inline-block";
-	button4P.style.display = "inline-block";
-	buttonTournament.style.display = "inline-block";
 	buttonMainMenu.style.display = "inline-block";
 });
 
@@ -424,25 +483,10 @@ button2PLocal.addEventListener("click", () => {
 	buttonAi.style.display = "none";
 	buttonMainMenu.style.display = "none";
 	buttonTournament.style.display = "none";
-	textPong.style.display = "none";
-	canvas_container.style.display = "block";
-	canvas.style.display = "block";
 	nbrPlayer = parseInt(button2PLocal.value);
 	if (isNaN(nbrPlayer))
 		nbrPlayer = 2;
-	playerGoals = new Array(nbrPlayer).fill(0);
-	playerGoalsRecived = new Array(nbrPlayer).fill(0);
-	Pebble = new Ball();
-	startGame();
-	players = [];
-	
-	// Use logged user's ID for Player 1, guest (0) for Player 2
-	const userId = getCurrentUserId();
-	const username = getCurrentUsername();
-	players.push(new Player(username, 0, userId, "vertical"));
-	players.push(new Player("Guest", 1, 0, "vertical"));
-
-	draw();
+	showPlayerName(nbrPlayer, 'local');
 });
 
 button4P.addEventListener("click", () => {
@@ -450,24 +494,11 @@ button4P.addEventListener("click", () => {
 	button2PRemote.style.display = "none";
 	buttonMainMenu.style.display = "none";
 	buttonTournament.style.display = "none";
-	textPong.style.display = "none";
-	canvas_container.style.display = "block";
-	canvas.style.display = "block";
 	nbrPlayer = parseInt(button4P.value);
 	if (isNaN(nbrPlayer))
 		nbrPlayer = 4;
-	playerGoals = new Array(nbrPlayer).fill(0);
-	playerGoalsRecived = new Array(nbrPlayer).fill(0);
 	canvas.height = canvas.width = 800;
-	Pebble = new Ball();
-	startGame();
-	players = [];
-	players.push(new Player("Matteo", 0, 12, "vertical"));
-	players.push(new Player("Arturo", 1, 13, "vertical"));
-	players.push(new Player("Petre", 2, 14, "horizontal"));
-	players.push(new Player("Tjaz", 3, 15, "horizontal"));
-
-	draw();
+	showPlayerName(nbrPlayer, 'local');
 });
 
 buttonAi.addEventListener("click", () => {
@@ -488,7 +519,7 @@ buttonAi.addEventListener("click", () => {
 	Pebble = new Ball();
 	startGame();
 	players = [];
-	players.push(new Player("Matteo", 0, 12, "vertical"));
+	players.push(new Player(username, 0, userId, "vertical"));
 	players.push(new Player("AI", 1, 13, "vertical"));
 
 	players[1].getPaddle().startBotPolling();
@@ -504,6 +535,22 @@ function waitForStartButton(): Promise<number> {
 	});
 }
 
+function waitForPlayerNames(): Promise<void> {
+    return new Promise((resolve) => {
+        const btn = document.getElementById("startGameButton")!;
+        const modal = document.getElementById("playerName")!;
+
+        const handler = () => {
+            btn.removeEventListener("click", handler);
+            modal.style.display = "none";
+            resolve();
+        };
+
+        btn.addEventListener("click", handler);
+    });
+}
+
+
 buttonTournament.addEventListener("click", async () => {
 	Tournament = true;
 	resetBracket();
@@ -516,21 +563,35 @@ buttonTournament.addEventListener("click", async () => {
 	textPong.style.display = "none";
 	startTournamentButton.style.display = "inline-block";
 	buttonNbrPlayer.style.display = "inline-block";
-	TournamentID= 1234; // Example Tournament ID, replace with actual logic to get ID
+	TournamentID= 1234;
 	nbrPlayer = await waitForStartButton();
 	if (isNaN(nbrPlayer) || nbrPlayer <= 0) {
 		console.error("Invalid player count:", buttonNbrPlayer.value);
 		return;
 	}
-	countPlayers = nbrPlayer;
-	players = [];
-	for (let i = 0; i < nbrPlayer; i++) {
-		if (i % 2 == 0) {
-			players.push(new Player(`Player${i + 1}`, 0, 12 + i, "vertical"));
+	showPlayerName(nbrPlayer, 'tournament');
+	await waitForPlayerNames();
+	console.log(">>> after waitForPlayerNames, reading inputs... nbrPlayer =", nbrPlayer);
+
+	// debug: logga tutti gli input trovati
+	for (let i = 1; i < nbrPlayer; i++) {
+	  const input = document.getElementById(`playerNameInput${i}`) as HTMLInputElement | null;
+	  console.log(`input #${i}:`, input, input?.value);
+	}
+	players.push(new Player(username, 0, userId, "vertical"));
+	for (let i = 1; i < nbrPlayer; i++) {
+		const input = document.getElementById(`playerNameInput${i}`) as HTMLInputElement;
+		const playerName = input.value.trim() || `Player${i + 1}`;
+		if (i % 2 === 0) {
+			players.push(new Player(playerName, 0, 0, "vertical"));
 		} else {
-			players.push(new Player(`Player${i + 1}`, 1, 13 + i, "vertical"));
+			players.push(new Player(playerName, 1, 0, "vertical"));
 		}
 	}
+	countPlayers = nbrPlayer;
+	playerGoals = new Array(nbrPlayer).fill(0);
+	playerGoalsRecived = new Array(nbrPlayer).fill(0);
+	console.log(">>> players array:", players);
 	if (nbrPlayer == 8) {
 		quarterfinals = [];
 		currentRound = "quarterfinals";

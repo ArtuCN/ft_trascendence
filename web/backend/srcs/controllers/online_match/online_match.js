@@ -1,6 +1,7 @@
 import { WebSocketServer } from 'ws';
 import { randomUUID } from 'crypto';
 import { insertMatch } from '../../database_comunication/match_db.js';
+import { clear } from 'console';
 
 const players = [];
 class Ball {
@@ -305,30 +306,29 @@ export function setupMatchmaking(server) {
 
 	    const roomId = player.room;
 	    if (roomId && rooms[roomId]) {
-				gameRunning = false;
-				rooms[roomId].players.forEach(op => {
-					if (op.id !== player.id && op.socket.readyState === op.socket.OPEN) {
-						op.socket.send(JSON.stringify({
-							type: 'opponent_disconnected',
-						}));
-					}
-				});
-				rooms[roomId].disconnectTimeout = setTimeout(() => {
-					const remaining = rooms[roomId].players.find(op => op.id !== player.id);
-					if (remaining && remaining.socket.readyState === remaining.socket.OPEN) {
-						remaining.socket.send(JSON.stringify({
-							type: 'victory',
-							winner: rooms[remaining.room].players.findIndex(p => p.id === remaining.id)
-						}));
-					}
-					delete rooms[roomId];
-				}, 2 * 60 * 1000); // 2 minuti
+	        gameRunning = false;
+			
+	        // Trova il giocatore rimasto (vincitore)
+	        const remaining = rooms[roomId].players.find(op => op.id !== player.id);
+			
+	        if (remaining && remaining.socket.readyState === remaining.socket.OPEN) {
+	            // Dichiara immediatamente il vincitore
+	            remaining.socket.send(JSON.stringify({
+	                type: 'victory',
+	                winner: rooms[roomId].players.findIndex(p => p.id === remaining.id)
+	            }));
+	            console.log(`🎮 ${remaining.name} wins! ${player.name} disconnected.`);
+	        }
+				
+	        // Salva le statistiche con il vincitore
+	        const winnerId = rooms[roomId].players.findIndex(p => p.id === remaining.id);
+	        saveMatchStats(roomId, winnerId);
+				
+	        // Pulisci la stanza immediatamente
+	        delete rooms[roomId];
 	    }
 		});
 
-		ws.on('error', (err) => {
-			console.error(`Errore WebSocket player ${player.id}:`, err.message);
-		});
 	});
 
 	wss.on('error', (err) => {

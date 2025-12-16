@@ -82,6 +82,12 @@ export async function add_friendship(id1, id2)
 {
     try
     {
+        const ids1 = await get_friends_by_user_db(id1);
+        const ids2 = await get_friends_by_user_db(id2);
+        if (ids1.includes(id2) || ids2.includes(id1))
+            throw new Error('Friendship already exists');
+        if (id1 === id2)
+            throw new Error('Cannot friend yourself');
         await add_friendship_db(id1, id2);
         await add_friendship_db(id2, id1);
     }

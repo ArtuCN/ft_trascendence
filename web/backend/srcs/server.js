@@ -18,6 +18,8 @@ import matchRoute from './controllers/match.js';
 import tournamentRoute from './controllers/tournament.js';
 import heartBeatRoute from './controllers/heartBeat.js';
 import avatarRoute from './controllers/avatar.js';
+import blockedRoute from './controllers/blocked.js';
+import chatRoute from './controllers/chat.js';
 // WebSocket matchmaking
 import { setupMatchmaking } from './controllers/online_match/online_match.js';
 
@@ -69,6 +71,8 @@ await fastify.register(friendRoute);
 await fastify.register(tournamentRoute);
 await fastify.register(heartBeatRoute);
 await fastify.register(avatarRoute);
+await fastify.register(blockedRoute);
+await fastify.register(chatRoute);
 // Endpoint semplice per debug
 fastify.get('/users', async (request, reply) => {
   try {
