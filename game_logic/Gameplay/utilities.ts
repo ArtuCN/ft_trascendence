@@ -241,9 +241,9 @@ export async function sendMatchData() {
 
     let body = {
         id_tournament: TournamentID || null, // null for non-tournament matches
-        users_ids: players_id,
-        users_goal_scored: playerGoals,
-        users_goal_taken: playerGoalsRecived
+        users_ids: players[0].getUserID(),
+        users_goal_scored: playerGoals[0],
+        users_goal_taken: playerGoalsRecived[0]
     };
 
     console.log("Sending match data:", body);
