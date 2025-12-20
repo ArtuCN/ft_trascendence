@@ -68,61 +68,16 @@ export default async function (fastify, opts) {
         return reply.code(400).send({ error: 'Missing required fields in request body' });
       }
 
-      // Validate arrays
-      if (!Array.isArray(users_ids) || !Array.isArray(users_goal_scored) || !Array.isArray(users_goal_taken)) {
-        return reply.code(400).send({ error: 'users_ids, users_goal_scored, and users_goal_taken must be arrays' });
-      }
-
       if (users_ids.length !== users_goal_scored.length || users_ids.length !== users_goal_taken.length) {
         return reply.code(400).send({ error: 'Array lengths must match' });
       }
-const invalidIndex = users_ids.findIndex(id => id === -1);
+    
+      console.log('📊 Saving match:', { id_tournament, users_ids, users_goal_scored, users_goal_taken });
 
-if (invalidIndex !== -1) {
-  console.log('⚠️ Partial match: saving ONLY player stats');
-
-  // filtra solo utenti validi
-  const validPlayers = users_ids
-    .map((id, i) => ({
-      id,
-      goalsScored: users_goal_scored[i],
-      goalsTaken: users_goal_taken[i],
-    }))
-    .filter(p => p.id !== -1);
-
-  for (const player of validPlayers) {
-    console.log(`📊 Saving stats for player ${player.id}: scored ${player.goalsScored}, taken ${player.goalsTaken}`);
-    const res = await insertPlayerMatchStats(
-      player.id,
-      0,
-      player.goalsScored,
-      player.goalsTaken
-    );
-
-    if (res?.error) {
-      return reply.code(500).send({ error: res.error });
-    }
-
-    const upd = await upsertStatsAfterMatch(
-      player.id,
-      player.goalsScored,
-      player.goalsTaken,
-      0
-    );
-
-    if (upd?.error) {
-      return reply.code(500).send({ error: upd.error });
-    }
-  }
-
-  return reply.send({ success: true, partial: true });
-}
-      else {
-        console.log('📊 Saving match:', { id_tournament, users_ids, users_goal_scored, users_goal_taken });
-
-        const result = await insertMatch(id_tournament, users_ids, users_goal_scored, users_goal_taken);
-        reply.send(result);
-      }
+      const result = await insertMatch(id_tournament, users_ids, users_goal_scored, users_goal_taken);
+      console.log('✅ Match saved with ID:', result);
+      reply.send(result);
+      // }
     } catch (error) {
       console.log(error);
       reply.code(500).send({ error: 'Internal Server Error ' + error });

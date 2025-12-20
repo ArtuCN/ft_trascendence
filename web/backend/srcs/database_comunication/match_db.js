@@ -44,6 +44,7 @@ async function insertMatchInDB(id_tournament, number_of_players)
 
 export async function insertPlayerMatchStats(id_user, id_match, goal_scored, goal_taken)
 {
+    console.log("Inserting player match stats:", {id_user, id_match, goal_scored, goal_taken});
     return new Promise((resolve, reject) =>
     {
         const query = `
