@@ -135,19 +135,32 @@ export async function insertMatch(id_tournament, users_ids, users_goal_scored, u
     {   
         const match = await insertMatchInDB(id_tournament, users_ids.length);
     
-        for (let i = 0; i < users_ids.length; i++)
+        if (users_ids.length === undefined)
         {
-            const userId = users_ids[i];          
-            const goalsScored = users_goal_scored[i];
-            const goalsTaken = users_goal_taken[i];
-            
             try {
-                await insertPlayerMatchStats(userId, match.id, goalsScored, goalsTaken);
-                await upsertStatsAfterMatch(userId, goalsScored, goalsTaken, 0);
+                await insertPlayerMatchStats(users_ids, match.id, users_goal_scored, users_goal_taken);
+                await upsertStatsAfterMatch(users_ids, users_goal_scored, users_goal_taken, 0);
             } catch (err) {
-                // If user doesn't exist (FOREIGN KEY constraint), skip this player's stats
+                console.error(`Error inserting stats for user ${userId}:`, err);
                 console.warn(`Warning: Could not save stats for user ${userId}. User may not exist in database.`);
                 console.warn(`Match will still be recorded, but without stats for this player.`);
+            }
+        }
+        else
+        {
+            for (let i = 0; i < users_ids.length; i++)
+            {
+                const userId = users_ids[i];          
+                const goalsScored = users_goal_scored[i];
+                const goalsTaken = users_goal_taken[i];
+                try {
+                    await insertPlayerMatchStats(userId, match.id, goalsScored, goalsTaken);
+                    await upsertStatsAfterMatch(userId, goalsScored, goalsTaken, 0);
+                } catch (err) {
+                    // If user doesn't exist (FOREIGN KEY constraint), skip this player's stats
+                    console.warn(`Warning: Could not save stats for user ${userId}. User may not exist in database.`);
+                    console.warn(`Match will still be recorded, but without stats for this player.`);
+                }
             }
         }
         return { matchId: match.id };
