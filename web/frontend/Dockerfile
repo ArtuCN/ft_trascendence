@@ -2,7 +2,7 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-COPY ./ts_frontend/package.json ./ts_frontend/package-lock.json* ./
+COPY ./ts_frontend/package.json ./
 
 RUN npm install
 
