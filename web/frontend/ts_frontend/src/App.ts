@@ -6,6 +6,7 @@ import { AuthGuard } from './components/AuthGuard.js';
 import { HomePage } from './pages/HomePage.js';
 import { PlayPage } from './pages/PlayPage.js';
 import { PlayPage3D } from './pages/PlayPage3D.js';
+import { LiveChatPage } from './pages/LiveChatPage.js';
 
 export class App {
   private navbar: Navbar;
@@ -64,6 +65,7 @@ export class App {
     router.addRoute('/', () => this.renderPage(new HomePage()));
     router.addRoute('/play', () => this.renderPage(new PlayPage()));
     router.addRoute('/play3D', () => this.renderPage(new PlayPage3D()));
+    router.addRoute('/live-chat', () => this.renderPage(new LiveChatPage()));
   }
 
   private bindAuthState(): void {
