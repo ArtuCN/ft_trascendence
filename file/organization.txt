@@ -3,6 +3,7 @@
    - forward/back button in UI
    - protect backend api
    - creare un env unico per tutti gli docker
+   - SECRET HARDCODATI!!!
    
 2 COSE DA FARE MEDIE
     - livechat non si connete tra due computer (se non si risolve non si consegna)
