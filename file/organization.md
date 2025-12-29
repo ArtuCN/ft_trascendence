@@ -15,7 +15,7 @@
 # ticket da fare (entro 6.1!!!):
 	- subject di ticket, punti, persona asegnata, status di ticket (in progress, finito, ...)
 
-1 COSE DA FARE URGENTI
+## COSE DA FARE URGENTI
    - leggi bene il subject e vedi se tuo parte funziona come vuole subject e crea nuovi ticket, 1, TUTTI, in progress
    - redirect, andare diretamente a pagina con scrivere url,  1
    - forward/back button in UI ,1
@@ -23,7 +23,7 @@
    - creare un env unico per tutti gli docker ,1
    - SECRET HARDCODATI!!! ,1
    
-2 COSE DA FARE MEDIE:
+## COSE DA FARE MEDIE:
     - caricare imagine di avatar, devi fare refresh che si vede ,1
     - blockchain:
         - salvare dati doppo la partitia o turneo (fare un pulsante che ti chiede se vuoi salvare turneo) ,1
@@ -36,9 +36,9 @@
         - Frontend stilizato ,1
 		- agiungere pulsante di inizare remote play da chat ,1
 
-3 COSE DA FARE IGNORABILI:
+## COSE DA FARE IGNORABILI:
 
-4. DA TESTARE:
+## DA TESTARE:
 - protection against sql/xss injection atacks ,2
 - test finale e correzioni globali finali (doppo che altri ticket importanti sono finiti) ,3
 
@@ -47,7 +47,7 @@
 
 -------------------------------------------------
 
-major completed:
+## major completed:
 - framework backend
 - framework/toolkint for front
 - auth
@@ -59,16 +59,16 @@ major completed:
 
 
 
-minor completed:
+## minor completed:
 - use DB for backend
 - expand browser compatibility
 
 -----
-major not completed TODO
+## major not completed TODO
 - blockchain (implementare bene in FE)
 - live chat
 - micro-service (only if live chat is included)
 
-minor not completed TODO
+## minor not completed TODO
 
 
