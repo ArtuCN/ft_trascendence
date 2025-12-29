@@ -10,10 +10,9 @@
 	- Matteo: 0 (1)
 	- Khadim: 0 (1)
 	- Petre: 0 (1)
-	- Tjaz: 0 (4)
+	- Tjaz: 1 (3)
 
 # ticket da fare (entro 6.1!!!):
-   - leggi bene il subject e vedi se tuo parte funziona come vuole subject e crea nuovi ticket se necesario (per tutti!) 1
 	- subject di ticket, punti, persona asegnata, status di ticket (in progress, finito, ...)
 
 1 COSE DA FARE URGENTI
