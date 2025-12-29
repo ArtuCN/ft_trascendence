@@ -1,29 +1,52 @@
+### ogni uno deve raguingere almeno 3 punti, meglio 4 (segnati doppo le cose che farai in prossimi giorni)
+
+# punti totali (cambia se aggiungi un ticket): 16
+	- se si aggiungono tanti piu ticket anche punti che ogni uno deve fare si devono cambiare
+	- se pensi che ticket e pio o meno difficile di previsto poi cambiare punti per il ticket
+	- si puo prendere un ticket in due o tre (si divide punti)
+
+# punti per persona: finito (in progress)
+	- Arturo: 0 (1)
+	- Matteo: 0 (1)
+	- Khadim: 0 (1)
+	- Petre: 0 (1)
+	- Tjaz: 0 (4)
+
+# ticket da fare (entro 6.1!!!):
+   - leggi bene il subject e vedi se tuo parte funziona come vuole subject e crea nuovi ticket se necesario (per tutti!) 1
+	- subject di ticket, punti, persona asegnata, status di ticket (in progress, finito, ...)
+
 1 COSE DA FARE URGENTI
-   - redirect, andare diretamente a pagina con scrivere url
-   - forward/back button in UI
-   - protect backend api
-   - creare un env unico per tutti gli docker
-   - SECRET HARDCODATI!!!
+   - leggi bene il subject e vedi se tuo parte funziona come vuole subject e crea nuovi ticket, 1, TUTTI, in progress
+   - redirect, andare diretamente a pagina con scrivere url,  1
+   - forward/back button in UI ,1
+   - protect backend api 3 , tjaz, inizio 30.1
+   - creare un env unico per tutti gli docker ,1
+   - SECRET HARDCODATI!!! ,1
    
-2 COSE DA FARE MEDIE
-    - livechat non si connete tra due computer (se non si risolve non si consegna)
-    - caricare imagine di avatar, devi fare refresh che si vede
+2 COSE DA FARE MEDIE:
+    - caricare imagine di avatar, devi fare refresh che si vede ,1
     - blockchain:
-        - salvare dati doppo la partitia o turneo (fare un pulsante che ti chiede se vuoi salvare turneo)
-        - mostrare dati di partite salvate su chain
+        - salvare dati doppo la partitia o turneo (fare un pulsante che ti chiede se vuoi salvare turneo) ,1
+        - mostrare dati di partite salvate su chain ,1
     - livechat:
-        - non funziona su diversi computer
-        - non si connete secondo utente
-        - si deve fare refresh per mostrare utenti (forse farlo automatico)
-        - Frontend deve mostrare 
+        - non funziona su diversi computer ,2
+        - non si connete secondo utente ,1
+		- diversi browser ,1
+        - si deve fare refresh per mostrare utenti (forse farlo automatico) ,1
+        - Frontend stilizato ,1
+		- agiungere pulsante di inizare remote play da chat ,1
 
-3 COSE DA FARE IGNORABILI
+3 COSE DA FARE IGNORABILI:
+
+4. DA TESTARE:
+- protection against sql/xss injection atacks ,2
+- test finale e correzioni globali finali (doppo che altri ticket importanti sono finiti) ,3
 
 
 
-4. da testare:
-- protection against sql/xss injection attacs
 
+-------------------------------------------------
 
 major completed:
 - framework backend
