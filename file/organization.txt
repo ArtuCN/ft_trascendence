@@ -1,1 +1,51 @@
-porta 80 x http 443 https
+1 COSE DA FARE URGENTI
+   - redirect, andare diretamente a pagina con scrivere url
+   - forward/back button in UI
+   - protect backend api
+   - creare un env unico per tutti gli docker
+   
+2 COSE DA FARE MEDIE
+    - livechat non si connete tra due computer (se non si risolve non si consegna)
+    - caricare imagine di avatar, devi fare refresh che si vede
+    - blockchain:
+        - salvare dati doppo la partitia o turneo (fare un pulsante che ti chiede se vuoi salvare turneo)
+        - mostrare dati di partite salvate su chain
+    - livechat:
+        - non funziona su diversi computer
+        - non si connete secondo utente
+        - si deve fare refresh per mostrare utenti (forse farlo automatico)
+        - Frontend deve mostrare 
+
+3 COSE DA FARE IGNORABILI
+
+
+
+4. da testare:
+- protection against sql/xss injection attacs
+
+
+major completed:
+- framework backend
+- framework/toolkint for front
+- auth
+- remote auth sign-in
+- remote players
+- multipalyer
+- ai oponent
+- 3d 
+
+
+
+minor completed:
+- use DB for backend
+- expand browser compatibility
+
+-----
+major not completed TODO
+- blockchain (implementare bene in FE)
+- live chat
+- micro-service (only if live chat is included)
+
+minor not completed TODO
+
+
