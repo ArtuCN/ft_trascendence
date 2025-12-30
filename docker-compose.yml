@@ -77,7 +77,7 @@ services:
       context: ./web/liveChat
     image: livechat-fastify:0.1
     container_name: livechat
-    env_file: ./web/liveChat/.env.docker
+    env_file: .env
     networks:
       - transcendnet
     volumes:
