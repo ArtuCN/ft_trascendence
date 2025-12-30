@@ -42,10 +42,13 @@ export class PlayPage {
     });
 
     const controls = [
+      'LOCALE',
       'W / S - Giocatore 1 (sinistra)',
-      'Frecce Su/Giù - Giocatore 2 (destra)', 
-      'Spacebar - Pausa/Resume',
-      'ESC - Menu principale'
+      'Frecce Su/Giù - Giocatore 2 (destra)',
+      'D / F - Giocatore 3',
+      'J / K - Giocatore 4',
+      'ONLINE',
+      'W / S'
     ];
 
     controls.forEach(control => {
@@ -61,7 +64,7 @@ export class PlayPage {
       innerHTML: `
         <h3 class="font-semibold text-blue-800 mb-2">Modalità di Gioco</h3>
         <ul class="text-sm text-blue-700 space-y-1">
-          <li>• <strong>Local:</strong> Due giocatori sullo stesso computer</li>
+          <li>• <strong>Local:</strong> Gioco sullo stesso computer</li>
           <li>• <strong>Remote:</strong> Gioco online</li>
           <li>• <strong>VS Bot:</strong> Contro l'intelligenza artificiale</li>
           <li>• <strong>Tournament:</strong> Torneo con più giocatori</li>
@@ -80,7 +83,7 @@ export class PlayPage {
 
     // Game iframe
     this.gameFrame = createElement('iframe', {
-      src: 'https://localhost/game/',
+      src: '/game/',
       className: 'w-full h-full border-0',
       style: 'min-height: 500px;'
     }) as HTMLIFrameElement;

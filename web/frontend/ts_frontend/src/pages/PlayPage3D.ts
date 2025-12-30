@@ -42,12 +42,13 @@ export class PlayPage3D {
     });
 
     const controls = [
+      'LOCALE',
       'W / S - Giocatore 1 (sinistra)',
       'Frecce Su/Giù - Giocatore 2 (destra)', 
       'D / F - Giocatore 3',
       'J / K - Giocatore 4',
-      'Spacebar - Pausa/Resume',
-      'ESC - Menu principale'
+      'ONLINE',
+      'W / S'
     ];
 
     controls.forEach(control => {
@@ -82,7 +83,7 @@ export class PlayPage3D {
 
     // Game iframe
     this.gameFrame = createElement('iframe', {
-      src: 'https://localhost/game/3d/',
+      src: '/game/3d/',
       className: 'w-full h-full border-0',
       style: 'min-height: 500px;'
     }) as HTMLIFrameElement;

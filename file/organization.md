@@ -7,7 +7,7 @@
 
 # punti per persona: finito (in progress)
 	- Arturo: 0 (1)
-	- Matteo: 0 (1)
+	- Matteo: 2 (2)
 	- Khadim: 0 (1)
 	- Petre: 0 (1)
 	- Tjaz: 1 (3)
@@ -17,8 +17,8 @@
 
 ## COSE DA FARE URGENTI
    - leggi bene il subject e vedi se tuo parte funziona come vuole subject e crea nuovi ticket, 1, TUTTI, in progress
-   - redirect, andare diretamente a pagina con scrivere url,  1
-   - forward/back button in UI ,1
+   - redirect, andare diretamente a pagina con scrivere url,  1, Matteo, inizio 30.1, fixed
+   - forward/back button in UI ,1, Matteo, inizio 30.1, fixed
    - protect backend api 3 , tjaz, inizio 30.1
    - creare un env unico per tutti gli docker ,1
    - SECRET HARDCODATI!!! ,1

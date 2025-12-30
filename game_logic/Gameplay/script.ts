@@ -470,6 +470,7 @@ buttonMainMenu.addEventListener("click", () => {
 	buttonLocalPlay.style.display = "inline-block";
 	buttonRemotePlay.style.display = "inline-block";
 	button2PLocal.style.display = "none";
+	button2PRemote.style.display = "none";
 	button4P.style.display = "none";
 	buttonAi.style.display = "none";
 	buttonTournament.style.display = "none";
@@ -491,6 +492,7 @@ button2PLocal.addEventListener("click", () => {
 
 button4P.addEventListener("click", () => {
 	button4P.style.display = "none";
+	button2PLocal.style.display = "none";
 	button2PRemote.style.display = "none";
 	buttonMainMenu.style.display = "none";
 	buttonTournament.style.display = "none";
