@@ -1,12 +1,12 @@
 ### ogni uno deve raguingere almeno 3 punti, meglio 4 (segnati doppo le cose che farai in prossimi giorni)
 
-# punti totali (cambia se aggiungi un ticket): 16
+# punti totali (cambia se aggiungi un ticket): 17
 	- se si aggiungono tanti piu ticket anche punti che ogni uno deve fare si devono cambiare
 	- se pensi che ticket e pio o meno difficile di previsto poi cambiare punti per il ticket
 	- si puo prendere un ticket in due o tre (si divide punti)
 
 # punti per persona: finito (in progress)
-	- Arturo: 0 (1)
+	- Arturo: 1 (2)
 	- Matteo: 2 (2)
 	- Khadim: 0 (1)
 	- Petre: 0 (1)
@@ -20,7 +20,7 @@
    - redirect, andare diretamente a pagina con scrivere url,  1, Matteo, inizio 30.1, fixed
    - forward/back button in UI ,1, Matteo, inizio 30.1, fixed
    - protect backend api 3 , tjaz, inizio 30.1
-   - creare un env unico per tutti gli docker ,1
+   - creare un env unico per tutti gli docker Arturo, inizio 30 ,1 fixed
    - SECRET HARDCODATI!!! ,1
    
 ## COSE DA FARE MEDIE:
