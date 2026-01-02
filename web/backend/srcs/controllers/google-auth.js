@@ -57,7 +57,8 @@ export default async function (fastify, opts) {
                     id: user.id,
                     mail: user.mail,
                     username: user.username,
-                    google_id: user.google_id
+                    google_id: user.google_id,
+                    is_admin: user.is_admin || false
                 });
                 await saveToken(user.username, token);
             }

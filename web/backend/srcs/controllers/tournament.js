@@ -1,14 +1,14 @@
 import { insertTournamentInDB, getAllTournaments, startTournament, finishTournament } from '../database_comunication/tournament_db.js';
 
 export default async function (fastify, opts) {
-      fastify.post('/tournament', async (request, reply) => {
+      fastify.post('/tournament', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     {
       const { tournament_name } = request.body;
       const result = await insertTournamentInDB(tournament_name);
       reply.send(result);
     }
   })
-  fastify.get('/alltournament', async (request, reply) => {
+  fastify.get('/alltournament', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try {
       const result = await getAllTournaments();
       reply.send(result);
@@ -17,7 +17,7 @@ export default async function (fastify, opts) {
       reply.code(500).send({ error: 'Internal Server Error ' + error });
     }
   });
-  fastify.post('/starttournament', async (request, reply) => {
+  fastify.post('/starttournament', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try {
       const { id } = request.body;
       if (!id) return reply.code(400).send({ error: 'Missing id' });
@@ -29,7 +29,7 @@ export default async function (fastify, opts) {
       reply.code(500).send({ error: 'Internal Server Error ' + error });
     }
   });
-  fastify.post('/finishtournament', async (request, reply) => {
+  fastify.post('/finishtournament', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try {
       const { id, id_winner } = request.body;
       if (!id || !id_winner) return reply.code(400).send({ error: 'Missing id or id_winner' });

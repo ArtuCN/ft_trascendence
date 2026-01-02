@@ -18,7 +18,12 @@ export default async function (fastify, opts) {
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash(psw, saltRounds);
       const newUser = await insertUser({ username, mail, psw: hashedPassword });
-      const token = fastify.jwt.sign({ id: newUser.id, mail: newUser.mail });
+      const token = fastify.jwt.sign({
+        id: newUser.id,
+        mail: newUser.mail,
+        username: username,
+        is_admin: false
+      });
       console.log("BACKEND NEWUSER ", newUser.id, " mail: ", newUser.mail, " username ", newUser.username);
       saveToken(newUser.username, token);
       reply.send({

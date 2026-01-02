@@ -2,7 +2,7 @@
 import { insertMatch, getAllMatches, getMatchById, getPlayerMatchStats, getPlayerByMatchId, insertPlayerMatchStats, upsertStatsAfterMatch } from '../database_comunication/match_db.js';
 import { getAllMatchesOfPlayer } from '../database_comunication/user_db.js';
 export default async function (fastify, opts) {
-  fastify.get('/allmatch', async (request, reply) => {
+  fastify.get('/allmatch', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try {
       const result = await getAllMatches();
       reply.send(result);
@@ -11,7 +11,7 @@ export default async function (fastify, opts) {
       reply.code(500).send({ error: 'Internal Server Error ' + error });
     }
   });
-  fastify.get('/matchid', async (request, reply) => {
+  fastify.get('/matchid', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try {
       const { id } = request.query;
       if (!id) return reply.code(400).send({ error: 'Missing id' });
@@ -24,7 +24,7 @@ export default async function (fastify, opts) {
     }
   });
 
-  fastify.get('/allmatchplayer', async (request, reply) => {
+  fastify.get('/allmatchplayer', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try {
       const { id_player } = request.query;
       if (!id_player) return reply.code(400).send({ error: 'Missing id_player' });
@@ -46,7 +46,7 @@ export default async function (fastify, opts) {
     }
   });
 
-  fastify.get('/playersbymatchid', async (request, reply) => {
+  fastify.get('/playersbymatchid', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try {
       const { id } = request.query;
       if (!id) return reply.code(400).send({ error: 'Missing id_match' });
@@ -59,7 +59,7 @@ export default async function (fastify, opts) {
     }
   });
 
-  fastify.post('/match', async (request, reply) => {
+  fastify.post('/match', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try {
       const { id_tournament, users_ids, users_goal_scored, users_goal_taken } = request.body;
       

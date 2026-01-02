@@ -10,7 +10,7 @@
 	- Matteo: 2 (2)
 	- Khadim: 0 (1)
 	- Petre: 0 (1)
-	- Tjaz: 1 (3)
+	- Tjaz: 4 (5)
 
 # ticket da fare (entro 6.1!!!):
 	- subject di ticket, punti, persona asegnata, status di ticket (in progress, finito, ...)
@@ -19,7 +19,7 @@
    - leggi bene il subject e vedi se tuo parte funziona come vuole subject e crea nuovi ticket, 1, TUTTI, in progress
    - redirect, andare diretamente a pagina con scrivere url,  1, Matteo, inizio 30.1, fixed
    - forward/back button in UI ,1, Matteo, inizio 30.1, fixed
-   - protect backend api 3 , tjaz, inizio 30.1
+   - protect backend api 3 , tjaz, finito
    - creare un env unico per tutti gli docker Arturo, inizio 30 ,1 fixed
    - SECRET HARDCODATI!!! ,1
    
@@ -39,7 +39,7 @@
 ## COSE DA FARE IGNORABILI:
 
 ## DA TESTARE:
-- protection against sql/xss injection atacks ,2
+- protection against sql/xss injection atacks ,2 tjaz (parzialmente fatto, testare)
 - test finale e correzioni globali finali (doppo che altri ticket importanti sono finiti) ,3
 
 

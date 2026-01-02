@@ -197,12 +197,19 @@ export function clonePlayer(original: Player, newID: number): Player {
     return new Player(original.getNameTag(), newID, original.getUserID(), original.getPaddle().getOrientation());
 }
 
+export function getToken() {
+	const token = localStorage.getItem("token");
+	return token
+}
+
 export async function sendBotData(ball_y: number, paddle_y: number): Promise<string> {
 
+	const token = getToken()
 	let response = await fetch("/ai/", {
 		method: "POST",
 		headers: {
-			"Content-Type": "application/json"
+			"Content-Type": "application/json",
+			"Authorization": `Bearer ${token}`
 		},
 		body: JSON.stringify({ ball_y, paddle_y })
 	});
@@ -224,14 +231,17 @@ export function sendTournamentData() {
         semifinals: semifinals,
         final: final
     };
+	const token = getToken()
     fetch("/api/tournament/", {
         method: "POST",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+			"Authorization": `Bearer ${token}`
         },
         body: JSON.stringify(body)
     })
 }
+
 
 export async function sendMatchData() {
 
@@ -249,10 +259,12 @@ export async function sendMatchData() {
     console.log("Sending match data:", body);
 
     try {
+		const token = getToken()
         const response = await fetch("/api/match", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+				"Authorization": `Bearer ${token}`
             },
             body: JSON.stringify(body)
         });

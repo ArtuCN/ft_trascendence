@@ -9,20 +9,22 @@ import {
   getAllPlayerStats,
   getUserLastActive
 } from '../database_comunication/user_db.js';
+import { sanitizeUser, sanitizeUsers } from '../utils/sanitize.js';
 
 export default async function (fastify, opts) {
 
-  fastify.get('/allusers', async (request, reply) => {
+  fastify.get('/allusers', { preHandler: [fastify.authenticateAdmin] }, async (request, reply) => {
     try {
       const result = await getAllUsers();
-      reply.send(result);
+      const sanitized = sanitizeUsers(result);
+      reply.send(sanitized);
     } catch (error) {
       console.error(error);
       reply.code(500).send({ error: 'Internal Server Error ' + error });
     }
   });
 
-  fastify.get('/userbyid', async (request, reply) => {
+  fastify.get('/userbyid', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try {
       const { id } = request.query;
       if (!id) {
@@ -33,14 +35,14 @@ export default async function (fastify, opts) {
       if (!result) {
         return reply.code(404).send({ error: 'User not found' });
       }
-      reply.send(result);
+      reply.send(sanitizeUser(result));
     } catch (error) {
       console.error(error);
       reply.code(500).send({ error: 'Internal Server Error ' + error });
     }
   });
 
-  fastify.get('/userbyusername', async (request, reply) => {
+  fastify.get('/userbyusername', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try {
       const { username } = request.query;
       if (!username) {
@@ -48,14 +50,14 @@ export default async function (fastify, opts) {
       }
 
       const result = await getUserByUsername(username);
-      reply.send(result);
+      reply.send(sanitizeUsers(result));
     } catch (error) {
       console.error(error);
       reply.code(500).send({ error: 'Internal Server Error ' + error });
     }
   });
 
-  fastify.get('/userbymail', async (request, reply) => {
+  fastify.get('/userbymail', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try {
       const { mail } = request.query;
       if (!mail) {
@@ -66,14 +68,14 @@ export default async function (fastify, opts) {
       if (!result) {
         return reply.code(404).send({ error: 'User not found' });
       }
-      reply.send(result);
+      reply.send(sanitizeUser(result));
     } catch (error) {
       console.error(error);
       reply.code(500).send({ error: 'Internal Server Error ' + error });
     }
   });
 
-  fastify.get('/userbygoogleid', async (request, reply) => {
+  fastify.get('/userbygoogleid', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try {
       const { google_id } = request.query;
       if (!google_id) {
@@ -84,14 +86,14 @@ export default async function (fastify, opts) {
       if (!result) {
         return reply.code(404).send({ error: 'User not found' });
       }
-      reply.send(result);
+      reply.send(sanitizeUser(result));
     } catch (error) {
       console.error(error);
       reply.code(500).send({ error: 'Internal Server Error ' + error });
     }
   });
 
-  fastify.get('/userbytoken', async (request, reply) => {
+  fastify.get('/userbytoken', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try {
       const { token } = request.query;
       if (!token) {
@@ -99,14 +101,14 @@ export default async function (fastify, opts) {
       }
 
       const result = await searchByToken(token);
-      reply.send(result);
+      reply.send(sanitizeUsers(result));
     } catch (error) {
       console.error(error);
       reply.code(500).send({ error: 'Internal Server Error ' + error });
     }
   });
 
-  fastify.get('/statsbyid', async (request, reply) => {
+  fastify.get('/statsbyid', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try {
       const { id } = request.query;
       if (!id) {
@@ -121,7 +123,7 @@ export default async function (fastify, opts) {
     }
   });
 
-  fastify.get('/allplayerstats', async (request, reply) => {
+  fastify.get('/allplayerstats', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try {
       const result = await getAllPlayerStats();
       reply.send(result);
@@ -131,7 +133,7 @@ export default async function (fastify, opts) {
     }
   });
 
-  fastify.get('/userlastactive', async (request, reply) => {
+  fastify.get('/userlastactive', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try {
       const { id } = request.query;
       if (!id) {

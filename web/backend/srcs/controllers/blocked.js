@@ -4,7 +4,7 @@ import { get_blocked_user, add_blocked_user, remove_blocked_user } from '../data
 
 export default async function (fastify, opts) {
 
-    fastify.get('/blocked', async (request, reply) => {
+    fastify.get('/blocked', { preHandler: [fastify.authenticate] }, async (request, reply) => {
         try {
             const { id } = request.query;
             if (!id) {
@@ -19,7 +19,7 @@ export default async function (fastify, opts) {
             return reply.code(500).send({ error: 'Server error: ' + error.message });
         }
     });
-    fastify.post('/blockuser', async (request, reply) => {
+    fastify.post('/blockuser', { preHandler: [fastify.authenticate] }, async (request, reply) => {
         try {
             const { id, id_blocked } = request.body;
 
@@ -38,7 +38,7 @@ export default async function (fastify, opts) {
             return reply.code(500).send({ error: 'Server error: ' + error.message });
         }
     });
-    fastify.delete('/unblockuser', async (request, reply) => {
+    fastify.delete('/unblockuser', { preHandler: [fastify.authenticate] }, async (request, reply) => {
         try {
             const { id, id_blocked } = request.body;
 
@@ -55,7 +55,7 @@ export default async function (fastify, opts) {
     });
 
     // Backwards-compatible POST endpoint for clients that send a POST instead of DELETE
-    fastify.post('/unblockuser', async (request, reply) => {
+    fastify.post('/unblockuser', { preHandler: [fastify.authenticate] }, async (request, reply) => {
         try {
             const { id, id_blocked } = request.body;
 

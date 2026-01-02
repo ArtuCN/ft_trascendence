@@ -10,12 +10,14 @@
   "dependencies": {
     "@fastify/cors": "^8.4.1",
     "@fastify/jwt": "^6.2.1",
+    "@fastify/rate-limit": "^9.1.0",
     "bcrypt": "^6.0.0",
     "fastify": "^4.20.0",
     "fastify-multipart": "^5.3.1",
     "google-auth-library": "^9.0.0",
     "sqlite3": "^5.x.x",
-    "ws": "^8.18.3"
+    "ws": "^8.18.3",
+    "xss": "^1.0.15"
   },
   "devDependencies": {
     "nodemon": "^2.0.22"
