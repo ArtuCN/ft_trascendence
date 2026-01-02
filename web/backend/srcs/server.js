@@ -57,7 +57,7 @@ await fastify.register(fastifyMultipart, {
 });
 
 // Configura JWT
-await fastify.register(jwt, { secret: 'your_secret_key' }); // 🔐 usa un valore sicuro in .env
+await fastify.register(jwt, { secret: process.env.JWT_SECRET }); // 🔐 usa un valore sicuro in .env
 
 // per preHandler - estrare dati di user da token, senza lookup in database
 fastify.decorate('authenticate', async function (request, reply) {

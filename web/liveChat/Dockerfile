@@ -18,7 +18,7 @@ COPY index.html ./index.html
 
 RUN tsc
 
-EXPOSE 4555
+EXPOSE ${VITE_PORT}
 
 # For development with reload: CMD ["ts-node", "src/lib/index.ts"]
 CMD ["node", "dist/lib/index.js"]

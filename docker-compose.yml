@@ -43,7 +43,7 @@ services:
       - backend_node_modules:/app/node_modules
       - shared_db_volume:/app/data
     expose:
-      - "3000"
+      - "${BACKEND_PORT}"
     depends_on:
       - database
     restart: on-failure
@@ -64,7 +64,7 @@ services:
       - ./web/frontend/ts_frontend/index.html:/app/index.html
       - frontend_node_modules:/app/node_modules
     expose:
-      - "5173"
+      - "${FRONTEND_PORT}"
     networks:
       - transcendnet
     depends_on:
@@ -87,7 +87,7 @@ services:
       - livechat_node_modules:/app/node_modules
       - shared_db_volume:/app/data
     expose:
-      - "4555"
+      - "${VITE_PORT}"
     depends_on:
       - database
       - backend
@@ -95,18 +95,20 @@ services:
 
   gameplay:
     container_name: gameplay
+    env_file: .env
     build:
       context: ./game_logic/Gameplay
       dockerfile: Dockerfile
     volumes:
       - ./game_logic/Gameplay:/code
     expose:
-      - "8000"
+      - "${GAMEPLAY_PORT}"
     networks:
       - netplay
     restart: on-failure
   ai:
     container_name: ai
+    env_file: .env
     build:
       context: ./game_logic/AI
       dockerfile: Dockerfile
@@ -114,7 +116,7 @@ services:
       - ./game_logic/AI:/code
       - ai_data:/code/data
     expose:
-      - "8001"
+      - "${AI_PORT}"
     depends_on:
       - gameplay
     networks:

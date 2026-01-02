@@ -21,7 +21,7 @@
    - forward/back button in UI ,1, Matteo, inizio 30.1, fixed
    - protect backend api 3 , tjaz, finito
    - creare un env unico per tutti gli docker Arturo, inizio 30 ,1 fixed
-   - SECRET HARDCODATI!!! ,1
+   - SECRET HARDCODATI!!! Arturo inizio 02,1
    
 ## COSE DA FARE MEDIE:
     - caricare imagine di avatar, devi fare refresh che si vede ,1
