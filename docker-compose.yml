@@ -4,11 +4,11 @@ services:
       context: ./nginx
     image: nginx-ssl:latest
     container_name: nginx
-    volumes:
-      - ./nginx/conf:/etc/nginx/conf.d:ro
-      - ./nginx/certs:/etc/ssl:ro
+    env_file: .env
     ports:
-      - "443:443"
+      - "${NGINX_PORT}"
+    volumes:
+      - ./nginx/certs:/etc/ssl:ro
     depends_on:
       - frontend
       - backend
@@ -17,6 +17,7 @@ services:
     networks:
       - transcendnet
       - netplay
+    restart: on-failure
   database:
     build:
       context: ./web/database

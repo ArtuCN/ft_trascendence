@@ -6,7 +6,7 @@
 	- si puo prendere un ticket in due o tre (si divide punti)
 
 # punti per persona: finito (in progress)
-	- Arturo: 1 (2)
+	- Arturo: 3 (3)
 	- Matteo: 2 (2)
 	- Khadim: 0 (1)
 	- Petre: 0 (1)
@@ -21,7 +21,7 @@
    - forward/back button in UI ,1, Matteo, inizio 30.1, fixed
    - protect backend api 3 , tjaz, finito
    - creare un env unico per tutti gli docker Arturo, inizio 30 ,1 fixed
-   - SECRET HARDCODATI!!! Arturo inizio 02,1
+   - SECRET HARDCODATI!!! Arturo inizio 02,1 fixed
    
 ## COSE DA FARE MEDIE:
     - caricare imagine di avatar, devi fare refresh che si vede ,1
