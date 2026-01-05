@@ -1,5 +1,6 @@
 import { OAuth2Client } from 'google-auth-library';
 import { getUserByGoogleId, getUserByMail, insertGoogleUser, saveToken, getTokenByUsername, tokenExists } from '../database_comunication/user_db.js';
+import { sanitizeInput } from '../utils/sanitize.js';
 
 const GOOGLE_CLIENT_ID = '575747097249-3bu3g738p6s49pisr9ael83r4p5p1urv.apps.googleusercontent.com';
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
@@ -26,25 +27,28 @@ export default async function (fastify, opts) {
             const { sub: googleId, email, name } = payload;
 
             let user = await getUserByGoogleId(googleId);
-            
+
             if (!user) {
                 const existingUser = await getUserByMail(email);
                 if (existingUser && !existingUser.google_id) {
-                    return reply.code(400).send({ 
-                        error: 'An account with this email already exists. Please use your email and password to log in.' 
+                    return reply.code(400).send({
+                        error: 'An account with this email already exists. Please use your email and password to log in.'
                     });
                 }
-                
+
+                const sanitizedUsername = sanitizeInput(name || email.split('@')[0]);
+                const sanitizedEmail = sanitizeInput(email);
+
                 const newUser = await insertGoogleUser({
-                    username: name || email.split('@')[0],
-                    mail: email,
+                    username: sanitizedUsername,
+                    mail: sanitizedEmail,
                     google_id: googleId
                 });
-                
+
                 user = {
                     id: newUser.id,
-                    username: name || email.split('@')[0],
-                    mail: email,
+                    username: sanitizedUsername,
+                    mail: sanitizedEmail,
                     google_id: googleId
                 };
             }
