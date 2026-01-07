@@ -302,8 +302,8 @@ export function showVictoryScreen(winner: Player) {
     btnBack.style.transform = "translate(-50%, -50%)";
 
     btnBack.onclick = () => {
-        btnBack.style.display = "none";
-        canvas_container.style.display = "none";
-        showMenu(winner); // or showMenu(null) if you want to reset
+      btnBack.style.display = "none";
+      canvas_container.style.display = "none";
+      showMenu(winner); // or showMenu(null) if you want to reset
     };
 }
