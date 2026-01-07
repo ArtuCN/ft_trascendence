@@ -1,4 +1,4 @@
-import { insertTournamentInDB, getAllTournaments, startTournament, finishTournament } from '../database_comunication/tournament_db.js';
+import { insertTournamentInDB, getAllTournaments, startTournament, finishTournament, getTournamentDataForBlockchain } from '../database_comunication/tournament_db.js';
 import { sanitizeInput } from '../utils/sanitize.js';
 
 export default async function (fastify, opts) {
@@ -43,4 +43,22 @@ export default async function (fastify, opts) {
       reply.code(500).send({ error: 'Internal Server Error ' + error });
     }
   });
+
+  fastify.get('/gettournamentforblockchain', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+	  try {
+		  const { id, tournament_id } = request.query;
+		  if (!id || !tournament_id) return reply.code(400).send({ error: 'Missing id or tournament_id' });
+
+		  const result = await getTournamentDataForBlockchain(Number(tournament_id));
+		  const tournament_ids = result.user_ids;
+		  if (!tournament_ids.includes(Number(id))) {
+			  return reply.code(403).send({ error: 'User not in tournament' });
+		  }
+		  return reply.send(result);
+	  } catch (error) {
+		  console.log(error);
+		  reply.code(500).send({ error: 'Internal Server Error ' + error});
+	  }
+  });
 }
+
