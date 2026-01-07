@@ -2,14 +2,12 @@ import { insertTournamentInDB, getAllTournaments, startTournament, finishTournam
 import { sanitizeInput } from '../utils/sanitize.js';
 
 export default async function (fastify, opts) {
-      fastify.post('/tournament', { preHandler: [fastify.authenticate] }, async (request, reply) => {
-    {
-      const { tournament_name } = request.body;
-      const sanitizedTournamentName = sanitizeInput(tournament_name);
-      const result = await insertTournamentInDB(sanitizedTournamentName);
-      reply.send(result);
-    }
-  })
+  fastify.post('/tournament', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+    const { tournament_name } = request.body;
+    const sanitizedTournamentName = sanitizeInput(tournament_name);
+    const result = await insertTournamentInDB(sanitizedTournamentName);
+    reply.send(result);
+  });
 
   fastify.get('/alltournament', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try {

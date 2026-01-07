@@ -229,7 +229,7 @@ export async function getTournamentDataForBlockchain(tournament_id)
 				}
 				return acc;
 			}, 0);
-			score_obj = {
+			const score_obj = {
 				"id": user.id,
 				"score": total_score >= 0 ? total_score : 0,
 			};
@@ -246,20 +246,20 @@ export async function getTournamentDataForBlockchain(tournament_id)
 			id => scoreByUserId.get(id) ?? 0
 		);
 
-		const user_ids_8     = padTo8(user_ids_sorted);
+		const user_ids_8     = padTo8(user_ids);
 		const user_scores_8  = padTo8(user_scores_sorted);
 		const winner_ids_8   = padTo8([Number(winner_id)]);
 		const winner_name_str = winner_name;
 
 		return {
 			"user_ids": user_ids_8,
-			"user_scores": userScoreArray_8,
+			"user_scores": user_scores_8,
 			"winner_ids": winner_ids_8,
 			"winner_names": winner_name_str,
 			"tournament_id": Number(tournament_id)
 		}
 	} catch (error) {
-		console.error('Error getting tournament data for blockchain for: ', id, ", tournament id: ", tournament_id)
-
-
+		console.error('Error getting tournament data for blockchain for tournament id: ', tournament_id, ', error:', error);
+		throw error;
+	}
 }
