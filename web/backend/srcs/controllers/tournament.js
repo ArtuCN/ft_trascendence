@@ -10,6 +10,7 @@ export default async function (fastify, opts) {
       reply.send(result);
     }
   })
+
   fastify.get('/alltournament', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try {
       const result = await getAllTournaments();
@@ -19,6 +20,7 @@ export default async function (fastify, opts) {
       reply.code(500).send({ error: 'Internal Server Error ' + error });
     }
   });
+
   fastify.post('/starttournament', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try {
       const { id } = request.body;
@@ -31,6 +33,7 @@ export default async function (fastify, opts) {
       reply.code(500).send({ error: 'Internal Server Error ' + error });
     }
   });
+
   fastify.post('/finishtournament', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try {
       const { id, id_winner } = request.body;

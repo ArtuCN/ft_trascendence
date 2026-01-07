@@ -84,4 +84,11 @@ $db->exec("CREATE TABLE IF NOT EXISTS player_all_time_stats(
     tournament_won INTEGER DEFAULT 0,
     FOREIGN KEY (id_player) REFERENCES user(id)
 )");
+
+$db->exec("CREATE TABLE IF NOT EXISTS blockchain_tournament(
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	id_backend INTEGER,
+	id_blockchain INTEGER,
+	FOREIGN KEY (id_backend) REFERENCES tournament(id)
+)");
 ?>
