@@ -42,3 +42,4 @@ LIVECHAT_MAX_CONNECTIONS=100
 LIVECHAT_LOG_LEVEL="info"
 VITE_API_URL="http://livechat:4555"
 HOST="livechat"
+DOCKER_COMPOSE_TYPE="docker-compose"

@@ -3,7 +3,7 @@
 **giovedì 15.1. 21:00**
 
 ## Consegna  
-**venerdì 16.1. tardi pomeriggio**
+**lunedi 19.1. tardi pomeriggio**
 
 ---
 ## timeline:
@@ -72,8 +72,10 @@
     + Non si finisce - *Matteo*
     + Quando giochi 2 player, c'è pulsante per 4 player che ti porta durante il gioco a giocare - *Matteo*
     + Playground/field è troppo grande per la viewport che c'è all'inizio
-- **Fare VM su computer di scuola e testare se tutto funziona** — *Petre-Arturo*
+- **Fare VM su computer di scuola e testare se tutto funziona** — *Petre-Arturo* -*Fatto*
+- **Sistemare makefile e .env in base alla VM** - *Arturo* - *Fatto*
 - **Fare ultime modifiche per integrare blockchain con FE** — *Tjaz-Khadim*
+- **Sistemare visuale gameplay 2d che non fa vedere un player** - *Matteo*
 
 ---
 

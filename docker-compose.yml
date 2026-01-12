@@ -6,7 +6,7 @@ services:
     container_name: nginx
     env_file: .env
     ports:
-      - "${NGINX_PORT}"
+      - ${NGINX_PORT}:443
     volumes:
       - ./nginx/certs:/etc/ssl:ro
     depends_on:
