@@ -1,40 +1,46 @@
 import { Player } from './classPlayer.js';
 import { Paddles } from './classPaddles.js';
 import { gameRunning, stopGame, PaddleOrientation, canvas, ctx, cornerWallSize, cornerWallThickness,  } from './variables.js';
-import { nbrPlayer, playerGoals, playerGoalsRecived, showMenu, ws } from '../script.js';
+import { nbrPlayer, playerGoals, playerGoalsRecived, players, showMenu, ws } from '../script.js';
 import { showVictoryScreen } from '../utilities.js';
 
 export function drawScore(nbrPlayer: number) {
-    ctx.font = "bold 36px Arial";
+    ctx.font = "bold 25px Arial";
     ctx.fillStyle = "white";
 
     if (nbrPlayer <= 2) {
         ctx.textAlign = "left";
         ctx.textBaseline = "top";
+				ctx.fillText(players[0].getNameTag(), canvas.width / 2 - 300, 20)
         ctx.fillText(playerGoals[0].toString(), canvas.width / 2 - 100, 20); // Left player
         ctx.textAlign = "right";
+				ctx.fillText(players[1].getNameTag(), canvas.width / 2 + 300, 20)
         ctx.fillText(playerGoals[1].toString(), canvas.width / 2 + 100, 20); // Right player
     }
     if (nbrPlayer == 4) {
-		ctx.fillStyle = "blue";
-        ctx.textAlign = "left";
-        ctx.textBaseline = "top";
-        ctx.fillText(playerGoals[2].toString(), cornerWallThickness / 2 - 10, cornerWallThickness / 2 - 15);
+			ctx.fillStyle = "blue";
+			ctx.textAlign = "left";
+			ctx.textBaseline = "top";
+			ctx.fillText(players[2].getNameTag().slice(0, 5), cornerWallThickness / 2  - 45, cornerWallThickness / 2 - 30);
+			ctx.fillText(playerGoals[2].toString(), cornerWallThickness / 2 - 10, cornerWallThickness / 2 + 5);
 
-		ctx.fillStyle = "red";
-        ctx.textAlign = "right";
-        ctx.textBaseline = "top";
-        ctx.fillText(playerGoals[1].toString(), canvas.width - cornerWallThickness / 2 + 10, cornerWallThickness / 2 - 15);
+			ctx.fillStyle = "red";
+			ctx.textAlign = "right";
+			ctx.textBaseline = "top";
+			ctx.fillText(players[1].getNameTag().slice(0, 5), canvas.width - cornerWallThickness / 2  + 45, cornerWallThickness / 2 - 30);
+			ctx.fillText(playerGoals[1].toString(), canvas.width - cornerWallThickness / 2 + 10, cornerWallThickness / 2 + 5);
 
-		ctx.fillStyle = "green";
-        ctx.textAlign = "right";
-        ctx.textBaseline = "bottom";
-        ctx.fillText(playerGoals[3].toString(), canvas.width - cornerWallThickness / 2 + 10, canvas.height - cornerWallThickness / 2 + 15);
+			ctx.fillStyle = "green";
+			ctx.textAlign = "right";
+			ctx.textBaseline = "bottom";
+			ctx.fillText(players[3].getNameTag().slice(0, 5), canvas.width - cornerWallThickness / 2  + 45, canvas.height - cornerWallThickness / 2 - 5);
+			ctx.fillText(playerGoals[3].toString(), canvas.width - cornerWallThickness / 2 + 10, canvas.height - cornerWallThickness / 2 + 30);
 
-		ctx.fillStyle = "white";
-        ctx.textAlign = "left";
-        ctx.textBaseline = "bottom";
-        ctx.fillText(playerGoals[0].toString(), cornerWallThickness / 2 - 10, canvas.height - cornerWallThickness / 2 + 15);
+			ctx.fillStyle = "white";
+			ctx.textAlign = "left";
+			ctx.textBaseline = "bottom";
+			ctx.fillText(players[0].getNameTag().slice(0, 5), cornerWallThickness / 2  - 45, canvas.height - cornerWallThickness / 2 - 5);
+			ctx.fillText(playerGoals[0].toString(), cornerWallThickness / 2 - 10, canvas.height - cornerWallThickness / 2 + 30);
     }
 }
 
@@ -112,46 +118,47 @@ export class Ball {
 
 	private checkScore(players: Player[]) {
 		if (this.online && this.isAuthoritative) return;
-		// Left goal
-		if (this.ballX < 0) {
-			if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
-			playerGoalsRecived[0]++;
-			drawScore(nbrPlayer);
-			if (playerGoals[this.lastTouchedPlayer] == 5) {
-				if (typeof showMenu === "function") {
-					stopGame();
-					showVictoryScreen(players[this.lastTouchedPlayer]);
-					for (let i = 0; i < players.length; i++) {
-						if (i !== this.lastTouchedPlayer) {
-							players[i].getPaddle().stopBotPolling();
-						}
-					}
-				}
 
+		if (nbrPlayer <= 2) {
+			// Left goal
+			if (this.ballX < 0) {
+				playerGoals[1]++;
+				playerGoalsRecived[0]++;
+				drawScore(nbrPlayer);
+				if (playerGoals[1] == 5) {
+					if (typeof showMenu === "function") {
+						stopGame();
+						showVictoryScreen(players[1]);
+						for (let i = 0; i < players.length; i++) {
+							if (i !== 1) {
+								players[i].getPaddle().stopBotPolling();
+							}
+						}
+					}
+
+				}
+				this.resetGame(players);
+				return;
 			}
-			this.resetGame(players);
-			return;
-		}
-		// Right goal
-		if (this.ballX > canvas.width) {
-			if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
-			drawScore(nbrPlayer);
-			playerGoalsRecived[1]++;
-			if (playerGoals[this.lastTouchedPlayer] == 5) {
-				if (typeof showMenu === "function") {
-					stopGame();
-					showVictoryScreen(players[this.lastTouchedPlayer]);
-					for (let i = 0; i < players.length; i++) {
-						if (i !== this.lastTouchedPlayer) {
-							players[i].getPaddle().stopBotPolling();
+			// Right goal
+			if (this.ballX > canvas.width) {
+				playerGoals[0]++;
+				drawScore(nbrPlayer);
+				playerGoalsRecived[1]++;
+				if (playerGoals[0] == 5) {
+					if (typeof showMenu === "function") {
+						stopGame();
+						showVictoryScreen(players[0]);
+						for (let i = 0; i < players.length; i++) {
+							if (i !== 0) {
+								players[i].getPaddle().stopBotPolling();
+							}
 						}
 					}
 				}
+				this.resetGame(players);
+				return;
 			}
-			this.resetGame(players);
-			return;
-		}
-		if (nbrPlayer <= 2) {
 			// Bounce off top wall
 			if (this.ballY - this.ballSize / 2 <= 0) {
 				this.ballY = this.ballSize / 2;
@@ -164,6 +171,44 @@ export class Ball {
 			}
 		}
 		else if (nbrPlayer == 4) {
+			if (this.ballX < 0) {
+				if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
+				playerGoalsRecived[0]++;
+				drawScore(nbrPlayer);
+				if (playerGoals[this.lastTouchedPlayer] == 5) {
+					if (typeof showMenu === "function") {
+						stopGame();
+						showVictoryScreen(players[this.lastTouchedPlayer]);
+						for (let i = 0; i < players.length; i++) {
+							if (i !== this.lastTouchedPlayer) {
+								players[i].getPaddle().stopBotPolling();
+							}
+						}
+					}
+
+				}
+				this.resetGame(players);
+				return;
+			}
+			// Right goal
+			if (this.ballX > canvas.width) {
+				if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
+				drawScore(nbrPlayer);
+				playerGoalsRecived[1]++;
+				if (playerGoals[this.lastTouchedPlayer] == 5) {
+					if (typeof showMenu === "function") {
+						stopGame();
+						showVictoryScreen(players[this.lastTouchedPlayer]);
+						for (let i = 0; i < players.length; i++) {
+							if (i !== this.lastTouchedPlayer) {
+								players[i].getPaddle().stopBotPolling();
+							}
+						}
+					}
+				}
+				this.resetGame(players);
+				return;
+			}
 			if (this.ballY < 0) {
 				if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
 				playerGoalsRecived[2]++;

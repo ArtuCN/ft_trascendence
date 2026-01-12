@@ -127,15 +127,15 @@ export class Paddles {
 				this.initialPosition -= this.speed;
 		}
 		else if (this.id === 2 && this.orientation === "horizontal") {
-			if ((keysPressed["d"] || keysPressed["D"]) && this.initialPosition <= (canvas.width - this.paddleLength - cornerWallThickness))
+			if ((keysPressed["f"] || keysPressed["F"]) && this.initialPosition <= (canvas.width - this.paddleLength - cornerWallThickness))
 				this.initialPosition += this.speed;
-			if ((keysPressed["a"] || keysPressed["A"]) && this.initialPosition >= 0 + cornerWallThickness)
+			if ((keysPressed["d"] || keysPressed["D"]) && this.initialPosition >= 0 + cornerWallThickness)
 				this.initialPosition -= this.speed;
 		}
 		else if (this.id === 3 && this.orientation === "horizontal") {
-			if (keysPressed["ArrowRight"] && this.initialPosition <= (canvas.width - this.paddleLength - cornerWallThickness))
+			if ((keysPressed["k"] || keysPressed["K"]) && this.initialPosition <= (canvas.width - this.paddleLength - cornerWallThickness))
 				this.initialPosition += this.speed;
-			if (keysPressed["ArrowLeft"] && this.initialPosition >= 0 + cornerWallThickness)
+			if ((keysPressed["J"] || keysPressed["J"]) && this.initialPosition >= 0 + cornerWallThickness)
 				this.initialPosition -= this.speed;
 		}
 		if (this.orientation === "vertical") {
