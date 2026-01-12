@@ -1,73 +1,85 @@
-# work split (divisione di lavoro)
 
-### deadline: *giovedi 15.1. 21.00h*
-### consegna: venerdi 16.1. tardi pomeriggio
+## Deadline  
+**giovedì 15.1. 21:00**
 
+## Consegna  
+**venerdì 16.1. tardi pomeriggio**
 
-### modo di completare tui task:
-    + *prima fare test, che ti sono stati asegnatti,*
-    + se esiste qualcosa che non va, aggiungi a task che devono fare questi che si ocupano di questa parte
-    + se questo non sei tu, organiza e spiega cosa si deve fare a questo che deve farlo
-    + *fai tui ticket*
-    + fai un altro test losteso come al inizio
-    + *se serve ripetti tutto di nuovo!*
+---
 
-### come testare:
-    - funzionalita di app deve ripsetare 100% a cose che sono scritte in subject
-    - se ce qualcosa che non va scrivi un ticket in organization.md e contatta Tjaz che asegna ticket a qualcuno
-    - guarda anche subject prima di modules (pagina 4-7), se ce qualcosa li che e conneso con il modulo che stai testando, <br>
-        deve rispetare anche questo (per esempio pagina 6 parla di game, che corisponde con gamplay modules)
-    - se sono cose lasciate alla interpretazione, pensa a come difendere le nostre scelte. <br>
-        ogni uno sara responsabile di pottere diffendere parti che ha testato insieme con questo che ha fatto il modulo
+## Modo di completare i tuoi task
 
-### come fare ticket:
-    - come detto prima prima testare e vedere se sono altri ticket o ticket asegnati si devono modificare
-    - comunicare con altri se serve colaborazione. al prima possibile, cosi tutti hanno abastanza tempo per fare sua parte
-    - fare e testare di nuovo!
+1. **Prima fai i test che ti sono stati assegnati.**
+2. Se esiste qualcosa che non va, aggiungi ai task quelli che devono essere fatti da chi si occupa di quella parte.
+3. Se questo non sei tu, organizza e spiega cosa si deve fare a chi deve farlo.
+4. **Crea i tuoi ticket.**
+5. Fai un altro test come all'inizio.
+6. **Se serve, ripeti tutto di nuovo!**
 
+---
 
-## divisione di moduli:
+## Come testare
 
-### testare:
-    - framework backend - Arturo, Tjaz
-    - framework/toolkit for frontend - Khadim, Petre
-    - remote auth - khadim, Arturo
-    - remote players - Matteo, tjaz
-    - multiple players - Matteo, Petre
-    - ai oponent - Matteo, Petre
-    - security - Tjaz, Arturo
-    - 3d - Petre, Matteo
-    - user management - Khadim, Arturo
-    - blockchain - tjaz, khadim
+- La funzionalità dell'app deve rispettare **100%** ciò che è scritto nel subject.
+- Se c'è qualcosa che non va, scrivi un ticket in `organization.md` e contatta **Tjaz** che assegna il ticket a qualcuno.
+- Guarda anche il subject prima dei modules (pagina 4-7): se c'è qualcosa lì che è connesso con il modulo che stai testando, deve rispettare anche questo (es. pagina 6 parla di game, che corrisponde con gameplay modules).
+- Se sono cose lasciate all'interpretazione, pensa a come difendere le nostre scelte.  
+  **Ogni uno sarà responsabile di poter difendere le parti che ha testato insieme con chi ha fatto il modulo.**
 
-### ticket importanti:
-    - utenti non possono modificare sui dati!, *Khadim* (con Arturo se serve qualche modifica in BE)
-        + guarda user management module in subject
-    - aggiungere online/offline status a amici, *Khadim* (con Arturo se serve qualche modifica in BE)
-    - o avere user id in user profile, o potere scrivere username o emain per trovare un amico in social, *Khadim*
-    - 3d: *Petre*
-        + giocho no ha score
-        + no si finisce
-        + quando giochi 2 player, ce pulsante per 4 player che ti porta durante giocho giocare
-        + playground/field e troppo grande per viewport che ce al inizio,
-    - fare VM su computer di scuola e testare se tutto funziona, *Petre/Matteo*
-    - fare ultime modifice per integrare blockchain con FE, *Tjaz-Khadim*
+---
 
-### ticket meno importanti:
-    - Address any compatibility issues or rendering discrepancies in browser other than firefox, *Arturo*
-    - caricare avatar da un alert notice, ma imaggine si carica, *Khadim*
-    - 3d: *Petre*
-        - qualche cosa in piu, o pensare come difendere le prossime cose che chiede subject su 3d: (scegli uno)
-            - advanced 3d graphics, imersive gameplay, enhancing gameplay experience, elevating visual quality
-    - livechat: *Tjaz-Khadim* (completare solo se hai finito altri ticket)
-        - non funziona su diversi computer *Tjaz*
-        - non si connete secondo utente *Tjaz*
-		- diversi browser *Tjaz-Khadim*
-        - si deve fare refresh per mostrare utenti (forse farlo automatico), *Tjaz*
-        - Frontend stilizato *Khadim*
-		- agiungere pulsante di inizare remote play da chat *Khadim*
+## Come fare ticket
 
-    
+- Come detto prima, prima testare e vedere se ci sono altri ticket o ticket assegnati che si devono modificare.
+- Comunicare con altri se serve collaborazione, il prima possibile, così tutti hanno abbastanza tempo per fare la propria parte.
+- Fare e testare di nuovo!
 
-### 
+---
 
+## Divisione di moduli
+
+### Testare
+
+- **framework backend** — Arturo, Tjaz
+- **framework/toolkit for frontend** — Khadim, Petre
+- **remote auth** — Khadim, Arturo
+- **remote players** — Matteo, Tjaz
+- **multiple players** — Matteo, Petre
+- **ai opponent** — Matteo, Petre
+- **security** — Tjaz, Arturo
+- **3d** — Petre, Matteo
+- **user management** — Khadim, Arturo
+- **blockchain** — Tjaz, Khadim
+
+---
+
+## Ticket importanti
+
+- **Utenti non possono modificare i propri dati!** — *Khadim* (con Arturo se serve qualche modifica in BE)
+    + Guarda user management module in subject
+- **Aggiungere online/offline status agli amici** — *Khadim* (con Arturo se serve qualche modifica in BE)
+- **O avere user id in user profile, o poter scrivere username o email per trovare un amico in social** — *Khadim*
+- **3d** — *Petre*
+    + Il gioco non ha score
+    + Non si finisce
+    + Quando giochi 2 player, c'è pulsante per 4 player che ti porta durante il gioco a giocare
+    + Playground/field è troppo grande per la viewport che c'è all'inizio
+- **Fare VM su computer di scuola e testare se tutto funziona** — *Petre/Matteo*
+- **Fare ultime modifiche per integrare blockchain con FE** — *Tjaz-Khadim*
+
+---
+
+## Ticket meno importanti
+
+- **Address any compatibility issues or rendering discrepancies in browsers other than Firefox** — *Arturo*
+- **Caricare avatar da un alert notice, ma immagine si carica** — *Khadim*
+- **3d** — *Petre*
+    - Qualcosa in più, o pensare come difendere le prossime cose che chiede il subject su 3d: (scegli uno)
+        - advanced 3d graphics, immersive gameplay, enhancing gameplay experience, elevating visual quality
+- **Livechat** — *Tjaz-Khadim* (completare solo se hai finito altri ticket)
+    - Non funziona su diversi computer — *Tjaz*
+    - Non si connette secondo utente — *Tjaz*
+    - Diversi browser — *Tjaz-Khadim*
+    - Si deve fare refresh per mostrare utenti (forse farlo automatico) — *Tjaz*
+    - Frontend stilizzato — *Khadim*
+    - Aggiungere pulsante di iniziare remote play da chat — *Khadim*
