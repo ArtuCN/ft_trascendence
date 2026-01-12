@@ -2,7 +2,7 @@ import { add_friendship, get_friends_by_user, remove_friendship, get_all_friends
 import { who_blocked_user } from "../database_comunication/blocked_db.js";
 export default async function (fastify, opts) {
 
-    fastify.get('/friend', async (request, reply) => {
+    fastify.get('/friend', { preHandler: [fastify.authenticate] }, async (request, reply) => {
         try {
             const { id } = request.query;
             if (!id) {
@@ -22,7 +22,7 @@ export default async function (fastify, opts) {
         }
     });
 
-    fastify.post('/addfriend', async (request, reply) => {
+    fastify.post('/addfriend', { preHandler: [fastify.authenticate] }, async (request, reply) => {
         try {
             const { id1, id2 } = request.body;
 
@@ -41,7 +41,7 @@ export default async function (fastify, opts) {
         }
     });
 
-    fastify.delete('/removefriend/:id1/:id2', async (request, reply) => {
+    fastify.delete('/removefriend/:id1/:id2', { preHandler: [fastify.authenticate] }, async (request, reply) => {
         try {
             const { id1, id2 } = request.params;
 
@@ -61,7 +61,7 @@ export default async function (fastify, opts) {
         }
     });
 
-    fastify.get('/allfriendships', async (request, reply) => {
+    fastify.get('/allfriendships', { preHandler: [fastify.authenticate] }, async (request, reply) => {
         try {
 
             const users = await get_all_friendships();

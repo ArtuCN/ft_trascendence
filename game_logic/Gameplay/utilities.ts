@@ -197,12 +197,19 @@ export function clonePlayer(original: Player, newID: number): Player {
     return new Player(original.getNameTag(), newID, original.getUserID(), original.getPaddle().getOrientation());
 }
 
+export function getToken() {
+	const token = localStorage.getItem("token");
+	return token
+}
+
 export async function sendBotData(ball_y: number, paddle_y: number): Promise<string> {
 
+	const token = getToken()
 	let response = await fetch("/ai/", {
 		method: "POST",
 		headers: {
-			"Content-Type": "application/json"
+			"Content-Type": "application/json",
+			"Authorization": `Bearer ${token}`
 		},
 		body: JSON.stringify({ ball_y, paddle_y })
 	});
@@ -224,14 +231,17 @@ export function sendTournamentData() {
         semifinals: semifinals,
         final: final
     };
+	const token = getToken()
     fetch("/api/tournament/", {
         method: "POST",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+			"Authorization": `Bearer ${token}`
         },
         body: JSON.stringify(body)
     })
 }
+
 
 export async function sendMatchData() {
 
@@ -241,18 +251,20 @@ export async function sendMatchData() {
 
     let body = {
         id_tournament: TournamentID || null, // null for non-tournament matches
-        users_ids: players_id,
-        users_goal_scored: playerGoals,
-        users_goal_taken: playerGoalsRecived
+        users_ids: players[0].getUserID(),
+        users_goal_scored: playerGoals[0],
+        users_goal_taken: playerGoalsRecived[0]
     };
 
     console.log("Sending match data:", body);
 
     try {
+		const token = getToken()
         const response = await fetch("/api/match", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+				"Authorization": `Bearer ${token}`
             },
             body: JSON.stringify(body)
         });
@@ -290,8 +302,8 @@ export function showVictoryScreen(winner: Player) {
     btnBack.style.transform = "translate(-50%, -50%)";
 
     btnBack.onclick = () => {
-        btnBack.style.display = "none";
-        canvas_container.style.display = "none";
-        showMenu(winner); // or showMenu(null) if you want to reset
+      btnBack.style.display = "none";
+      canvas_container.style.display = "none";
+      showMenu(winner); // or showMenu(null) if you want to reset
     };
 }

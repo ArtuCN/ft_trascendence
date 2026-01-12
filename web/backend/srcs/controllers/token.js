@@ -15,10 +15,11 @@ export default async function (fastify, opts) {
       }
       
       // Genera un nuovo token (refresh)
-      const newToken = fastify.jwt.sign({ 
-        id: user.id, 
+      const newToken = fastify.jwt.sign({
+        id: user.id,
         mail: user.mail,
-        username: user.username
+        username: user.username,
+        is_admin: user.is_admin || false
       });
       
       reply.send({

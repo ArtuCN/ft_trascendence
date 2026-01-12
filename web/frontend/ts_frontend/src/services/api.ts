@@ -375,12 +375,9 @@ export class ApiService {
   }
 
   async logout(username: string): Promise<{ message: string }> {
-    const response = await fetch(`${API_BASE_URL}/logout`, {
+    const response = await this.makeAuthenticatedRequest('/logout', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ username }),
+      body: JSON.stringify({ username })
     });
 
     const data = await response.json();

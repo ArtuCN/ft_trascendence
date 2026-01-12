@@ -1,7 +1,7 @@
 import { getStatsById, getAllPlayerStats } from '../database_comunication/user_db.js';
 
 export default async function (fastify, opts) {
-  fastify.get('/stats', async (request, reply) => {
+  fastify.get('/stats', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try
     {
         const { id } = request.query;
@@ -18,7 +18,7 @@ export default async function (fastify, opts) {
   })
   
   //stats of ALL players
-  fastify.get('/allstats', async (request, reply) => {
+  fastify.get('/allstats', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try
     {
         const result = await getAllPlayerStats();

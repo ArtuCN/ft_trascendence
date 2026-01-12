@@ -29,7 +29,8 @@ export default async function (fastify, opts) {
                 token = fastify.jwt.sign({
                     id: user.id,
                     mail: user.mail,
-                    username: user.username
+                    username: user.username,
+                    is_admin: user.is_admin || false
                 });
             }
             reply.send({

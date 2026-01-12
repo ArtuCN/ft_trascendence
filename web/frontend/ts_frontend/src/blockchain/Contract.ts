@@ -126,6 +126,53 @@ export async function saveGameData(
 	}
 }
 
+/*
+ * Saves tournament data on the blockchain
+ * @param _NofPlayers - Number of players (max 8)
+ * @param _user_ids - Array of user IDs (length 8, pad with 0)
+ * @param _user_scores - Array of user scores (length 8, pad with 0)
+ * @param _winner_ids - Array of winner IDs (length 8, pad with 0)
+ * @param _winner_names - Winner name string
+ * @param _tournament_id - Tournament ID
+ */
+export async function saveTournamentData(
+  _NofPlayers: number,
+  _user_ids: number[],
+  _user_scores: number[],
+  _winner_ids: number[],
+  _winner_names: string,
+  _tournament_id: number
+): Promise<void> {
+  const walletClient = getStoredWalletClient();
+  const clientAddress: Address | null = getStoredAccount();
+
+  if (!walletClient || !clientAddress) {
+    throw new Error("Wallet not connected. Please connect MetaMask first.");
+  }
+
+  try {
+    const { request } = await publicClient.simulateContract({
+      account: clientAddress,
+      address: SCORES_ADDRESS,
+      abi: ScoreAbi,
+      functionName: 'saveTournamentData',
+      args: [
+        BigInt(_NofPlayers),
+        _user_ids.map(BigInt),
+        _user_scores.map(BigInt),
+        _winner_ids.map(BigInt),
+        _winner_names,
+        BigInt(_tournament_id)
+      ]
+    });
+
+    await walletClient.writeContract(request);
+  } catch (error) {
+    console.error('Error saving tournament data:', error);
+    throw error;
+  }
+}
+
 /**
  * Mints a NFT if the minter has participated in the game with the id passed as arg
  * @param gameId - The ID of the game to mint NFT for

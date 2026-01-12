@@ -103,6 +103,12 @@ export class Navbar {
       'text-white px-3 py-2 rounded-md transition-all w-full text-center bg-sky-400 hover:bg-sky-500 focus:outline-none',
       async () => await this.socialModal.show()
     );
+	
+    const chatButton = createButton(
+      'Chat',
+      'text-white px-3 py-2 rounded-md transition-all w-full text-center bg-sky-500 hover:bg-sky-600 focus:outline-none',
+      () => router.navigate('/live-chat')
+    );
 
     const logoutButton = createButton(
       'Logout',
@@ -125,6 +131,7 @@ export class Navbar {
     container.appendChild(playButton);
     container.appendChild(play3dButton);
     container.appendChild(socialButton);
+    container.appendChild(chatButton);
     container.appendChild(logoutButton);
 
     return container;
