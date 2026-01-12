@@ -1,34 +1,27 @@
-// Simple 3D Pong Game with Babylon.js
 declare const BABYLON: any;
 
-// Global game variables
 let engine: any;
 let scene: any;
 let camera: any;
 let canvas: HTMLCanvasElement;
 let gameStarted = false;
 
-// Variables needed by your classes (global scope for browser compatibility)
-let nbrPlayer = 2; // Start with 2 players (will be set by game mode)
-let playerGoals = [0, 0, 0, 0]; // Scores for up to 4 players
-let isAIMode = false; // Flag to check if AI mode is active
-let aiUpdateInterval = 100; // AI update frequency in ms
+let nbrPlayer = 2;
+let playerGoals = [0, 0, 0, 0];
+let isAIMode = false;
+let aiUpdateInterval = 100;
 
-// Field dimensions (adjustable for 4-player square field)
 let FIELD_WIDTH_3D = 18;
 let FIELD_HEIGHT_3D = 12;
 const FIELD_DEPTH_3D = 0.5;
 
-// Game objects using your classes
-let ball: any; // Will be instance of Ball class
-let players: any[] = []; // Will be array of Player instances
-// Corner obstacle cubes (created in initBabylon when nbrPlayer === 4)
+let ball: any; 
+let players: any[] = [];
 let cornerCubes: any[] = [];
 
-// Particle system for the ball trail
+// particelle ball
 let ballParticleSystem: any = null;
 
-// Keyboard controls (needed by paddle movement)
 const keys: Record<string, boolean> = {};
 window.addEventListener('keydown', (e) => {
     keys[e.key] = true;
@@ -37,23 +30,20 @@ window.addEventListener('keyup', (e) => {
     keys[e.key] = false;
 });
 
-// Colori centralizzati per il 3D (usa BABYLON.Color3)
 const COLORS = {
 	// materiali
-   ballDiffuse:    new BABYLON.Color3(0.88, 0.92, 0.98),  // bianco glaciale un filo più profondo
-    ballEmissive:   new BABYLON.Color3(0.50, 0.82, 0.95),  // azzurro acqua più corposo
-    paddleDefault:  new BABYLON.Color3(0.78, 0.90, 0.98),  // bianco-blu delicatamente scurito
-    paddleRight:    new BABYLON.Color3(0.00, 0.60, 0.90),  // blu frutiger più intenso
-    paddleTop:      new BABYLON.Color3(0.00, 0.88, 0.78),  // turchese acqua leggermente più profondo
-    paddleBottom:   new BABYLON.Color3(0.28, 0.85, 0.82),  // acqua pastello più smorzato
-    ground:         new BABYLON.Color3(0.36, 0.68, 0.78)   // azzurro più profondo e leggermente più scuro
+   ballDiffuse:    new BABYLON.Color3(0.88, 0.92, 0.98),  // bianco glaciale
+    ballEmissive:   new BABYLON.Color3(0.50, 0.82, 0.95),  // azzurro acqua
+    paddleDefault:  new BABYLON.Color3(0.78, 0.90, 0.98),  // bianco-blu
+    paddleRight:    new BABYLON.Color3(0.00, 0.60, 0.90),  // blu frutiger
+    paddleTop:      new BABYLON.Color3(0.00, 0.88, 0.78),  // turchese acqua
+    paddleBottom:   new BABYLON.Color3(0.28, 0.85, 0.82),  // acqua pastello
+    ground:         new BABYLON.Color3(0.36, 0.68, 0.78)   // azzurro più profondo
 };
 
-// Function to create game objects using your classes
 function createGameObjects(scene: any) {
     console.log("Creating game objects...");
     
-    // Create Ball (simplified version of your Ball class)
     const ballMesh = BABYLON.MeshBuilder.CreateSphere("ball", {diameter: 0.5}, scene);
     const ballMaterial = new BABYLON.StandardMaterial("ballMaterial", scene);
     ballMaterial.diffuseColor = COLORS.ballDiffuse;
@@ -61,22 +51,14 @@ function createGameObjects(scene: any) {
     ballMesh.material = ballMaterial;
     ballMesh.position = new BABYLON.Vector3(0, 0.5, 0);
 
-    // ----------------------------------------------------------------------------
-    // Particle trail for the ball
-    // Requires a small particle texture at "textures/flare.png" (recommended).
-    // If you don't have the texture, reduce particleSystem.particleTexture to a plain color or add the file.
-    // ----------------------------------------------------------------------------
     try {
         ballParticleSystem = new BABYLON.ParticleSystem("ballTrail", 400, scene);
-        // Particle texture - place a small glowing sprite at public/textures/flare.png
+        // TODO place a small glowing sprite at public/textures/flare.png
         ballParticleSystem.particleTexture = new BABYLON.Texture("textures/flare.png", scene);
-
-        // Make the emitter the ball mesh so particles follow it
         ballParticleSystem.emitter = ballMesh;
         ballParticleSystem.minEmitBox = new BABYLON.Vector3(0, 0, 0); // emission from center
         ballParticleSystem.maxEmitBox = new BABYLON.Vector3(0, 0, 0);
 
-        // Colors, size, lifetime
         ballParticleSystem.color1 = new BABYLON.Color4(1, 1, 1, 0.9);
         ballParticleSystem.color2 = new BABYLON.Color4(0.8, 0.95, 1, 0.6);
         ballParticleSystem.minSize = 0.04;
@@ -84,7 +66,6 @@ function createGameObjects(scene: any) {
         ballParticleSystem.minLifeTime = 0.2;
         ballParticleSystem.maxLifeTime = 0.6;
 
-        // Emission and physics
         ballParticleSystem.emitRate = 180;
         ballParticleSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_ONEONE;
         ballParticleSystem.gravity = new BABYLON.Vector3(0, 0, 0);
@@ -96,19 +77,16 @@ function createGameObjects(scene: any) {
         ballParticleSystem.maxEmitPower = 0.6;
         ballParticleSystem.updateSpeed = 0.01;
 
-        // Start emitting immediately (it follows the ball mesh)
         ballParticleSystem.start();
         console.log("✅ Ball particle system started");
     } catch (err) {
         console.warn("⚠️ Could not create ball particle system:", err);
     }
-    // ----------------------------------------------------------------------------
 
-    // Create a simple ball object that mimics your Ball class
     ball = {
         mesh: ballMesh,
         position: ballMesh.position,
-        velocity: new BABYLON.Vector3(0.15, 0, 0.1), // Start moving towards right
+        velocity: new BABYLON.Vector3(0.15, 0, 0.1),
         lastTouched: null as number | null,
         rallyActive: false as boolean,
         ballSize: 0.5,
@@ -116,17 +94,12 @@ function createGameObjects(scene: any) {
             this.position.addInPlace(this.velocity);
             this.mesh.position.copyFrom(this.position);
             
-            // Check collision with paddles FIRST
             this.checkPaddleCollisions(players);
-            
-            // Boundary / goal logic (use dynamic field half-sizes)
+        
             const halfW = FIELD_WIDTH_3D / 2;
             const halfH = FIELD_HEIGHT_3D / 2;
-
-            // If 4-player mode, treat Z-overflow as goals for player 3/4.
             if (nbrPlayer === 4) {
                 if (this.position.z > halfH) {
-                    // Goal: count only if a rally occurred and lastTouched is valid
                     if (this.rallyActive && this.lastTouched !== null) {
                         const scorer = this.lastTouched;
                         score3d[scorer] = (score3d[scorer] || 0) + 1;
@@ -136,7 +109,6 @@ function createGameObjects(scene: any) {
                     return;
                 }
                 if (this.position.z < -halfH) {
-                    // Goal: count only if a rally occurred and lastTouched is valid
                     if (this.rallyActive && this.lastTouched !== null) {
                         const scorer = this.lastTouched;
                         score3d[scorer] = (score3d[scorer] || 0) + 1;
@@ -149,15 +121,13 @@ function createGameObjects(scene: any) {
                 // 2-player mode: bounce on top/bottom walls
                 if (this.position.z > halfH || this.position.z < -halfH) {
                     this.velocity.z *= -1;
-                    // Keep ball inside bounds
                     this.position.z = (this.position.z > 0 ? 1 : -1) * (halfH - this.ballSize/2);
                     this.mesh.position.copyFrom(this.position);
                 }
             }
             
-            // Goal checks (reset ball)
+            //goal checks (reset ball)
             if (this.position.x < -halfW) {
-                // Goal: count only if a rally occurred and lastTouched is valid
                 if (this.rallyActive && this.lastTouched !== null) {
                     const scorer = this.lastTouched;
                     score3d[scorer] = (score3d[scorer] || 0) + 1;
@@ -166,7 +136,6 @@ function createGameObjects(scene: any) {
                 this.resetBall();
             }
             if (this.position.x > halfW) {
-                // Goal: count only if a rally occurred and lastTouched is valid
                 if (this.rallyActive && this.lastTouched !== null) {
                     const scorer = this.lastTouched;
                     score3d[scorer] = (score3d[scorer] || 0) + 1;
@@ -185,15 +154,12 @@ function createGameObjects(scene: any) {
                 const paddleDepth = 3;
                 const paddleHeight = 1;
                 
-                // Calculate paddle bounds
                 const paddleMinX = paddlePos.x - paddleWidth / 2;
                 const paddleMaxX = paddlePos.x + paddleWidth / 2;
                 const paddleMinZ = paddlePos.z - paddleDepth / 2;
                 const paddleMaxZ = paddlePos.z + paddleDepth / 2;
                 const paddleMinY = paddlePos.y - paddleHeight / 2;
                 const paddleMaxY = paddlePos.y + paddleHeight / 2;
-                
-                // Check if ball is colliding with paddle
                 if (
                     this.position.x + ballRadius > paddleMinX &&
                     this.position.x - ballRadius < paddleMaxX &&
@@ -206,15 +172,12 @@ function createGameObjects(scene: any) {
                     // remember last player who touched the ball and mark rally active
                     this.lastTouched = index;
                     this.rallyActive = true;
-                    
-                    // Horizontal bounce (left/right paddles)
+
                     this.velocity.x *= -1;
-                    
-                    // Add spin based on where ball hit the paddle
+           
                     const hitPosition = (this.position.z - paddlePos.z) / (paddleDepth / 2);
                     this.velocity.z += hitPosition * 0.05;
                     
-                    // Move ball away from paddle to prevent multiple collisions
                     if (this.position.x > paddlePos.x) {
                         this.position.x = paddleMaxX + ballRadius + 0.1;
                     } else {
@@ -222,19 +185,16 @@ function createGameObjects(scene: any) {
                     }
                     this.mesh.position.copyFrom(this.position);
                     
-                    // Slightly increase speed (optional)
+                    // leggero aumento velocità ad ogni rimbalzo
                     this.velocity.x *= 1.05;
                     this.velocity.z *= 1.02;
                 }
             });
 
-            // Check collision with corner cubes (treat cubes as AABB)
             cornerCubes.forEach((cube: any) => {
                 try {
                     const boxPos = cube.position;
                     const half = (cube.metadata && cube.metadata.halfSize) ? cube.metadata.halfSize : 0.5;
-
-                    // Compute overlap on X and Z between sphere center and box
                     const dx = Math.abs(this.position.x - boxPos.x);
                     const dz = Math.abs(this.position.z - boxPos.z);
                     const overlapX = half + ballRadius - dx;
@@ -256,7 +216,6 @@ function createGameObjects(scene: any) {
                         this.mesh.position.copyFrom(this.position);
                     }
                 } catch (e) {
-                    // ignore per-cube errors
                 }
             });
         },
@@ -268,7 +227,7 @@ function createGameObjects(scene: any) {
             this.lastTouched = null;
             this.rallyActive = false;
             
-            // Random direction
+            // random direction ad ogni spawn
             const angle = Math.random() < 0.5 ? 
                 (Math.random() - 0.5) * (Math.PI / 4) : 
                 Math.PI + (Math.random() - 0.5) * (Math.PI / 4);
@@ -280,20 +239,16 @@ function createGameObjects(scene: any) {
             );
         }
     };
-    
-    // Create Players (simplified version of your Player class)
     players = [];
     
-    // Player 0 (left paddle)
     const paddle1Mesh = BABYLON.MeshBuilder.CreateBox("paddle0", 
         {width: 0.3, height: 1, depth: 3}, scene);
     const paddle1Material = new BABYLON.StandardMaterial("paddle0Material", scene);
     paddle1Material.diffuseColor = COLORS.paddleDefault;
-    paddle1Material.emissiveColor = new BABYLON.Color3(0.2,0.2,0.2); // small tint kept
+    paddle1Material.emissiveColor = new BABYLON.Color3(0.2,0.2,0.2);
     paddle1Mesh.material = paddle1Material;
     paddle1Mesh.position = new BABYLON.Vector3(-FIELD_WIDTH_3D / 2 + 0.2, 0.5, 0);
     
-    // Player 1 (right paddle)  
     const paddle2Mesh = BABYLON.MeshBuilder.CreateBox("paddle1",
         {width: 0.3, height: 1, depth: 3}, scene);
     const paddle2Material = new BABYLON.StandardMaterial("paddle1Material", scene);
@@ -302,13 +257,12 @@ function createGameObjects(scene: any) {
     paddle2Mesh.material = paddle2Material;
     paddle2Mesh.position = new BABYLON.Vector3(FIELD_WIDTH_3D / 2 - 0.2, 0.5, 0);
     
-    // Create simple player objects that mimic your Player class
     players.push({
         id: 0,
         mesh: paddle1Mesh,
         position: paddle1Mesh.position,
         drawAndMove: function() {
-            // Player 0 controls: W/S keys
+            // Player 0
             const step = 0.15;
             const paddleHalfX = 0.3 / 2;
             const paddleHalfY = 1 / 2;
@@ -339,7 +293,7 @@ function createGameObjects(scene: any) {
         }
     });
     
-    // Player 1 (right paddle) - Human or AI depending on mode
+    // Player 1 (right paddle) (human or Ai)
     const player1 = {
         id: 1,
         mesh: paddle2Mesh,
@@ -375,12 +329,10 @@ function createGameObjects(scene: any) {
                         }
                     }
                 }
-                // Clamp position
                 if (this.position.z > vLimit) this.position.z = vLimit;
                 if (this.position.z < -vLimit) this.position.z = -vLimit;
                 this.mesh.position.copyFrom(this.position);
             } else if (nbrPlayer !== 1) {
-                // Human Mode: Arrow keys  
                 if (keys['ArrowUp']) {
                     const candidateZ = this.position.z + step;
                     if (candidateZ <= vLimit) {
@@ -406,7 +358,7 @@ function createGameObjects(scene: any) {
     
     players.push(player1);
     
-    // Add paddles for 4 player mode
+    //for 4 player mode
     if (nbrPlayer === 4) {
         // Player 2 (top paddle)
         const paddle3Mesh = BABYLON.MeshBuilder.CreateBox("paddle2",
@@ -422,8 +374,7 @@ function createGameObjects(scene: any) {
             mesh: paddle3Mesh,
             position: paddle3Mesh.position,
             drawAndMove: function() {
-                // Player 2 controls: D/F keys
-                // horizontal limit based on field height (top/bottom paddles move along X relative to field height)
+                // Player 2 controls
                 const paddleHalfX = 3 / 2;
                 const cubeHalf = (nbrPlayer === 4 && cornerCubes.length > 0 && cornerCubes[0].metadata) ? cornerCubes[0].metadata.halfSize : 0;
                 const margin = 0.2;
@@ -459,9 +410,7 @@ function createGameObjects(scene: any) {
         const paddle4Material = new BABYLON.StandardMaterial("paddle3Material", scene);
         paddle4Material.diffuseColor = COLORS.paddleBottom;
         paddle4Material.emissiveColor = new BABYLON.Color3(0.2,0.2,0);
-        // Assign material to the mesh (was missing previously)
         paddle4Mesh.material = paddle4Material;
-        // Ensure position is explicitly set before pushing the player
         paddle4Mesh.position = new BABYLON.Vector3(0, 0.5, -FIELD_HEIGHT_3D / 2 + 0.3);
         console.log("Paddle4 initial position:", paddle4Mesh.position);
 
@@ -470,8 +419,7 @@ function createGameObjects(scene: any) {
             mesh: paddle4Mesh,
             position: paddle4Mesh.position,
             drawAndMove: function() {
-                // Player 3 controls: J/K keys
-                // horizontal limit based on field height (top/bottom paddles move along X relative to field height)
+                // Player 3 controls
                     const paddleHalfX = 3 / 2;
                     const cubeHalf = (nbrPlayer === 4 && cornerCubes.length > 0 && cornerCubes[0].metadata) ? cornerCubes[0].metadata.halfSize : 0;
                     const margin = 0.2;
@@ -505,11 +453,9 @@ function createGameObjects(scene: any) {
     console.log("✅ Game objects created (supports up to 4 players)");
 }
 
-// Bot polling variables
 let botPollingId: number | null = null;
 let botKey: string | null = null;
 
-// Start bot polling (call this when starting AI mode)
 function startBotPolling() {
     if (botPollingId !== null) {
         clearInterval(botPollingId);
@@ -528,7 +474,6 @@ function startBotPolling() {
     }, 80);
 }
 
-// Stop bot polling (call this when stopping AI mode)
 function stopBotPolling() {
     if (botPollingId !== null) {
         clearInterval(botPollingId);
@@ -536,7 +481,6 @@ function stopBotPolling() {
     }
 }
 
-// Send bot data and get decision (returns a Promise)
 async function sendBotData(ballY: number, paddleY: number): Promise<string | null> {
     try {
         console.log(`[BOT] Sending data to backend: ballY=${ballY}, paddleY=${paddleY}`);
@@ -551,7 +495,6 @@ async function sendBotData(ballY: number, paddleY: number): Promise<string | nul
         }
         const data = await response.json();
         console.log(`[BOT] Backend response: ${JSON.stringify(data)}`);
-        // Stampa sempre la decisione ricevuta
         console.log(`[BOT] AI decision received: ${data.key}`);
         return data.key;
     } catch (error) {
@@ -561,13 +504,11 @@ async function sendBotData(ballY: number, paddleY: number): Promise<string | nul
     }
 }
 
-// Function to setup manual camera controls
 function setupManualCameraControls(camera: any, canvas: HTMLCanvasElement) {
     let isMouseDown = false;
     let mouseX = 0;
     let mouseY = 0;
     
-    // Mouse down event
     canvas.addEventListener('mousedown', (event) => {
         isMouseDown = true;
         mouseX = event.clientX;
@@ -575,54 +516,40 @@ function setupManualCameraControls(camera: any, canvas: HTMLCanvasElement) {
         canvas.style.cursor = 'grabbing';
     });
     
-    // Mouse up event
     canvas.addEventListener('mouseup', () => {
         isMouseDown = false;
         canvas.style.cursor = 'grab';
     });
-    
-    // Mouse leave event (in case mouse leaves canvas while dragging)
+
     canvas.addEventListener('mouseleave', () => {
         isMouseDown = false;
         canvas.style.cursor = 'grab';
     });
     
-    // Mouse move event
     canvas.addEventListener('mousemove', (event) => {
         if (!isMouseDown) return;
-        
         const deltaX = event.clientX - mouseX;
         const deltaY = event.clientY - mouseY;
-        
-        // Update camera angles
-        camera.alpha -= deltaX * 0.01; // Horizontal rotation
-        camera.beta += deltaY * 0.01;  // Vertical rotation
-        
-        // Clamp beta to prevent flipping
+        camera.alpha -= deltaX * 0.01;
+        camera.beta += deltaY * 0.01;
         camera.beta = Math.max(0.1, Math.min(Math.PI - 0.1, camera.beta));
         
         mouseX = event.clientX;
         mouseY = event.clientY;
     });
     
-    // Mouse wheel event for zoom
     canvas.addEventListener('wheel', (event) => {
         event.preventDefault();
         
         const zoomSpeed = 0.1;
         if (event.deltaY > 0) {
-            // Zoom out
             camera.radius += zoomSpeed;
         } else {
-            // Zoom in
             camera.radius -= zoomSpeed;
         }
-        
-        // Clamp zoom limits
         camera.radius = Math.max(5, Math.min(25, camera.radius));
     });
     
-    // Set initial cursor
     canvas.style.cursor = 'grab';
     
     console.log("🖱️  Manual mouse controls ready:");
@@ -630,7 +557,6 @@ function setupManualCameraControls(camera: any, canvas: HTMLCanvasElement) {
     console.log("   - Mouse wheel to zoom in/out");
 }
 
-// Helper: check sphere-AABB overlap. boxHalfX/Y/Z are half-sizes of the box.
 function sphereIntersectsBox(spherePos: any, radius: number, boxPos: any, boxHalfX: number, boxHalfY: number, boxHalfZ: number) {
     const dx = Math.max(Math.abs(spherePos.x - boxPos.x) - boxHalfX, 0);
     const dy = Math.max(Math.abs(spherePos.y - boxPos.y) - boxHalfY, 0);
@@ -638,18 +564,15 @@ function sphereIntersectsBox(spherePos: any, radius: number, boxPos: any, boxHal
     return (dx*dx + dy*dy + dz*dz) <= (radius * radius);
 }
 
-// Function to initialize Babylon.js scene
+//init babylon.js scene
 function initBabylon() {
     console.log("🚀 Initializing Babylon.js...");
-    
-    // Check if BABYLON is available
     if (typeof BABYLON === 'undefined') {
         console.error("❌ BABYLON.js is not loaded!");
         return;
     }
     console.log("✅ BABYLON.js is available");
     
-    // Get canvas element (correct ID)
     canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
     if (!canvas) {
         console.error("❌ Canvas not found!");
@@ -659,13 +582,9 @@ function initBabylon() {
     console.log("Canvas dimensions:", canvas.width, "x", canvas.height);
 
     try {
-        // Create engine
         engine = new BABYLON.Engine(canvas, true);
         console.log("✅ Engine created successfully");
-
-        // Create scene
         scene = new BABYLON.Scene(engine);
-        // Set darker azure background for the scene
         scene.clearColor = new BABYLON.Color4(0.20, 0.45, 0.70, 1.0);
         console.log("✅ Scene created successfully");
     } catch (error) {
@@ -674,19 +593,13 @@ function initBabylon() {
     }
 
     try {
-        // Create ArcRotate camera for better mouse controls
         camera = new BABYLON.ArcRotateCamera("camera1", -Math.PI/2, Math.PI/2.5, 12, BABYLON.Vector3.Zero(), scene);
-        // ATTACH CAMERA TO CANVAS so Babylon handles pointer input
-        // This enables standard arc-rotate mouse drag/zoom controls
         try {
             camera.attachControl(canvas, true);
             console.log("✅ Camera attached to canvas for pointer controls");
         } catch (e) {
             console.warn("⚠️ camera.attachControl failed:", e);
         }
-        
-        // Disabilita i controlli da tastiera della ArcRotateCamera (frecce)
-        // in modo che le freccette non muovano la camera: solo il mouse la controlla.
         try {
             camera.keysUp = [];
             camera.keysDown = [];
@@ -696,41 +609,29 @@ function initBabylon() {
         } catch (e) {
             console.warn("⚠️ Failed to clear camera key bindings:", e);
         }
+        camera.lowerRadiusLimit = 5;
+        camera.upperRadiusLimit = 25; 
+        camera.lowerBetaLimit = 0.1;
+        camera.upperBetaLimit = Math.PI/2 * 0.95;
         
-        // Set camera limits to keep it reasonable
-        camera.lowerRadiusLimit = 5;   // Min zoom distance
-        camera.upperRadiusLimit = 25;  // Max zoom distance  
-        camera.lowerBetaLimit = 0.1;   // Min vertical angle (almost top-down)
-        camera.upperBetaLimit = Math.PI/2 * 0.95; // Max vertical angle (almost horizontal)
-        
-        // Manual mouse controls implementation
         setupManualCameraControls(camera, canvas);
         console.log("✅ Manual mouse controls implemented");
         
         console.log("✅ ArcRotate camera created successfully");
         console.log("🖱️  Try mouse controls: Drag to rotate, Wheel to zoom");
 
-        // Create light
         const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
         console.log("✅ Light created");
 
-        // Create the playing field (use dynamic field size variables)
         const ground = BABYLON.MeshBuilder.CreateGround("ground", {width: FIELD_WIDTH_3D, height: FIELD_HEIGHT_3D}, scene);
         const groundMaterial = new BABYLON.StandardMaterial("groundMat", scene);
         groundMaterial.diffuseColor = COLORS.ground;
-        // Reduce shiny reflections on the ground: lower specular color and power
         groundMaterial.specularColor = new BABYLON.Color3(0.03, 0.03, 0.03);
         groundMaterial.specularPower = 8;
         ground.material = groundMaterial;
         console.log("✅ Playing field created");
 
-        // Create corner cubes only when in 4-player mode
         if (nbrPlayer === 4) {
-            // --------------------------------------------------------------------
-            // Corner cubes: one cube in each corner of the playing field
-            // Positioned using FIELD_WIDTH_3D and FIELD_HEIGHT_3D so they follow
-            // changes (e.g. when 4-player makes the field square).
-            // --------------------------------------------------------------------
             try {
                 const halfW = FIELD_WIDTH_3D / 2;
                 const halfH = FIELD_HEIGHT_3D / 2;
@@ -749,11 +650,11 @@ function initBabylon() {
                 cornerPositions.forEach((pos, idx) => {
                     const cube = BABYLON.MeshBuilder.CreateBox(`cornerCube${idx}`, {size: cornerSize}, scene);
                     const mat = new BABYLON.StandardMaterial(`cornerMat${idx}`, scene);
-                    // Use predefined palette colors for consistency
+                    // use predefined palette colors
                     mat.diffuseColor = cornerColors[idx % cornerColors.length];
                     cube.material = mat;
                     cube.position = pos;
-                    // mark with half-size for collision checks and register
+                    //mark with half-size for collision checks and register
                     (cube as any).metadata = { halfSize: cornerSize / 2 };
                     cornerCubes.push(cube);
                 });
@@ -763,12 +664,9 @@ function initBabylon() {
                 console.warn("⚠️ Could not create corner cubes:", err);
             }
         }
-
-        // Create game objects using your classes
         createGameObjects(scene);
         console.log("✅ Game objects created using your classes");
 
-        // Start bot polling ONLY if AI mode is active and objects are ready
         if (nbrPlayer === 1) startBotPolling();
         else stopBotPolling();
     } catch (error) {
@@ -778,18 +676,13 @@ function initBabylon() {
     
     console.log("✅ All 3D objects created successfully");
 
-    // Force immediate render to test
     scene.render();
     scene.clearColor = new BABYLON.Color4(0.40, 0.45, 0.70, 1.0);
     console.log("✅ First render executed");
 
-    // Game loop using your classes - MOVED INSIDE initBabylon()
     engine.runRenderLoop(() => {
         if (gameStarted && ball && players.length > 0) {
-            // Update players (handles paddle movement)
             players.forEach(player => player.drawAndMove());
-            
-            // Update ball (handles movement, collisions, goals)
             ball.moveBall(players);
         }
         
@@ -799,28 +692,22 @@ function initBabylon() {
     console.log("✅ Game loop started successfully");
 }
 
-// Punteggio dei giocatori
 let score3d: number[] = [];
 
-// Funzione per aggiornare il punteggio su schermo
 function updateScoreDisplay() {
     const scoreDiv = document.getElementById("score3d");
     if (!scoreDiv) return;
 
-    // Mostra dinamicamente i punteggi esistenti
     if (!score3d || score3d.length === 0) {
         scoreDiv.innerText = "";
         return;
     }
 
-    // Costruisci stringa punteggi in base al numero di giocatori
     const labels = score3d.map((s, idx) => `Player ${idx + 1}: ${s}`);
     scoreDiv.innerText = labels.join("   ");
 }
 
-// Start game function
 function startGame() {
-    // Inizializza array punteggi in base al numero di giocatori attuale
     score3d = new Array(Math.max(2, nbrPlayer)).fill(0);
 
     updateScoreDisplay();
@@ -830,29 +717,24 @@ function startGame() {
     console.log("3D Pong Game Started!");
 }
 
-// Handle window resize
 window.addEventListener("resize", () => {
     if (engine && engine.resize) {
         engine.resize();
     }
 });
 
-// Wait for DOM to load before setting up UI
 document.addEventListener('DOMContentLoaded', () => {
-    // UI Elements for 3D Pong
     const buttonLocalPlay3D = document.getElementById("LocalPlay") as HTMLButtonElement;
     const buttonRemotePlay3D = document.getElementById("RemotePlay") as HTMLButtonElement;
     const canvasContainer3D = document.getElementById("canvas-container")!;
     const textPong3D = document.getElementById("PongGame") as HTMLHeadingElement;
 
-    // Get references to submenu buttons
     const button2P3D = document.getElementById("Play2P") as HTMLButtonElement;
     const buttonAI3D = document.getElementById("PlayAI") as HTMLButtonElement;
     const button4P3D = document.getElementById("Play4P") as HTMLButtonElement;
     const buttonTournament3D = document.getElementById("Tournament") as HTMLButtonElement;
     const buttonMainMenu3D = document.getElementById("returnMenu") as HTMLButtonElement;
 
-    // Check if elements exist
     if (!buttonLocalPlay3D) {
         console.error("ButtonLocalPlay not found!");
         return;
@@ -860,9 +742,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log("All UI elements found, setting up event listeners...");
 
-// Event listeners for 3D Pong
 buttonLocalPlay3D.addEventListener("click", () => {
-    // Step 1: Hide main menu, show submenu (like 2D Pong)
     buttonLocalPlay3D.style.display = "none";
     buttonRemotePlay3D.style.display = "none";
     button2P3D.style.display = "inline-block";
@@ -874,7 +754,6 @@ buttonLocalPlay3D.addEventListener("click", () => {
 
     button2P3D.addEventListener("click", () => {
         console.log("2 Player button clicked!");
-        // Step 2: Hide submenu, start 2 player game
         button2P3D.style.display = "none";
         buttonAI3D.style.display = "none";
         buttonTournament3D.style.display = "none";
@@ -882,11 +761,10 @@ buttonLocalPlay3D.addEventListener("click", () => {
         textPong3D.style.display = "none";
         canvasContainer3D.style.display = "block";
         
-        // Set player count BEFORE initializing Babylon
-        nbrPlayer = 2; // Set to 2 players
-        // Initialize Babylon.js only when needed
+        // set player count BEFORE initializing Babylon
+        nbrPlayer = 2;
         initBabylon();
-        // Properly start game (initializes score array etc.)
+        //  start game (initializes score array etc.)
         startGame();
         stopBotPolling();
         console.log("3D Local 2 Player Game Started!");
@@ -894,7 +772,7 @@ buttonLocalPlay3D.addEventListener("click", () => {
 
     buttonAI3D.addEventListener("click", () => {
         console.log("VS Bot button clicked!");
-        // Step 2: Hide submenu, start AI game
+
         button2P3D.style.display = "none";
         buttonAI3D.style.display = "none";
         buttonTournament3D.style.display = "none";
@@ -902,18 +780,14 @@ buttonLocalPlay3D.addEventListener("click", () => {
         textPong3D.style.display = "none";
         canvasContainer3D.style.display = "block";
         
-        // Set player count BEFORE initializing Babylon
-        nbrPlayer = 1; // Set to 1 human player + AI
-        // Initialize Babylon.js only when needed
+        nbrPlayer = 1;
         initBabylon();
-        // Properly start game (initializes score array and bot polling)
         startGame();
         console.log("🤖 3D VS Bot Game Started! nbrPlayer set to:", nbrPlayer);
     });
 
     button4P3D.addEventListener("click", () => {
         console.log("4 Player button clicked!");
-        // Nascondi submenu e mostra canvas
         button2P3D.style.display = "none";
         buttonAI3D.style.display = "none";
         button4P3D.style.display = "none";
@@ -921,15 +795,11 @@ buttonLocalPlay3D.addEventListener("click", () => {
         buttonMainMenu3D.style.display = "none";
         textPong3D.style.display = "none";
         canvasContainer3D.style.display = "block";
-
-        // Imposta 4 giocatori e avvia la partita (nbrPlayer FIRST)
         nbrPlayer = 4;
-        // Make the 3D field square for 4 players
         FIELD_HEIGHT_3D = FIELD_WIDTH_3D;
-        // Initialize Babylon and then start game so score3d is created
         initBabylon();
         startGame();
-        stopBotPolling(); // Nessun bot in 4P
+        stopBotPolling();
         console.log("3D 4 Player Game Started!");
     });
 
@@ -954,9 +824,8 @@ buttonLocalPlay3D.addEventListener("click", () => {
     buttonTournament3D.style.display = "none";
     buttonMainMenu3D.style.display = "none";
     });
-}); // End DOMContentLoaded
+});
 
 console.log("3D Pong Game Loaded!");
 
-// Make startGame function global for HTML onclick
 (window as any).startGame = startGame;
