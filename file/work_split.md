@@ -6,6 +6,14 @@
 **venerdì 16.1. tardi pomeriggio**
 
 ---
+## timeline:
+ 1. finale decisone su task pricipali, entro lunedi 20h mandare richeste di cambio, finalizato 22.00h
+ 2. test iniziale (per trovare altri problem di risolvere) entro martedi 21.00h
+ 3. fare ticket principali, entro mercoledi 21.00h
+ 4. fare ultimi ticket e secondo test giovedi, entro 18.00h
+ 5. fare agiustamenti su ultimo test, entro 21.00h
+ 6. venerdi: pushare tutto su main; ultimo test su computer di scuola, entro 18.00h
+ 7. venerdi: pushare e consegnare progetto, entro 19.30h
 
 ## Modo di completare i tuoi task
 
