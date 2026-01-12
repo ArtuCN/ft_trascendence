@@ -54,7 +54,7 @@
 - **remote players** — Matteo, Tjaz
 - **multiple players** — Matteo, Petre
 - **ai opponent** — Matteo, Petre
-- **security** — Tjaz, Arturo
+- **security** — Tjaz, Arturo - vedere subject prima di modules su security
 - **3d** — Petre, Matteo
 - **user management** — Khadim, Arturo
 - **blockchain** — Tjaz, Khadim
@@ -68,11 +68,11 @@
 - **Aggiungere online/offline status agli amici** — *Khadim* (con Arturo se serve qualche modifica in BE)
 - **O avere user id in user profile, o poter scrivere username o email per trovare un amico in social** — *Khadim*
 - **3d** — *Petre*
-    + Il gioco non ha score
-    + Non si finisce
-    + Quando giochi 2 player, c'è pulsante per 4 player che ti porta durante il gioco a giocare
+    + Il gioco non ha score - *Matteo*
+    + Non si finisce - *Matteo*
+    + Quando giochi 2 player, c'è pulsante per 4 player che ti porta durante il gioco a giocare - *Matteo*
     + Playground/field è troppo grande per la viewport che c'è all'inizio
-- **Fare VM su computer di scuola e testare se tutto funziona** — *Petre/Matteo*
+- **Fare VM su computer di scuola e testare se tutto funziona** — *Petre-Arturo*
 - **Fare ultime modifiche per integrare blockchain con FE** — *Tjaz-Khadim*
 
 ---
