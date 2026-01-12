@@ -2,16 +2,16 @@ import type { Player } from "./classPlayer"
 import { FIELD_WIDTH, FIELD_HEIGHT } from "./variables3D.js"
 import { nbrPlayer, playerGoals } from "../script.js"
 
-// Babylon.js caricato come file locale - variabili globali
 declare const BABYLON: any;
 
 export class Ball {
   private position: any
   private mesh: any
   private ballSize = 0.5
-  private speed = 0.2 // ✅ Aumentata da 0.1 a 0.15
+  private speed = 0.2
   private velocity: any
   private lastTouchedPlayer = -1
+  private rallyActive = false
 
   public getBallSpeed(): number {
     return this.speed
@@ -42,59 +42,46 @@ export class Ball {
     this.velocity = new BABYLON.Vector3(this.speed * Math.cos(angle), 0, this.speed * Math.sin(angle))
   }
 
-  public drawBall() {
-    // Non serve fare niente - la mesh si disegna automaticamente
-  }
+  public drawBall() {}
 
   public moveBall(players: Player[]) {
     this.position.addInPlace(this.velocity)
     this.mesh.position.copyFrom(this.position)
-
-    // ✅ Controlla collisioni con i paddle PRIMA di controllare i goal
     this.checkPaddleCollisions(players)
 
-    // Controlla i limiti del campo per i goal
     if (this.position.x > FIELD_WIDTH / 2) {
-      // Goal per il giocatore di sinistra (player 0)
-      if (nbrPlayer >= 2) playerGoals[0]++
-    //   console.log("Goal! Player 0 scored. Score:", playerGoals)
+      if (this.rallyActive && this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++
       this.resetGame(players)
       return
     }
 
     if (this.position.x < -FIELD_WIDTH / 2) {
-      // Goal per il giocatore di destra (player 1)
-      if (nbrPlayer >= 2) playerGoals[1]++
-    //   console.log("Goal! Player 1 scored. Score:", playerGoals)
+      if (this.rallyActive && this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++
       this.resetGame(players)
       return
     }
 
     if (nbrPlayer === 2) {
-      // Rimbalzo sui muri superiore e inferiore
       if (this.position.z > FIELD_HEIGHT / 2 || this.position.z < -FIELD_HEIGHT / 2) {
         this.velocity.z *= -1
         this.position.z = Math.sign(this.position.z) * (FIELD_HEIGHT / 2 - this.ballSize / 2)
       }
     } else if (nbrPlayer === 4) {
-      // Per 4 giocatori, controlla anche i goal verticali
       if (this.position.z > FIELD_HEIGHT / 2) {
-        playerGoals[2]++ // Player 2 (bottom)
-        // console.log("Goal! Player 2 scored. Score:", playerGoals)
+        // goal segnato dall'ultimoche tocca la palla
+        if (this.rallyActive && this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++
         this.resetGame(players)
         return
       }
 
       if (this.position.z < -FIELD_HEIGHT / 2) {
-        playerGoals[3]++ // Player 3 (top)
-        // console.log("Goal! Player 3 scored. Score:", playerGoals)
+        if (this.rallyActive && this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++
         this.resetGame(players)
         return
       }
     }
   }
 
-  // ✅ Nuova funzione per controllare le collisioni con i paddle
   private checkPaddleCollisions(players: Player[]) {
     players.forEach((player, index) => {
       const paddle = player.getPaddle()
@@ -102,24 +89,21 @@ export class Ball {
       const paddleLength = paddle.getPaddleLength()
       const paddleThickness = paddle.getPaddleThickness()
 
-      // Calcola i bounds del paddle
       let paddleMinX, paddleMaxX, paddleMinZ, paddleMaxZ
 
       if (paddle.getOrientation() === "vertical") {
-        // Paddle verticale (sinistra/destra)
         paddleMinX = paddlePos.x - paddleThickness / 2
         paddleMaxX = paddlePos.x + paddleThickness / 2
         paddleMinZ = paddlePos.z - paddleLength / 2
         paddleMaxZ = paddlePos.z + paddleLength / 2
       } else {
-        // Paddle orizzontale (sopra/sotto)
         paddleMinX = paddlePos.x - paddleLength / 2
         paddleMaxX = paddlePos.x + paddleLength / 2
         paddleMinZ = paddlePos.z - paddleThickness / 2
         paddleMaxZ = paddlePos.z + paddleThickness / 2
       }
 
-      // Controlla se la palla è in collisione con il paddle
+      // controllare la palla da chi viene colpita
       const ballRadius = this.ballSize / 2
       if (
         this.position.x + ballRadius > paddleMinX &&
@@ -128,31 +112,21 @@ export class Ball {
         this.position.z - ballRadius < paddleMaxZ
       ) {
         console.log(`Ball hit paddle ${index}!`)
-
-        // Determina la direzione del rimbalzo
         if (paddle.getOrientation() === "vertical") {
-          // Rimbalzo orizzontale
           this.velocity.x *= -1
-
-          // Aggiungi un po' di "spin" basato su dove ha colpito il paddle
           const hitPosition = (this.position.z - paddlePos.z) / (paddleLength / 2)
           this.velocity.z += hitPosition * 0.05
 
-          // Sposta la palla fuori dal paddle per evitare collisioni multiple
           if (this.position.x > paddlePos.x) {
             this.position.x = paddleMaxX + ballRadius
           } else {
             this.position.x = paddleMinX - ballRadius
           }
         } else {
-          // Rimbalzo verticale
           this.velocity.z *= -1
-
-          // Aggiungi spin orizzontale
           const hitPosition = (this.position.x - paddlePos.x) / (paddleLength / 2)
           this.velocity.x += hitPosition * 0.05
 
-          // Sposta la palla fuori dal paddle
           if (this.position.z > paddlePos.z) {
             this.position.z = paddleMaxZ + ballRadius
           } else {
@@ -160,15 +134,16 @@ export class Ball {
           }
         }
 
-        // Aumenta leggermente la velocità ad ogni rimbalzo (opzionale)
+        // aumento la velocità ad ogni rimbalzo
         const speedMultiplier = 1.02
         this.velocity.x *= speedMultiplier
         this.velocity.z *= speedMultiplier
 
-        // Aggiorna la posizione della mesh
+        // per aggiornare la posizione della mesh:
         this.mesh.position.copyFrom(this.position)
 
         this.lastTouchedPlayer = index
+        this.rallyActive = true
       }
     })
   }
@@ -192,9 +167,10 @@ export class Ball {
 
     players.forEach((p) => p.getPaddle().reset())
     this.lastTouchedPlayer = -1
+    this.rallyActive = false
   }
 }
 
 export function drawScore(nbrPlayer: number) {
-//   console.log("Score:", playerGoals)
+//   console.log("score:", playerGoals)
 }

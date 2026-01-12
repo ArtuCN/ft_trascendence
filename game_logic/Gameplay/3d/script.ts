@@ -109,6 +109,8 @@ function createGameObjects(scene: any) {
         mesh: ballMesh,
         position: ballMesh.position,
         velocity: new BABYLON.Vector3(0.15, 0, 0.1), // Start moving towards right
+        lastTouched: null as number | null,
+        rallyActive: false as boolean,
         ballSize: 0.5,
         moveBall: function(players: any[]) {
             this.position.addInPlace(this.velocity);
@@ -124,16 +126,22 @@ function createGameObjects(scene: any) {
             // If 4-player mode, treat Z-overflow as goals for player 3/4.
             if (nbrPlayer === 4) {
                 if (this.position.z > halfH) {
-                    // Ball passed beyond top edge -> assign point to player 3 (id 2)
-                    score3d[2] = (score3d[2] || 0) + 1;
-                    updateScoreDisplay();
+                    // Goal: count only if a rally occurred and lastTouched is valid
+                    if (this.rallyActive && this.lastTouched !== null) {
+                        const scorer = this.lastTouched;
+                        score3d[scorer] = (score3d[scorer] || 0) + 1;
+                        updateScoreDisplay();
+                    }
                     this.resetBall();
                     return;
                 }
                 if (this.position.z < -halfH) {
-                    // Ball passed beyond bottom edge -> assign point to player 4 (id 3)
-                    score3d[3] = (score3d[3] || 0) + 1;
-                    updateScoreDisplay();
+                    // Goal: count only if a rally occurred and lastTouched is valid
+                    if (this.rallyActive && this.lastTouched !== null) {
+                        const scorer = this.lastTouched;
+                        score3d[scorer] = (score3d[scorer] || 0) + 1;
+                        updateScoreDisplay();
+                    }
                     this.resetBall();
                     return;
                 }
@@ -149,13 +157,21 @@ function createGameObjects(scene: any) {
             
             // Goal checks (reset ball)
             if (this.position.x < -halfW) {
-                score3d[1] += 1; // Player 2 segna
-                updateScoreDisplay();
+                // Goal: count only if a rally occurred and lastTouched is valid
+                if (this.rallyActive && this.lastTouched !== null) {
+                    const scorer = this.lastTouched;
+                    score3d[scorer] = (score3d[scorer] || 0) + 1;
+                    updateScoreDisplay();
+                }
                 this.resetBall();
             }
             if (this.position.x > halfW) {
-                score3d[0] += 1; // Player 1 segna
-                updateScoreDisplay();
+                // Goal: count only if a rally occurred and lastTouched is valid
+                if (this.rallyActive && this.lastTouched !== null) {
+                    const scorer = this.lastTouched;
+                    score3d[scorer] = (score3d[scorer] || 0) + 1;
+                    updateScoreDisplay();
+                }
                 this.resetBall();
             }
         },
@@ -187,6 +203,9 @@ function createGameObjects(scene: any) {
                     this.position.y - ballRadius < paddleMaxY
                 ) {
                     console.log(`Ball hit paddle ${index}!`);
+                    // remember last player who touched the ball and mark rally active
+                    this.lastTouched = index;
+                    this.rallyActive = true;
                     
                     // Horizontal bounce (left/right paddles)
                     this.velocity.x *= -1;
@@ -245,6 +264,9 @@ function createGameObjects(scene: any) {
         resetBall: function() {
             this.position = new BABYLON.Vector3(0, 0.5, 0);
             this.mesh.position.copyFrom(this.position);
+            // clear last toucher on reset
+            this.lastTouched = null;
+            this.rallyActive = false;
             
             // Random direction
             const angle = Math.random() < 0.5 ? 
