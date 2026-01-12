@@ -252,7 +252,7 @@ function showPlayerName(numberPlayers: number, gameType: 'local' | 'tournament')
 		const laber = document.createElement('label');
 		laber.style.display = 'block';
 		laber.style.marginTop = '10px';
-		laber.textContent = `Player Name ${i}: `;
+		laber.textContent = `Player Name ${i + 1}: `;
 		const input = document.createElement('input');
 		input.type = 'text';
 		input.placeholder = `Player Name ${i + 1}`;
@@ -537,6 +537,7 @@ button4P.addEventListener("click", () => {
 	button4P.style.display = "none";
 	button2PLocal.style.display = "none";
 	button2PRemote.style.display = "none";
+	buttonAi.style.display = "none";
 	buttonMainMenu.style.display = "none";
 	buttonTournament.style.display = "none";
 	nbrPlayer = parseInt(button4P.value);
