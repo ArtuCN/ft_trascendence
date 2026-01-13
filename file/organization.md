@@ -62,6 +62,7 @@
 - remote players
 - multiple players
 - ai oponent
+- 3d
 
 
 
@@ -70,7 +71,6 @@
 
 -----
 ## major not completed TODO
-- 3d 
 - blockchain (implementare bene in FE)
 - live chat
 - micro-service (only if live chat is included)
@@ -89,3 +89,4 @@
     - caricare imagine di avatar, devi fare refresh che si vede ,1, funziona
     - protection against sql/xss injection atacks ,2 tjaz,  fatto
     - added Allowed origins to env
+    - 3d, sistemati tutti i vari problemi
