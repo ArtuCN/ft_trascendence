@@ -356,7 +356,18 @@ export async function winTournament(id_player)
 export async function getAllPlayerStats() {
     return new Promise((resolve, reject) => {
         const query = `
-        SELECT * FROM player_all_time_stats
+        SELECT 
+            s.id_player,
+            u.username,
+            s.goal_scored,
+            s.goal_taken,
+            s.tournament_won,
+            (SELECT COUNT(*) FROM player_match_stats WHERE id_user = s.id_player) as matches_played,
+            (SELECT COUNT(*) FROM player_match_stats WHERE id_user = s.id_player AND goal_scored > goal_taken) as matches_won,
+            (SELECT COUNT(*) FROM player_match_stats WHERE id_user = s.id_player AND goal_scored < goal_taken) as matches_lost
+        FROM player_all_time_stats s
+        JOIN user u ON s.id_player = u.id
+        ORDER BY s.tournament_won DESC, matches_won DESC, s.goal_scored DESC
         `;
         db.all(query, [], (err, rows) => {
             if (err) {

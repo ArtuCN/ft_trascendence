@@ -1,10 +1,5 @@
 import { createElement, createButton } from '../utils/dom.js';
-
-const COLORS = {
-  primary: '#00B4D8',
-  dark: '#2A2A2A',
-  white: '#ffffff'
-};
+import { COLORS } from '../utils/constants.js';
 
 export class MatchmakingModal {
   private isVisible: boolean = false;

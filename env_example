@@ -7,7 +7,7 @@ ALLOWED_ORIGINS="https://localhost,https://192.168.1.203"
 DB_PATH=/app/data/database.sqlite
 
 # Google OAuth (opzionale - riempire se si vuole usare Google login)
-GOOGLE_CLIENT_ID=your_google_client_id_here
+GOOGLE_CLIENT_ID=575747097249-3bu3g738p6s49pisr9ael83r4p5p1urv.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your_google_client_secret_here
 
 # Blockchain Configuration (Avalanche Fuji Testnet)

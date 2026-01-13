@@ -7,6 +7,7 @@ import { HomePage } from './pages/HomePage.js';
 import { PlayPage } from './pages/PlayPage.js';
 import { PlayPage3D } from './pages/PlayPage3D.js';
 import { LiveChatPage } from './pages/LiveChatPage.js';
+import { apiService } from './services/api.js';
 
 export class App {
   private navbar: Navbar;
@@ -17,6 +18,9 @@ export class App {
   private unsubscribe?: () => void;
 
   constructor() {
+    // Invalida cache stats al caricamento dell'app (refresh)
+    apiService.clearStatsCache();
+    
     this.navbar = new Navbar();
     const { layout, mainContent } = this.initializeDOM();
     this.layout = layout;
@@ -63,7 +67,12 @@ export class App {
   }
 
   private setupRoutes(): void {
-    router.addRoute('/', () => this.renderPage(new HomePage()));
+    router.addRoute('/', () => {
+      const homePage = new HomePage();
+      this.renderPage(homePage);
+      // Carica leaderboards solo al primo accesso alla home
+      homePage.ensureLeaderboardsLoaded();
+    });
     router.addRoute('/play', () => this.renderPage(new PlayPage()));
     router.addRoute('/play3D', () => this.renderPage(new PlayPage3D()));
     router.addRoute('/live-chat', () => this.renderPage(new LiveChatPage()));

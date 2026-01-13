@@ -46,10 +46,15 @@ export class Navbar {
     
     const logoButton = createButton(
       'HOME',
-      'text-white font-bold text-lg hover:text-cyan-300 transition-colors px-6 py-2 rounded border-2 border-cyan-400',
+      'text-white font-bold text-lg px-6 py-2 rounded-md transition-all transform hover:scale-105 uppercase tracking-wider',
       () => router.navigate('/')
     );
-    logoButton.style.color = '#9BE7FF';
+    logoButton.style.background = 'rgba(0, 229, 255, 0.1)';
+    logoButton.style.borderColor = '#00e5ff';
+    logoButton.style.borderWidth = '3px';
+    logoButton.style.color = '#00e5ff';
+    logoButton.style.boxShadow = '0 0 30px rgba(0, 229, 255, 0.6), inset 0 0 30px rgba(0, 229, 255, 0.15)';
+    logoButton.style.fontFamily = '"Press Start 2P", "Courier New", monospace';
     mainContainer.appendChild(logoButton);
     
     if (user) {
@@ -67,34 +72,54 @@ export class Navbar {
 
     const profileButton = createButton(
       'PROFILE',
-      'text-white font-bold px-6 py-2 rounded transition-all focus:outline-none border-2 border-pink-400 hover:bg-pink-500/20',
+      'text-white font-bold px-6 py-2 rounded-md transition-all transform hover:scale-105 focus:outline-none uppercase tracking-wider',
       async () => await this.profileModal.show()
     );
-    profileButton.style.color = '#FF6EC7';
+    profileButton.style.background = 'rgba(255, 110, 199, 0.1)';
+    profileButton.style.borderColor = '#ff6ec7';
+    profileButton.style.borderWidth = '3px';
+    profileButton.style.color = '#ff6ec7';
+    profileButton.style.boxShadow = '0 0 30px rgba(255, 110, 199, 0.6), inset 0 0 30px rgba(255, 110, 199, 0.15)';
+    profileButton.style.fontFamily = '"Press Start 2P", "Courier New", monospace';
 
     const socialButton = createButton(
       'SOCIAL',
-      'text-white font-bold px-6 py-2 rounded transition-all focus:outline-none border-2 border-pink-400 hover:bg-pink-500/20',
+      'text-white font-bold px-6 py-2 rounded-md transition-all transform hover:scale-105 focus:outline-none uppercase tracking-wider',
       async () => await this.socialModal.show()
     );
-    socialButton.style.color = '#FF6EC7';
+    socialButton.style.background = 'rgba(255, 110, 199, 0.1)';
+    socialButton.style.borderColor = '#ff6ec7';
+    socialButton.style.borderWidth = '3px';
+    socialButton.style.color = '#ff6ec7';
+    socialButton.style.boxShadow = '0 0 30px rgba(255, 110, 199, 0.6), inset 0 0 30px rgba(255, 110, 199, 0.15)';
+    socialButton.style.fontFamily = '"Press Start 2P", "Courier New", monospace';
 	
     const chatButton = createButton(
       'CHAT',
-      'text-white font-bold px-6 py-2 rounded transition-all focus:outline-none border-2 border-cyan-400 hover:bg-cyan-500/20',
+      'text-white font-bold px-6 py-2 rounded-md transition-all transform hover:scale-105 focus:outline-none uppercase tracking-wider',
       () => router.navigate('/live-chat')
     );
-    chatButton.style.color = '#9BE7FF';
+    chatButton.style.background = 'rgba(0, 229, 255, 0.1)';
+    chatButton.style.borderColor = '#00e5ff';
+    chatButton.style.borderWidth = '3px';
+    chatButton.style.color = '#00e5ff';
+    chatButton.style.boxShadow = '0 0 30px rgba(0, 229, 255, 0.6), inset 0 0 30px rgba(0, 229, 255, 0.15)';
+    chatButton.style.fontFamily = '"Press Start 2P", "Courier New", monospace';
 
     const logoutButton = createButton(
       'LOGOUT',
-      'text-white font-bold px-6 py-2 rounded transition-all focus:outline-none border-2 border-pink-400 hover:bg-pink-500/20',
+      'text-white font-bold px-6 py-2 rounded-md transition-all transform hover:scale-105 focus:outline-none uppercase tracking-wider',
       () => {
         authState.logout();
         router.navigate('/');
       }
     );
-    logoutButton.style.color = '#FF6EC7';
+    logoutButton.style.background = 'rgba(255, 110, 199, 0.1)';
+    logoutButton.style.borderColor = '#ff6ec7';
+    logoutButton.style.borderWidth = '3px';
+    logoutButton.style.color = '#ff6ec7';
+    logoutButton.style.boxShadow = '0 0 30px rgba(255, 110, 199, 0.6), inset 0 0 30px rgba(255, 110, 199, 0.15)';
+    logoutButton.style.fontFamily = '"Press Start 2P", "Courier New", monospace';
 
     container.appendChild(profileButton);
     container.appendChild(socialButton);

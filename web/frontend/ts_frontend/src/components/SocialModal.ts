@@ -2,13 +2,7 @@ import { createElement, createButton } from '../utils/dom.js';
 import { authState } from '../state/auth.js';
 import { apiService } from '../services/api.js';
 import { User } from '../types/index.js';
-
-const COLORS = {
-  // Fruitiger / Aero inspired cool-blue palette
-  primary: '#00B4D8',  // cyan accent
-  dark: '#062A3A',     // deep cool background
-  white: '#ffffff'
-};
+import { COLORS } from '../utils/constants.js';
 
 interface Message {
   id: number;

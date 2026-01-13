@@ -4,12 +4,7 @@ import { Stats } from '../types/index.js';
 import { ProfileImageUpload } from './ProfileImageUpload.js';
 import { apiService } from '../services/api.js';
 import { blockchainService } from '../services/blockchainService.js';
-
-const COLORS = {
-  primary: '#00B4D8',
-  dark: '#2A2A2A',
-  white: '#ffffff'
-};
+import { COLORS } from '../utils/constants.js';
 
 export class ProfileModal {
   private isVisible: boolean = false;
@@ -18,6 +13,7 @@ export class ProfileModal {
   private walletAddressElement?: HTMLElement;
   private unsubscribeWallet?: () => void;
   private isEditMode: boolean = false;
+  private isSaving: boolean = false; // Previeni doppi click
   private editFormData = {
     username: '',
     password: '',
@@ -41,17 +37,25 @@ export class ProfileModal {
         try {
           const backendStats = await apiService.getStats(Number(user.id));
           
+          // Carica anche tutti gli stats per calcolare la posizione
+          const allStats = await apiService.getAllStats();
+          
           // Mappa i dati dal backend al formato atteso dal frontend
           if (backendStats && Array.isArray(backendStats) && backendStats.length > 0) {
             const stat = backendStats[0];
             console.log('Backend stats received:', stat);
+            
+            // Calcola la posizione del giocatore basandosi sul ranking
+            // Il ranking è già ordinato dal backend per tournament_won DESC, matches_won DESC, goal_scored DESC
+            const playerRank = allStats.findIndex((s: any) => s.id_player === Number(user.id)) + 1;
+            
             playerStats = {
               matchesPlayed: stat.matches_played || 0,
               matchesWon: stat.matches_won || 0,
               matchesLost: stat.matches_lost || 0,
               goalsScored: stat.goal_scored || 0,
               tournamentsWon: stat.tournament_won || 0,
-              rank: 0 // TODO: calcolare ranking
+              rank: playerRank || 0
             };
           } else {
             throw new Error('No stats found');
@@ -123,7 +127,7 @@ export class ProfileModal {
 
     const title = createElement('h2', {
       className: 'text-2xl font-bold mb-6 text-center',
-      innerHTML: `Profilo: ${user?.username || 'Giocatore'}`,
+      innerHTML: `Profilo`,
       style: `color: ${COLORS.primary};`
     });
 
@@ -144,7 +148,7 @@ export class ProfileModal {
     const tr = createElement('tr');
 
     const avatarTd = createElement('td', {
-      className: 'align-middle w-32'
+      className: 'align-top w-48'
     });
 
     const profileImageUpload = new ProfileImageUpload(
@@ -154,9 +158,15 @@ export class ProfileModal {
       }
     );
 
-    avatarTd.appendChild(profileImageUpload.getElement());
+    // Container per avatar
+    const avatarContainer = createElement('div', {
+      className: 'flex flex-col gap-4'
+    });
+    
+    avatarContainer.appendChild(profileImageUpload.getElement());
+    
     const infoTd = createElement('td', {
-      className: 'align-middle'
+      className: 'align-top'
     });
 
     const infoDiv = createElement('div', {
@@ -201,12 +211,17 @@ export class ProfileModal {
       innerHTML: `<span><strong>Mail:</strong> ${user?.mail || 'N/A'}</span>`
     });
 
+    // Edit button container (if not in edit mode)
+    const editButtonContainer = createElement('div', {
+      className: 'mt-2'
+    });
+
     const walletDiv = createElement('div', {
-      className: 'text-sm text-left'
+      className: 'text-sm text-left mt-4'
     });
 
     const walletContainer = createElement('div', {
-      className: 'flex items-center gap-2'
+      className: 'flex flex-col gap-2'
     });
 
     const walletLabel = createElement('span', {
@@ -217,44 +232,51 @@ export class ProfileModal {
     // Check wallet state
     const walletState = blockchainService.getWalletState();
     
+    walletContainer.appendChild(walletLabel);
+    
     if (walletState.isConnected && walletState.address) {
-      // Show wallet address and disconnect button
-      this.walletAddressElement = createElement('span', {
-        className: 'text-xs font-mono bg-gray-700 px-2 py-1 rounded',
+      // Show wallet address and buttons
+      this.walletAddressElement = createElement('div', {
+        className: 'text-xs font-mono bg-gray-700 px-3 py-2 rounded mt-2',
         innerHTML: blockchainService.formatAddress(walletState.address)
       });
       
+      const walletButtonsContainer = createElement('div', {
+        className: 'flex gap-2 mt-2'
+      });
+      
       const disconnectButton = createButton(
-        '✕',
-        'text-red-400 hover:text-red-300 px-2 py-1 text-sm transition-colors focus:outline-none',
+        'Disconnect',
+        'text-white px-3 py-1 rounded text-sm hover:opacity-90 transition-opacity focus:outline-none flex-1',
         async () => {
           blockchainService.disconnect();
           this.hide();
           await this.show(stats);
         }
       );
+      disconnectButton.style.backgroundColor = '#EF4444'; // red
       
       const viewGamesButton = createButton(
-        '📊 My Games',
-        'text-white px-3 py-1 rounded text-sm hover:opacity-90 transition-opacity focus:outline-none ml-2',
+        '📊 Games',
+        'text-white px-3 py-1 rounded text-sm hover:opacity-90 transition-opacity focus:outline-none flex-1',
         async () => this.showUserGames(walletState.address!)
       );
       viewGamesButton.style.backgroundColor = '#10B981'; // green
       
-      walletContainer.appendChild(walletLabel);
+      walletButtonsContainer.appendChild(disconnectButton);
+      walletButtonsContainer.appendChild(viewGamesButton);
+      
       walletContainer.appendChild(this.walletAddressElement);
-      walletContainer.appendChild(disconnectButton);
-      walletContainer.appendChild(viewGamesButton);
+      walletContainer.appendChild(walletButtonsContainer);
     } else {
       // Show connect button
       this.walletButtonElement = createButton(
         blockchainService.isMetaMaskInstalled() ? '🦊 Connect MetaMask' : '⚠️ Install MetaMask',
-        'text-white px-3 py-1 rounded text-sm hover:opacity-90 transition-opacity focus:outline-none',
+        'text-white px-4 py-2 rounded text-sm hover:opacity-90 transition-opacity focus:outline-none w-full mt-2',
         async () => this.handleWalletConnect()
       );
       this.walletButtonElement.style.backgroundColor = blockchainService.isMetaMaskInstalled() ? COLORS.primary : '#6B7280';
       
-      walletContainer.appendChild(walletLabel);
       walletContainer.appendChild(this.walletButtonElement);
     }
 
@@ -262,7 +284,25 @@ export class ProfileModal {
 
     infoDiv.appendChild(usernameDiv);
     infoDiv.appendChild(mailDiv);
-    infoDiv.appendChild(walletDiv);
+    
+    // Add edit button to infoDiv if not in edit mode
+    if (!this.isEditMode) {
+      const editButton = createButton(
+        '✏️ Edit Profile',
+        'px-6 py-2 rounded text-white hover:opacity-90 transition-opacity focus:outline-none w-full mt-4',
+        async () => {
+          this.isEditMode = true;
+          this.editFormData.username = user?.username || '';
+          await this.show(stats);
+        }
+      );
+      editButton.style.backgroundColor = COLORS.primary;
+      editButtonContainer.appendChild(editButton);
+      infoDiv.appendChild(editButtonContainer);
+    }
+    
+    // Add wallet to avatar column
+    avatarContainer.appendChild(walletDiv);
 
     // Password change fields (only in edit mode)
     if (this.isEditMode) {
@@ -334,6 +374,7 @@ export class ProfileModal {
 
     infoTd.appendChild(infoDiv);
 
+    avatarTd.appendChild(avatarContainer);
     tr.appendChild(avatarTd);
     tr.appendChild(infoTd);
     tbody.appendChild(tr);
@@ -548,7 +589,19 @@ export class ProfileModal {
       const saveButton = createButton(
         'Save Changes',
         'px-6 py-2 rounded text-white hover:opacity-90 transition-opacity focus:outline-none',
-        async () => await this.handleSaveProfile(stats)
+        async () => {
+          if (this.isSaving) return; // Previeni doppi click
+          this.isSaving = true;
+          saveButton.style.opacity = '0.5';
+          saveButton.style.cursor = 'not-allowed';
+          (saveButton as HTMLButtonElement).disabled = true;
+          
+          try {
+            await this.handleSaveProfile(stats);
+          } finally {
+            this.isSaving = false;
+          }
+        }
       );
       saveButton.style.backgroundColor = '#10B981'; // green
 
@@ -566,23 +619,6 @@ export class ProfileModal {
       buttonContainer.appendChild(saveButton);
       buttonContainer.appendChild(cancelButton);
       content.appendChild(buttonContainer);
-    } else {
-      const editButton = createButton(
-        '✏️ Edit Profile',
-        'px-6 py-2 rounded text-white hover:opacity-90 transition-opacity focus:outline-none mb-4',
-        async () => {
-          this.isEditMode = true;
-          this.editFormData.username = user?.username || '';
-          await this.show(stats);
-        }
-      );
-      editButton.style.backgroundColor = COLORS.primary;
-      
-      const editButtonContainer = createElement('div', {
-        className: 'flex justify-center mt-6'
-      });
-      editButtonContainer.appendChild(editButton);
-      content.appendChild(editButtonContainer);
     }
     
     content.appendChild(statsTopGrid);
