@@ -7,6 +7,7 @@ export class ApiService {
   private statsCache: { data: any[]; timestamp: number } | null = null;
   private readonly STATS_CACHE_DURATION = 30000; // 30 secondi
   private statsLoadingPromise: Promise<any[]> | null = null; // Lock per chiamate simultanee
+  private heartbeatInterval: number | null = null;
 
   constructor() {
     this.token = localStorage.getItem('token');
@@ -30,6 +31,7 @@ export class ApiService {
   removeToken(): void {
     this.token = null;
     this.statsCache = null; // Pulisci cache al logout
+    this.stopHeartbeat(); // Ferma heartbeat al logout
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('id');
@@ -425,6 +427,64 @@ export class ApiService {
     }
 
     return data;
+  }
+
+  // ==================== HEARTBEAT ====================
+
+  startHeartbeat(): void {
+    // Se già attivo, non avviare di nuovo
+    if (this.heartbeatInterval !== null) {
+      return;
+    }
+
+    // Invia subito il primo heartbeat
+    this.sendHeartbeat();
+
+    // Poi ogni 30 secondi
+    this.heartbeatInterval = window.setInterval(() => {
+      this.sendHeartbeat();
+    }, 30000);
+
+    console.log('Heartbeat started');
+  }
+
+  stopHeartbeat(): void {
+    if (this.heartbeatInterval !== null) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+      console.log('Heartbeat stopped');
+    }
+  }
+
+  private async sendHeartbeat(): Promise<void> {
+    try {
+      const response = await this.makeAuthenticatedRequest('/heartbeat', {
+        method: 'POST',
+        body: JSON.stringify({})
+      });
+
+      if (!response.ok) {
+        console.error('Heartbeat failed:', response.status);
+      }
+    } catch (error) {
+      console.error('Heartbeat error:', error);
+    }
+  }
+
+  async signalOffline(): Promise<void> {
+    try {
+      // Imposta last_active a una data vecchia per segnalare offline
+      const response = await this.makeAuthenticatedRequest('/heartbeat', {
+        method: 'POST',
+        body: JSON.stringify({ offline: true })
+      });
+
+      if (!response.ok) {
+        console.error('Failed to signal offline:', response.status);
+      }
+    } catch (error) {
+      console.error('Error signaling offline:', error);
+    }
   }
 
 }

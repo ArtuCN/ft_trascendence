@@ -19,9 +19,18 @@ export default async function (fastify, opts) {
 				return reply.code(400).send({ error: 'Invalid user payload' });
 			}
 
-			const now = Date.now();
+			const { offline } = request.body || {};
+			let timestamp;
 
-			await updateUserLastActive(userId, new Date(now).toISOString());
+			if (offline) {
+				// Se offline, imposta last_active a una data molto vecchia (1 gennaio 2000)
+				timestamp = new Date('2000-01-01').toISOString();
+			} else {
+				// Altrimenti usa il timestamp corrente
+				timestamp = new Date(Date.now()).toISOString();
+			}
+
+			await updateUserLastActive(userId, timestamp);
 
 			return reply.code(200).send({ ok: true });
 		} catch (err) {

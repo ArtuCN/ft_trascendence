@@ -32,6 +32,9 @@ export class App {
     if (!isAuthenticated) {
       this.navbar.getElement().style.display = 'none';
       this.mainContent.style.display = 'none';
+    } else {
+      // Se già autenticato, avvia heartbeat
+      apiService.startHeartbeat();
     }
     
     this.setupRoutes();
@@ -85,9 +88,13 @@ export class App {
       if (isAuthenticated) {
         this.mainContent.style.display = 'block';
         this.navbar.getElement().style.display = 'flex';
+        // Avvia heartbeat quando l'utente si autentica
+        apiService.startHeartbeat();
       } else {
         this.mainContent.style.display = 'none';
         this.navbar.getElement().style.display = 'none';
+        // Ferma heartbeat al logout
+        apiService.stopHeartbeat();
       }
     });
   }
@@ -110,6 +117,9 @@ export class App {
     if (this.unsubscribe) {
       this.unsubscribe();
     }
+    
+    // Ferma heartbeat quando l'app viene distrutta
+    apiService.stopHeartbeat();
     
     this.navbar.destroy();
     this.authGuard.destroy();
