@@ -12,6 +12,7 @@
     "@fastify/jwt": "^6.2.1",
     "@fastify/rate-limit": "^9.1.0",
     "bcrypt": "^6.0.0",
+    "dotenv": "^17.2.3",
     "fastify": "^4.20.0",
     "fastify-multipart": "^5.3.1",
     "google-auth-library": "^9.0.0",

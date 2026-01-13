@@ -75,6 +75,7 @@
 - **Fare VM su computer di scuola e testare se tutto funziona** — *Petre-Arturo* -*Fatto*
 - **Sistemare makefile e .env in base alla VM** - *Arturo* - *Fatto*
 - **Fare ultime modifiche per integrare blockchain con FE** — *Tjaz-Khadim*
+    - wallet non rimane conneso doppo refresh di pagina
 - **Sistemare visuale gameplay 2d che non fa vedere un player** - *Matteo*
 
 ---

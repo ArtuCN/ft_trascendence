@@ -88,3 +88,4 @@
     - SECRET HARDCODATI!!! Arturo inizio 02,1 fixed
     - caricare imagine di avatar, devi fare refresh che si vede ,1, funziona
     - protection against sql/xss injection atacks ,2 tjaz,  fatto
+    - added Allowed origins to env
