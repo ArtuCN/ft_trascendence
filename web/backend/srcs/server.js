@@ -3,8 +3,9 @@ import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 import fastifyMultipart from 'fastify-multipart';
 import rateLimit from '@fastify/rate-limit';
-import 'dotenv/config';
+import dotenv from 'dotenv';
 
+dotenv.config();
 
 import { getAllUsers } from './database_comunication/user_db.js';
 import { sanitizeUsers } from './utils/sanitize.js';

@@ -389,6 +389,44 @@ export class ApiService {
     this.removeToken();
     return data;
   }
+
+  // ==================== PROFILE UPDATE ====================
+
+  async updateProfile(updates: { username?: string; password?: string; currentPassword?: string }): Promise<AuthResponse> {
+    const response = await this.makeAuthenticatedRequest('/updateprofile', {
+      method: 'PUT',
+      body: JSON.stringify(updates)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to update profile');
+    }
+
+    // Update stored token if provided
+    if (data.token) {
+      this.saveToken(data.token);
+    }
+
+    return data;
+  }
+
+  // ==================== HEARTBEAT ====================
+
+  async sendHeartbeat(): Promise<{ success: boolean; timestamp: number }> {
+    const response = await this.makeAuthenticatedRequest('/heartbeat', {
+      method: 'POST'
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to send heartbeat');
+    }
+
+    return data;
+  }
 }
 
 

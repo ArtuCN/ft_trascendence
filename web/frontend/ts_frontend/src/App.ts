@@ -42,14 +42,15 @@ export class App {
       throw new Error('App element not found');
     }
 
-    // Layout principale con flexbox orizzontale
+    // Layout principale con flexbox verticale (navbar in alto)
     const layout = createElement('div', {
-      className: 'min-h-screen bg-gray-100 flex'
+      className: 'min-h-screen bg-gray-100 flex flex-col'
     });
 
-    // Container per il contenuto principale (senza margin-left)
+    // Container per il contenuto principale
     const mainContent = createElement('div', {
-      className: 'flex-1 p-8 min-h-screen'
+      className: 'flex-1 min-h-screen',
+      style: 'background: linear-gradient(180deg, #001F3F 0%, #003D73 100%);'
     });
 
     // Aggiungiamo la navbar e il contenuto principale al layout

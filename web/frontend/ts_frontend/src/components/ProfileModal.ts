@@ -17,9 +17,19 @@ export class ProfileModal {
   private walletButtonElement?: HTMLElement;
   private walletAddressElement?: HTMLElement;
   private unsubscribeWallet?: () => void;
+  private isEditMode: boolean = false;
+  private editFormData = {
+    username: '',
+    password: '',
+    confirmPassword: '',
+    currentPassword: ''
+  };
 
   async show(stats?: Stats): Promise<void> {
-    if (this.isVisible) return;
+    // Close existing modal if open
+    if (this.isVisible) {
+      this.hide();
+    }
     
     this.isVisible = true;
     
@@ -69,6 +79,7 @@ export class ProfileModal {
     if (!this.isVisible || !this.modalElement) return;
     
     this.isVisible = false;
+    // Don't reset edit mode here - let the caller decide
     document.body.removeChild(this.modalElement);
     this.modalElement = undefined;
   }
@@ -102,7 +113,11 @@ export class ProfileModal {
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
       </svg>`,
       'absolute top-4 right-4 hover:opacity-70 transition-opacity focus:outline-none',
-      () => this.hide()
+      () => {
+        this.isEditMode = false;
+        this.resetEditForm();
+        this.hide();
+      }
     );
     closeButton.style.color = COLORS.primary;
 
@@ -147,6 +162,39 @@ export class ProfileModal {
     const infoDiv = createElement('div', {
       className: 'space-y-5'
     });
+
+    // Username display/edit
+    const usernameDiv = createElement('div', {
+      className: 'text-sm text-left'
+    });
+
+    if (this.isEditMode) {
+      const usernameLabel = createElement('label', {
+        className: 'block text-xs font-medium mb-1',
+        innerHTML: 'Username:'
+      });
+      
+      const usernameInput = createElement('input', {
+        type: 'text',
+        className: 'w-full px-3 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:outline-none focus:border-blue-500',
+        value: this.editFormData.username || user?.username || '',
+        placeholder: 'Enter new username'
+      }) as HTMLInputElement;
+
+      usernameInput.addEventListener('input', (e) => {
+        this.editFormData.username = (e.target as HTMLInputElement).value;
+      });
+
+      usernameDiv.appendChild(usernameLabel);
+      usernameDiv.appendChild(usernameInput);
+    } else {
+      usernameDiv.innerHTML = `
+        <div>
+          <div><strong>Username:</strong> ${user?.username || 'N/A'}</div>
+          <div class="text-xs text-gray-400 mt-1"><strong>ID:</strong> ${user?.id || 'N/A'}</div>
+        </div>
+      `;
+    }
 
     const mailDiv = createElement('div', {
       className: 'text-sm text-left',
@@ -212,8 +260,78 @@ export class ProfileModal {
 
     walletDiv.appendChild(walletContainer);
 
+    infoDiv.appendChild(usernameDiv);
     infoDiv.appendChild(mailDiv);
     infoDiv.appendChild(walletDiv);
+
+    // Password change fields (only in edit mode)
+    if (this.isEditMode) {
+      const passwordSection = createElement('div', {
+        className: 'space-y-3 mt-4 pt-4 border-t border-gray-600'
+      });
+
+      const passwordTitle = createElement('div', {
+        className: 'text-xs font-medium mb-2',
+        innerHTML: 'Change Password (optional)',
+        style: `color: ${COLORS.primary};`
+      });
+
+      const currentPasswordLabel = createElement('label', {
+        className: 'block text-xs font-medium mb-1',
+        innerHTML: 'Current Password:'
+      });
+      
+      const currentPasswordInput = createElement('input', {
+        type: 'password',
+        className: 'w-full px-3 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:outline-none focus:border-blue-500',
+        placeholder: 'Enter current password'
+      }) as HTMLInputElement;
+
+      currentPasswordInput.addEventListener('input', (e) => {
+        this.editFormData.currentPassword = (e.target as HTMLInputElement).value;
+      });
+
+      const newPasswordLabel = createElement('label', {
+        className: 'block text-xs font-medium mb-1 mt-2',
+        innerHTML: 'New Password:'
+      });
+      
+      const newPasswordInput = createElement('input', {
+        type: 'password',
+        className: 'w-full px-3 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:outline-none focus:border-blue-500',
+        placeholder: 'Enter new password'
+      }) as HTMLInputElement;
+
+      newPasswordInput.addEventListener('input', (e) => {
+        this.editFormData.password = (e.target as HTMLInputElement).value;
+      });
+
+      const confirmPasswordLabel = createElement('label', {
+        className: 'block text-xs font-medium mb-1 mt-2',
+        innerHTML: 'Confirm New Password:'
+      });
+      
+      const confirmPasswordInput = createElement('input', {
+        type: 'password',
+        className: 'w-full px-3 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:outline-none focus:border-blue-500',
+        placeholder: 'Confirm new password'
+      }) as HTMLInputElement;
+
+      confirmPasswordInput.addEventListener('input', (e) => {
+        this.editFormData.confirmPassword = (e.target as HTMLInputElement).value;
+      });
+
+      passwordSection.appendChild(passwordTitle);
+      passwordSection.appendChild(currentPasswordLabel);
+      passwordSection.appendChild(currentPasswordInput);
+      passwordSection.appendChild(newPasswordLabel);
+      passwordSection.appendChild(newPasswordInput);
+      passwordSection.appendChild(confirmPasswordLabel);
+      passwordSection.appendChild(confirmPasswordInput);
+
+      infoDiv.appendChild(passwordSection);
+    }
+
     infoTd.appendChild(infoDiv);
 
     tr.appendChild(avatarTd);
@@ -420,6 +538,53 @@ export class ProfileModal {
 
     // Mettiamo tutto insieme come un puzzle
     content.appendChild(userTable);
+    
+    // Edit/Save/Cancel buttons
+    if (this.isEditMode) {
+      const buttonContainer = createElement('div', {
+        className: 'flex gap-4 justify-center mt-6 mb-4'
+      });
+
+      const saveButton = createButton(
+        'Save Changes',
+        'px-6 py-2 rounded text-white hover:opacity-90 transition-opacity focus:outline-none',
+        async () => await this.handleSaveProfile(stats)
+      );
+      saveButton.style.backgroundColor = '#10B981'; // green
+
+      const cancelButton = createButton(
+        'Cancel',
+        'px-6 py-2 rounded text-white hover:opacity-90 transition-opacity focus:outline-none',
+        async () => {
+          this.isEditMode = false;
+          this.resetEditForm();
+          await this.show(stats);
+        }
+      );
+      cancelButton.style.backgroundColor = '#6B7280'; // gray
+
+      buttonContainer.appendChild(saveButton);
+      buttonContainer.appendChild(cancelButton);
+      content.appendChild(buttonContainer);
+    } else {
+      const editButton = createButton(
+        '✏️ Edit Profile',
+        'px-6 py-2 rounded text-white hover:opacity-90 transition-opacity focus:outline-none mb-4',
+        async () => {
+          this.isEditMode = true;
+          this.editFormData.username = user?.username || '';
+          await this.show(stats);
+        }
+      );
+      editButton.style.backgroundColor = COLORS.primary;
+      
+      const editButtonContainer = createElement('div', {
+        className: 'flex justify-center mt-6'
+      });
+      editButtonContainer.appendChild(editButton);
+      content.appendChild(editButtonContainer);
+    }
+    
     content.appendChild(statsTopGrid);
     content.appendChild(mainStatsGrid);
     content.appendChild(matchResultsSection);
@@ -432,6 +597,8 @@ export class ProfileModal {
     // Se clicchi fuori dal modal si chiude (comodo no?)
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
+        this.isEditMode = false;
+        this.resetEditForm();
         this.hide();
       }
     });
@@ -479,6 +646,94 @@ export class ProfileModal {
       console.error('Error fetching games:', error);
       alert('Failed to fetch games from blockchain');
     }
+  }
+
+  private async handleSaveProfile(stats?: Stats): Promise<void> {
+    try {
+      const { user } = authState.getState();
+      if (!user) {
+        alert('User not found');
+        return;
+      }
+
+      // Validate inputs
+      const updates: any = {};
+      
+      // Check if username changed
+      if (this.editFormData.username && this.editFormData.username !== user.username) {
+        if (this.editFormData.username.trim().length < 3) {
+          alert('Username must be at least 3 characters');
+          return;
+        }
+        updates.username = this.editFormData.username.trim();
+      }
+
+      // Check if password is being changed
+      if (this.editFormData.password || this.editFormData.currentPassword) {
+        if (!this.editFormData.currentPassword) {
+          alert('Current password is required to change password');
+          return;
+        }
+        
+        if (!this.editFormData.password) {
+          alert('Please enter a new password');
+          return;
+        }
+
+        if (this.editFormData.password.length < 6) {
+          alert('New password must be at least 6 characters');
+          return;
+        }
+
+        if (this.editFormData.password !== this.editFormData.confirmPassword) {
+          alert('New passwords do not match');
+          return;
+        }
+
+        updates.password = this.editFormData.password;
+        updates.currentPassword = this.editFormData.currentPassword;
+      }
+
+      // If no changes, just exit edit mode
+      if (Object.keys(updates).length === 0 || (Object.keys(updates).length === 1 && updates.currentPassword)) {
+        alert('No changes to save');
+        return;
+      }
+
+      // Call API to update profile
+      const response = await apiService.updateProfile(updates);
+
+      // Update auth state with new user data
+      if (response.user) {
+        authState.updateUser(response.user);
+        localStorage.setItem('username', response.user.username);
+        localStorage.setItem('user', JSON.stringify(response.user));
+      }
+
+      // Reset edit mode
+      this.isEditMode = false;
+      this.resetEditForm();
+
+      // Show success message
+      alert('Profile updated successfully!');
+
+      // Refresh modal with updated data
+      await this.show(stats);
+
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update profile';
+      alert(`Error: ${errorMessage}`);
+    }
+  }
+
+  private resetEditForm(): void {
+    this.editFormData = {
+      username: '',
+      password: '',
+      confirmPassword: '',
+      currentPassword: ''
+    };
   }
 
   destroy(): void {

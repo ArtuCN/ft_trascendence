@@ -10,8 +10,14 @@ export default async function (fastify, opts) {
 		preHandler: [fastify.authenticate],
 	}, async (request, reply) => {
 		try {
+			console.log('Heartbeat request.user:', request.user);
 			const userId = request.user && request.user.id;
-			if (!userId) return reply.code(400).send({ error: 'Invalid user payload' });
+			console.log('Extracted userId:', userId);
+			
+			if (!userId) {
+				console.log('No userId found in request.user');
+				return reply.code(400).send({ error: 'Invalid user payload' });
+			}
 
 			const now = Date.now();
 
@@ -19,6 +25,7 @@ export default async function (fastify, opts) {
 
 			return reply.code(200).send({ ok: true });
 		} catch (err) {
+			console.error('Heartbeat error:', err);
 			request.log.error(err);
 			return reply.code(500).send({ error: 'Failed to update heartbeat' });
 		}

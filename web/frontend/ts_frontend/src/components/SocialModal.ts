@@ -165,36 +165,38 @@ export class SocialModal {
           : 'background-color: rgba(255, 255, 255, 0.06);'
       });
 
-      // Render friend name and two buttons (Blocca / Sblocca). One is disabled depending on blocked state.
+      // Render friend name with online status, and action buttons
       friendItem.innerHTML = `
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <span class="font-medium">${friend.username}</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <button
-              type="button"
-              class="friend-block-btn px-3 py-1 rounded text-sm text-white ${isBlocked ? 'bg-gray-500 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'} focus:outline-none"
-              title="Blocca ${friend.username}"
-              aria-label="Blocca ${friend.username}"
-              ${isBlocked ? 'disabled' : ''}
-            >
-              Blocca
-            </button>
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="w-3 h-3 rounded-full ${isOnline ? 'bg-green-500' : 'bg-gray-500'} shadow-lg ${isOnline ? 'animate-pulse' : ''}" title="${isOnline ? 'Online' : 'Offline'}"></span>
+              <span class="font-medium">${friend.username}</span>
+              <span class="text-xs ${isOnline ? 'text-green-400' : 'text-gray-400'} font-semibold">${isOnline ? 'Online' : 'Offline'}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                class="friend-block-btn px-3 py-1 rounded text-sm text-white ${isBlocked ? 'bg-gray-500 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'} focus:outline-none"
+                title="Blocca ${friend.username}"
+                aria-label="Blocca ${friend.username}"
+                ${isBlocked ? 'disabled' : ''}
+              >
+                Blocca
+              </button>
 
-            <button
-              type="button"
-              class="friend-unblock-btn px-3 py-1 rounded text-sm text-white ${isBlocked ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-500 cursor-not-allowed'} focus:outline-none"
-              title="Sblocca ${friend.username}"
-              aria-label="Sblocca ${friend.username}"
-              ${isBlocked ? '' : 'disabled'}
-            >
-              Sblocca
-            </button>
-
-            <span class="ml-2 w-3 h-3 rounded-full ${isOnline ? 'bg-green-500' : 'bg-gray-400'}" aria-hidden="true"></span>
-            <span class="ml-3 text-sm font-semibold ${isBlocked ? 'text-red-400' : 'text-green-400'}">${isBlocked ? 'Utente bloccato' : 'Utente non bloccato'}</span>
+              <button
+                type="button"
+                class="friend-unblock-btn px-3 py-1 rounded text-sm text-white ${isBlocked ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-500 cursor-not-allowed'} focus:outline-none"
+                title="Sblocca ${friend.username}"
+                aria-label="Sblocca ${friend.username}"
+                ${isBlocked ? '' : 'disabled'}
+              >
+                Sblocca
+              </button>
+            </div>
           </div>
+          ${isBlocked ? '<div class="text-xs text-red-400 pl-6">⚠️ Utente bloccato</div>' : ''}
         </div>
       `;
 

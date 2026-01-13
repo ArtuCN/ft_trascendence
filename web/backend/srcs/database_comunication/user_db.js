@@ -418,3 +418,37 @@ export async function getAvatar_db(userId) {
     });
   });
 }
+
+// Update user profile (username and/or password)
+export async function updateUserProfile(userId, updates) {
+  return new Promise((resolve, reject) => {
+    const fields = [];
+    const values = [];
+
+    if (updates.username !== undefined) {
+      fields.push('username = ?');
+      values.push(updates.username);
+    }
+
+    if (updates.psw !== undefined) {
+      fields.push('psw = ?');
+      values.push(updates.psw);
+    }
+
+    if (fields.length === 0) {
+      return reject(new Error('No fields to update'));
+    }
+
+    values.push(userId);
+    const query = `UPDATE user SET ${fields.join(', ')} WHERE id = ?`;
+
+    db.run(query, values, function (err) {
+      if (err) {
+        console.error('Error while updating user profile:', err);
+        reject(err);
+      } else {
+        resolve({ id: userId, changes: this.changes });
+      }
+    });
+  });
+}
