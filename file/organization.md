@@ -7,7 +7,7 @@
 
 # punti per persona: finito (in progress)
 	- Arturo: 3 (3)
-	- Matteo: 2 (2)
+	- Matteo: 3 (4)
 	- Khadim: 0 (1)
 	- Petre: 0 (1)
 	- Tjaz: 5 (5)

@@ -1,4 +1,26 @@
 declare const BABYLON: any;
+import { Player } from "../typescriptFile3D/classPlayer";
+
+export const canvas_container = document.getElementById("canvas-container")!;
+const buttonLocalPlay3D = document.getElementById("LocalPlay3D") as HTMLButtonElement;
+const buttonRemotePlay3D = document.getElementById("RemotePlay3D") as HTMLButtonElement;
+const canvasContainer3D = document.getElementById("canvas-container")!;
+const textPong3D = document.getElementById("PongGame") as HTMLHeadingElement;
+const button2P3D = document.getElementById("Play2P3D") as HTMLButtonElement;
+const buttonAI3D = document.getElementById("PlayAI3D") as HTMLButtonElement;
+const button4P3D = document.getElementById("Play4P3D") as HTMLButtonElement;
+const buttonMainMenu3D = document.getElementById("returnMenu") as HTMLButtonElement;
+const textPong = document.getElementById("PongGame") as HTMLHeadingElement;
+const scoreDiv = document.getElementById("score3d") as HTMLDivElement;
+
+function getCurrentUserId(): number {
+    const userId = localStorage.getItem('id');
+	return userId ? parseInt(userId) : 0;
+}
+
+function getCurrentUsername(): string {
+    return localStorage.getItem('username') || 'Guest';
+}
 
 let engine: any;
 let scene: any;
@@ -22,6 +44,9 @@ let cornerCubes: any[] = [];
 // particelle ball
 let ballParticleSystem: any = null;
 
+const userId = getCurrentUserId();
+const username = getCurrentUsername();
+
 const keys: Record<string, boolean> = {};
 window.addEventListener('keydown', (e) => {
     keys[e.key] = true;
@@ -40,6 +65,59 @@ const COLORS = {
     paddleBottom:   new BABYLON.Color3(0.28, 0.85, 0.82),  // acqua pastello
     ground:         new BABYLON.Color3(0.36, 0.68, 0.78)   // azzurro più profondo
 };
+
+function showMenu(winner: Player) {
+    canvas.style.display = "none";
+    textPong3D.style.display = "block";
+    canvasContainer3D.style.display = "none";
+    buttonRemotePlay3D.style.display = 'inline-block';
+    buttonLocalPlay3D.style.display = 'inline-block';
+    scoreDiv.style.display = "none";
+}
+
+export function showVictoryScreen3D(winner: any) {
+    canvas_container.style.display = "block";
+    const canvas2D = document.getElementById("gameCanvas") as HTMLCanvasElement;
+    const ctx = canvas2D.getContext("2d")!;
+
+    const btnBack = document.getElementById("btnBackToMenu") as HTMLButtonElement;
+    if (!btnBack) {
+        console.error("Could not find btnBackToMenu element");
+        return;
+    }
+    btnBack.style.display = "inline-block";
+    btnBack.style.position = "absolute";
+    btnBack.style.left = "50%";
+    btnBack.style.top = "60%";
+    btnBack.style.transform = "translate(-50%, -50%)";
+    btnBack.style.zIndex = "999";
+
+    btnBack.onclick = () => {
+      btnBack.style.display = "none";
+      canvas_container.style.display = "none";
+      showMenu(winner); // or showMenu(null) if you want to reset
+    };
+
+    if (!ctx) {
+        console.error("Could not get 2D context from canvas");
+        return;
+    }
+    ctx.clearRect(0, 0, canvas2D.width, canvas2D.height);
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
+    ctx.fillRect(0, 0, canvas2D.width, canvas2D.height);
+    
+    ctx.fillStyle = "white";
+    ctx.font = "48px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    
+    ctx.fillText(
+      `🏆 ${winner.playerName} Wins 🏆`,
+      canvas2D.width / 2,
+      canvas2D.height / 2
+    );
+}
 
 function createGameObjects(scene: any) {
     console.log("Creating game objects...");
@@ -98,12 +176,49 @@ function createGameObjects(scene: any) {
         
             const halfW = FIELD_WIDTH_3D / 2;
             const halfH = FIELD_HEIGHT_3D / 2;
+            if (nbrPlayer === 2) {
+                // 2-player mode: check left/right goals
+                if (this.position.x < -halfW) {
+                    if (this.rallyActive) {
+                        score3d[1] = (score3d[1] || 0) + 1;
+                        updateScoreDisplay();
+                    }
+                    console.log("Player 2 scored! Current score:", score3d);
+                    if (score3d[1] >= 5) {
+                        gameStarted = false;
+                        showVictoryScreen3D(players[1]);
+                    }
+                    this.resetBall();
+                    return;
+                }
+                if (this.position.x > halfW) {
+                    if (this.rallyActive) {
+                        score3d[0] = (score3d[0] || 0) + 1;
+                        updateScoreDisplay();
+                    }
+                    if (score3d[0] >= 5) {
+                        gameStarted = false;
+                        showVictoryScreen3D(players[0]);
+                    }
+                    this.resetBall();
+                    return;
+                }
+                if (this.position.z > halfH || this.position.z < -halfH) {
+                    this.velocity.z *= -1;
+                    this.position.z = (this.position.z > 0 ? 1 : -1) * (halfH - this.ballSize/2);
+                    this.mesh.position.copyFrom(this.position);
+                }
+            }
             if (nbrPlayer === 4) {
                 if (this.position.z > halfH) {
                     if (this.rallyActive && this.lastTouched !== null) {
                         const scorer = this.lastTouched;
                         score3d[scorer] = (score3d[scorer] || 0) + 1;
                         updateScoreDisplay();
+                    }
+                    if (score3d[this.lastTouched || 0] >= 5) {
+                        gameStarted = false;
+                        showVictoryScreen3D(players[this.lastTouched || 0]);
                     }
                     this.resetBall();
                     return;
@@ -114,35 +229,40 @@ function createGameObjects(scene: any) {
                         score3d[scorer] = (score3d[scorer] || 0) + 1;
                         updateScoreDisplay();
                     }
+                    if (score3d[this.lastTouched || 0] >= 5) {
+                        gameStarted = false;
+                        showVictoryScreen3D(players[this.lastTouched || 0]);
+                    }
                     this.resetBall();
                     return;
                 }
-            } else {
-                // 2-player mode: bounce on top/bottom walls
-                if (this.position.z > halfH || this.position.z < -halfH) {
-                    this.velocity.z *= -1;
-                    this.position.z = (this.position.z > 0 ? 1 : -1) * (halfH - this.ballSize/2);
-                    this.mesh.position.copyFrom(this.position);
+                if (this.position.x < -halfW) {
+                    if (this.rallyActive && this.lastTouched !== null) {
+                        const scorer = this.lastTouched;
+                        score3d[scorer] = (score3d[scorer] || 0) + 1;
+                        updateScoreDisplay();
+                    }
+                    if (score3d[this.lastTouched || 0] >= 5) {
+                        gameStarted = false;
+                        showVictoryScreen3D(players[this.lastTouched || 0]);
+                    }
+                    this.resetBall();
+                }
+                if (this.position.x > halfW) {
+                    if (this.rallyActive && this.lastTouched !== null) {
+                        const scorer = this.lastTouched;
+                        score3d[scorer] = (score3d[scorer] || 0) + 1;
+                        updateScoreDisplay();
+                    }
+                    if (score3d[this.lastTouched || 0] >= 5) {
+                        gameStarted = false;
+                        showVictoryScreen3D(players[this.lastTouched || 0]);
+                    }
+                    this.resetBall();
                 }
             }
             
             //goal checks (reset ball)
-            if (this.position.x < -halfW) {
-                if (this.rallyActive && this.lastTouched !== null) {
-                    const scorer = this.lastTouched;
-                    score3d[scorer] = (score3d[scorer] || 0) + 1;
-                    updateScoreDisplay();
-                }
-                this.resetBall();
-            }
-            if (this.position.x > halfW) {
-                if (this.rallyActive && this.lastTouched !== null) {
-                    const scorer = this.lastTouched;
-                    score3d[scorer] = (score3d[scorer] || 0) + 1;
-                    updateScoreDisplay();
-                }
-                this.resetBall();
-            }
         },
         
         checkPaddleCollisions: function(players: any[]) {
@@ -259,6 +379,8 @@ function createGameObjects(scene: any) {
     
     players.push({
         id: 0,
+        user_ids: [userId],
+        playerName: username,
         mesh: paddle1Mesh,
         position: paddle1Mesh.position,
         drawAndMove: function() {
@@ -297,6 +419,7 @@ function createGameObjects(scene: any) {
     const player1 = {
         id: 1,
         mesh: paddle2Mesh,
+        playerName: "Guest 1",
         position: paddle2Mesh.position,
         drawAndMove: function() {
             const step = 0.15;
@@ -372,6 +495,7 @@ function createGameObjects(scene: any) {
         players.push({
             id: 2,
             mesh: paddle3Mesh,
+            playerName: "Guest 2",
             position: paddle3Mesh.position,
             drawAndMove: function() {
                 // Player 2 controls
@@ -417,6 +541,7 @@ function createGameObjects(scene: any) {
         players.push({
             id: 3,
             mesh: paddle4Mesh,
+            playerName: "Guest 3",
             position: paddle4Mesh.position,
             drawAndMove: function() {
                 // Player 3 controls
@@ -573,7 +698,7 @@ function initBabylon() {
     }
     console.log("✅ BABYLON.js is available");
     
-    canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
+    canvas = document.getElementById("gameCanvas3D") as HTMLCanvasElement;
     if (!canvas) {
         console.error("❌ Canvas not found!");
         return;
@@ -593,7 +718,7 @@ function initBabylon() {
     }
 
     try {
-        camera = new BABYLON.ArcRotateCamera("camera1", -Math.PI/2, Math.PI/2.5, 12, BABYLON.Vector3.Zero(), scene);
+        camera = new BABYLON.ArcRotateCamera("camera1", -Math.PI/2, Math.PI/4, 42, BABYLON.Vector3.Zero(), scene);
         try {
             camera.attachControl(canvas, true);
             console.log("✅ Camera attached to canvas for pointer controls");
@@ -695,7 +820,6 @@ function initBabylon() {
 let score3d: number[] = [];
 
 function updateScoreDisplay() {
-    const scoreDiv = document.getElementById("score3d");
     if (!scoreDiv) return;
 
     if (!score3d || score3d.length === 0) {
@@ -724,16 +848,6 @@ window.addEventListener("resize", () => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    const buttonLocalPlay3D = document.getElementById("LocalPlay") as HTMLButtonElement;
-    const buttonRemotePlay3D = document.getElementById("RemotePlay") as HTMLButtonElement;
-    const canvasContainer3D = document.getElementById("canvas-container")!;
-    const textPong3D = document.getElementById("PongGame") as HTMLHeadingElement;
-
-    const button2P3D = document.getElementById("Play2P") as HTMLButtonElement;
-    const buttonAI3D = document.getElementById("PlayAI") as HTMLButtonElement;
-    const button4P3D = document.getElementById("Play4P") as HTMLButtonElement;
-    const buttonTournament3D = document.getElementById("Tournament") as HTMLButtonElement;
-    const buttonMainMenu3D = document.getElementById("returnMenu") as HTMLButtonElement;
 
     if (!buttonLocalPlay3D) {
         console.error("ButtonLocalPlay not found!");
@@ -748,7 +862,6 @@ buttonLocalPlay3D.addEventListener("click", () => {
     button2P3D.style.display = "inline-block";
     buttonAI3D.style.display = "inline-block";
     button4P3D.style.display = "inline-block";
-    buttonTournament3D.style.display = "inline-block";
     buttonMainMenu3D.style.display = "inline-block";
 });
 
@@ -756,7 +869,7 @@ buttonLocalPlay3D.addEventListener("click", () => {
         console.log("2 Player button clicked!");
         button2P3D.style.display = "none";
         buttonAI3D.style.display = "none";
-        buttonTournament3D.style.display = "none";
+        button4P3D.style.display = 'none';
         buttonMainMenu3D.style.display = "none";
         textPong3D.style.display = "none";
         canvasContainer3D.style.display = "block";
@@ -775,7 +888,7 @@ buttonLocalPlay3D.addEventListener("click", () => {
 
         button2P3D.style.display = "none";
         buttonAI3D.style.display = "none";
-        buttonTournament3D.style.display = "none";
+        button4P3D.style.display = 'none';
         buttonMainMenu3D.style.display = "none";
         textPong3D.style.display = "none";
         canvasContainer3D.style.display = "block";
@@ -791,7 +904,6 @@ buttonLocalPlay3D.addEventListener("click", () => {
         button2P3D.style.display = "none";
         buttonAI3D.style.display = "none";
         button4P3D.style.display = "none";
-        buttonTournament3D.style.display = "none";
         buttonMainMenu3D.style.display = "none";
         textPong3D.style.display = "none";
         canvasContainer3D.style.display = "block";
@@ -821,7 +933,6 @@ buttonLocalPlay3D.addEventListener("click", () => {
     buttonRemotePlay3D.style.display = "inline-block";
     button2P3D.style.display = "none";
     buttonAI3D.style.display = "none";
-    buttonTournament3D.style.display = "none";
     buttonMainMenu3D.style.display = "none";
     });
 });

@@ -214,29 +214,35 @@
   <body>
   <h1 id="PongGame">Pong Game 3D</h1>
 
-  <div id="menu-container">
-    <button id="LocalPlay" value="1">Local</button>
-    <button id="RemotePlay" value="2">Remote</button>
-    <button id="Play2P" value="2" style="display: none;">2 Player</button>
-    <button id="Play2PRemote" value="2" style="display: none;">2 Player</button>
-    <button id="Play4P" value="4" style="display: none;">4 Player</button>
-    <button id="PlayAI" value="1" style="display: none;">VS Bot</button>
-    <button id="Tournament" style="display: none;">Tournament</button>
+  <div id="menu-container"">
+    <!-- <div id="playerName" style="display: none; position: fixed;">
+      <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; text-align: center;">
+        <h2 id="modalTitle">Inserisci i nomi dei giocatori</h2>
+        <div id="playerInputsContainer"></div>
+        <button id="startGameButton" style="margin-top: 20px; padding: 10px 20px; font-size: 16px; display: none;">Inizia partita</button>
+        <button id="cancelButton" style="margin-top: 10px; padding: 10px 20px; font-size: 16px; display: none;">Annulla</button>
+      </div>
+    </div> -->
+    <button id="LocalPlay3D" value="1">Local</button>
+    <button id="RemotePlay3D" value="2">Remote</button>
+    <button id="Play2P3D" value="2" style="display: none;">2 Player</button>
+    <button id="Play2PRemote3D" value="2" style="display: none;">2 Player</button>
+    <button id="Play4P3D" value="4" style="display: none;">4 Player</button>
+    <button id="PlayAI3D" value="1" style="display: none;">VS Bot</button>
     <button id="returnMenu" style="display: none;">Main Menu</button>
-    <label for="nbrPlayer" style="display: none;">Number of Players:</label>
-    <select id="nbrPlayer" style="display: none;">
-      <option value="4">4</option>
-      <option value="8">8</option>
-    </select>
-    <button id="StartTournament" style="display:none;">Start Tournament</button>
     <button id="btnBackToMenu" style="display:none;">Back to Menu</button>
     <div id="bracket-container" style="display:none; margin-bottom: 20px;"></div>
     <button id="PlayGame" style="display:none;">Play Game</button>
     
     <!-- points -->
   <div id="score3d" style="position:absolute;top:20px;left:50%;transform:translateX(-50%);color:white;font-size:2em;z-index:10;text-shadow:2px 2px 4px #000;"></div>
-    <div id="canvas-container">
-      <canvas id="gameCanvas" width="900" height="600"></canvas>
+    <div id="canvas-container" style="position: relative;">
+      <canvas id="gameCanvas3D" width="900" height="600"></canvas>
+      <canvas id="gameCanvas" width="900" height="600" style="position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            background: transparent;"></canvas>
     </div>
   </div>
 

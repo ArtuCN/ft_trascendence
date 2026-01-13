@@ -1,8 +1,5 @@
 # Makefile for Docker Compose management
-include .env
-export
-
-DOCKER_COMPOSE = $(DOCKER_COMPOSE_TYPE) -f docker-compose.yml
+DOCKER_COMPOSE = docker compose -f docker-compose.yml
 
 # --- Default Target (Help) ---
 help:  ## help menu

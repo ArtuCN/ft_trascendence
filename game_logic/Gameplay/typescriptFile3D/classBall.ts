@@ -1,6 +1,7 @@
 import type { Player } from "./classPlayer"
-import { FIELD_WIDTH, FIELD_HEIGHT } from "./variables3D.js"
-import { nbrPlayer, playerGoals } from "../script.js"
+import { FIELD_WIDTH, FIELD_HEIGHT, stopGame } from "./variables3D.js"
+import { nbrPlayer, playerGoals, playerGoalsRecived, showMenu } from "../script.js"
+import { showVictoryScreen3D } from "../3d/script.js";
 
 declare const BABYLON: any;
 
@@ -49,33 +50,88 @@ export class Ball {
     this.mesh.position.copyFrom(this.position)
     this.checkPaddleCollisions(players)
 
-    if (this.position.x > FIELD_WIDTH / 2) {
-      if (this.rallyActive && this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++
-      this.resetGame(players)
-      return
-    }
-
-    if (this.position.x < -FIELD_WIDTH / 2) {
-      if (this.rallyActive && this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++
-      this.resetGame(players)
-      return
-    }
-
     if (nbrPlayer === 2) {
+
+      if (this.position.x > FIELD_WIDTH / 2) {
+        if (this.rallyActive) playerGoals[0]++
+        playerGoalsRecived[1]++;
+        console.log("Player 1 scored! Total goals:", playerGoals[0]);
+        if (playerGoals[0] >= 5) {
+          if (typeof showMenu === "function") {
+            stopGame()
+            showVictoryScreen3D(players[0]);
+          }
+        }
+        this.resetGame(players)
+        return
+      }
+
+      if (this.position.x < -FIELD_WIDTH / 2) {
+        if (this.rallyActive) playerGoals[1]++
+        playerGoalsRecived[0]++;
+        if (playerGoals[1] >= 5) {
+          if (typeof showMenu === "function") {
+            stopGame()
+            showVictoryScreen3D(players[1])
+          }
+        }
+        this.resetGame(players)
+        return
+      }
+
       if (this.position.z > FIELD_HEIGHT / 2 || this.position.z < -FIELD_HEIGHT / 2) {
         this.velocity.z *= -1
         this.position.z = Math.sign(this.position.z) * (FIELD_HEIGHT / 2 - this.ballSize / 2)
       }
-    } else if (nbrPlayer === 4) {
-      if (this.position.z > FIELD_HEIGHT / 2) {
-        // goal segnato dall'ultimoche tocca la palla
+    }
+    else if (nbrPlayer === 4) {
+      if (this.position.x > FIELD_WIDTH / 2) {
         if (this.rallyActive && this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++
+        playerGoalsRecived[1]++;
+        if (playerGoals[this.lastTouchedPlayer] >= 5) {
+          if (typeof showMenu === "function") {
+            stopGame()
+            showVictoryScreen3D(players[this.lastTouchedPlayer])
+          }
+        }
+        this.resetGame(players)
+        return
+      }
+      if (this.position.x < FIELD_WIDTH / 2) {
+        if (this.rallyActive && this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++
+        playerGoalsRecived[0]++;
+        if (playerGoals[this.lastTouchedPlayer] >= 5) {
+          if (typeof showMenu === "function") {
+            stopGame()
+            showVictoryScreen3D(players[this.lastTouchedPlayer])
+          }
+        }
+        this.resetGame(players)
+        return
+      }
+      if (this.position.z > FIELD_HEIGHT / 2) {
+        // goal segnato dall'ultimo che tocca la palla
+        if (this.rallyActive && this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++
+        playerGoalsRecived[2]++;
+        if (playerGoals[this.lastTouchedPlayer] >= 5) {
+          if (typeof showMenu === "function") {
+            stopGame()
+            showVictoryScreen3D(players[this.lastTouchedPlayer])
+          }
+        }
         this.resetGame(players)
         return
       }
 
       if (this.position.z < -FIELD_HEIGHT / 2) {
         if (this.rallyActive && this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++
+        playerGoalsRecived[3]++;
+        if (playerGoals[this.lastTouchedPlayer] >= 5) {
+          if (typeof showMenu === "function") {
+            stopGame()
+            showVictoryScreen3D(players[this.lastTouchedPlayer])
+          }
+        }
         this.resetGame(players)
         return
       }
