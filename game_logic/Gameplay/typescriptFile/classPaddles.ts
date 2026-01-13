@@ -135,7 +135,7 @@ export class Paddles {
 		else if (this.id === 3 && this.orientation === "horizontal") {
 			if ((keysPressed["k"] || keysPressed["K"]) && this.initialPosition <= (canvas.width - this.paddleLength - cornerWallThickness))
 				this.initialPosition += this.speed;
-			if ((keysPressed["J"] || keysPressed["J"]) && this.initialPosition >= 0 + cornerWallThickness)
+			if ((keysPressed["j"] || keysPressed["J"]) && this.initialPosition >= 0 + cornerWallThickness)
 				this.initialPosition -= this.speed;
 		}
 		if (this.orientation === "vertical") {
