@@ -25,9 +25,9 @@ export class Navbar {
 
   private createNavbar(): HTMLElement {
     const nav = createElement('nav', {
-      className: 'min-h-screen w-44 py-6 px-4 flex flex-col shadow-lg',
+      className: 'w-full py-4 px-8 flex items-center justify-center shadow-lg',
       // Fruitiger / Aero inspired cool-blue palette
-      style: 'background: linear-gradient(180deg, #062A3A 0%, #0B4F6C 100%);'
+      style: 'background: linear-gradient(90deg, #062A3A 0%, #0B4F6C 100%);'
     });
 
     this.element = nav;
@@ -42,94 +42,61 @@ export class Navbar {
       this.element.removeChild(this.element.firstChild);
     }
 
-    const logoContainer = createElement('div', { className: 'mb-8' });
+    const mainContainer = createElement('div', { className: 'flex items-center gap-4' });
+    
     const logoButton = createButton(
-      `<svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-      </svg>
-      <span class="text-sm">Home</span>`,
-      'text-white font-semibold text-lg flex flex-col items-center gap-2 hover:text-orange-300 transition-colors w-full p-4',
+      'HOME',
+      'text-white font-bold text-lg hover:text-cyan-300 transition-colors px-6 py-2 rounded border-2 border-cyan-400',
       () => router.navigate('/')
     );
     logoButton.style.color = '#9BE7FF';
-
-    logoContainer.appendChild(logoButton);
-    this.element.appendChild(logoContainer);
-
-    const mainContainer = createElement('div', { className: 'flex-1 flex flex-col justify-center' });
+    mainContainer.appendChild(logoButton);
     
     if (user) {
-      mainContainer.appendChild(this.createAuthenticatedButtons(user));
+      const authButtons = this.createAuthenticatedButtons(user);
+      while (authButtons.firstChild) {
+        mainContainer.appendChild(authButtons.firstChild);
+      }
     }
     
     this.element.appendChild(mainContainer);
   }
 
   private createAuthenticatedButtons(user: any): HTMLElement {
-    const container = createElement('div', { className: 'flex flex-col gap-4 w-full' });
-
-    const greeting = createElement('div', {
-      className: 'text-white text-center text-sm mb-4 px-2',
-      innerHTML: `Ciao, ${user.username}!`
-    });
+    const container = createElement('div', { className: 'flex items-center gap-4' });
 
     const profileButton = createButton(
-      'Profilo',
-      'text-white px-3 py-2 rounded transition-all focus:outline-none w-full text-center',
+      'PROFILE',
+      'text-white font-bold px-6 py-2 rounded transition-all focus:outline-none border-2 border-pink-400 hover:bg-pink-500/20',
       async () => await this.profileModal.show()
     );
-    profileButton.style.backgroundColor = '#00B4D8';
-    profileButton.addEventListener('mouseenter', () => {
-      profileButton.style.backgroundColor = '#0096C7';
-    });
-    profileButton.addEventListener('mouseleave', () => {
-      profileButton.style.backgroundColor = '#00B4D8';
-    });
-
-    const playButton = createButton(
-      'Play',
-      'text-white px-3 py-2 rounded-md transition-all w-full text-center bg-sky-500 hover:bg-sky-600 focus:outline-none',
-      () => router.navigate('/play')
-    );
-
-    const play3dButton = createButton(
-      'Play 3D',
-      'text-white px-3 py-2 rounded-md transition-all w-full text-center bg-sky-500 hover:bg-sky-600 focus:outline-none',
-      () => router.navigate('/play3D')
-    );
+    profileButton.style.color = '#FF6EC7';
 
     const socialButton = createButton(
-      'Social',
-      'text-white px-3 py-2 rounded-md transition-all w-full text-center bg-sky-400 hover:bg-sky-500 focus:outline-none',
+      'SOCIAL',
+      'text-white font-bold px-6 py-2 rounded transition-all focus:outline-none border-2 border-pink-400 hover:bg-pink-500/20',
       async () => await this.socialModal.show()
     );
+    socialButton.style.color = '#FF6EC7';
 	
     const chatButton = createButton(
-      'Chat',
-      'text-white px-3 py-2 rounded-md transition-all w-full text-center bg-sky-500 hover:bg-sky-600 focus:outline-none',
+      'CHAT',
+      'text-white font-bold px-6 py-2 rounded transition-all focus:outline-none border-2 border-cyan-400 hover:bg-cyan-500/20',
       () => router.navigate('/live-chat')
     );
+    chatButton.style.color = '#9BE7FF';
 
     const logoutButton = createButton(
-      'Logout',
-      'text-white px-3 py-2 rounded transition-all focus:outline-none w-full text-center',
+      'LOGOUT',
+      'text-white font-bold px-6 py-2 rounded transition-all focus:outline-none border-2 border-pink-400 hover:bg-pink-500/20',
       () => {
         authState.logout();
         router.navigate('/');
       }
     );
-    logoutButton.style.backgroundColor = '#334E68';
-    logoutButton.addEventListener('mouseenter', () => {
-      logoutButton.style.backgroundColor = '#2B5A78';
-    });
-    logoutButton.addEventListener('mouseleave', () => {
-      logoutButton.style.backgroundColor = '#334E68';
-    });
+    logoutButton.style.color = '#FF6EC7';
 
-    container.appendChild(greeting);
     container.appendChild(profileButton);
-    container.appendChild(playButton);
-    container.appendChild(play3dButton);
     container.appendChild(socialButton);
     container.appendChild(chatButton);
     container.appendChild(logoutButton);
