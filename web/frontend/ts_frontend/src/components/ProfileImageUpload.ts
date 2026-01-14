@@ -31,6 +31,15 @@ export class ProfileImageUpload {
       style: currentImageUrl ? 'display: block;' : 'display: none;'
     }) as HTMLImageElement;
 
+    // Handle image load errors (e.g., 404 or 204 responses)
+    this.imagePreview.addEventListener('error', () => {
+      this.imagePreview.style.display = 'none';
+      const defaultIcon = container.querySelector('div[innerHTML*="IMG"]') as HTMLElement;
+      if (defaultIcon) {
+        defaultIcon.style.display = 'flex';
+      }
+    });
+
     const defaultIcon = createElement('div', {
       className: 'text-white font-bold text-2xl flex items-center justify-center w-full h-full',
       innerHTML: 'IMG',

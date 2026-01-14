@@ -233,7 +233,7 @@ export function sendTournamentData() {
         final: final
     };
 	const token = getToken()
-    fetch("/api/tournament/", {
+    fetch("/api/tournament", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

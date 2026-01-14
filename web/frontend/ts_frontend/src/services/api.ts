@@ -1,9 +1,13 @@
-import { LoginRequest, RegisterRequest, AuthResponse, User, Stats, Match, CreateMatchRequest, Tournament, Friendship, HeartbeatResponse } from '../types/index.js';
+import { LoginRequest, RegisterRequest, AuthResponse, User, Stats, Match, CreateMatchRequest, Tournament, Friendship } from '../types/index.js';
 
 const API_BASE_URL = '/api';
 
 export class ApiService {
   private token: string | null = null;
+  private statsCache: { data: any[]; timestamp: number } | null = null;
+  private readonly STATS_CACHE_DURATION = 30000; // 30 secondi
+  private statsLoadingPromise: Promise<any[]> | null = null; // Lock per chiamate simultanee
+  private heartbeatInterval: number | null = null;
 
   constructor() {
     this.token = localStorage.getItem('token');
@@ -18,8 +22,16 @@ export class ApiService {
     return this.token;
   }
 
+  // Invalida la cache stats (utile per refresh o logout)
+  clearStatsCache(): void {
+    this.statsCache = null;
+    this.statsLoadingPromise = null;
+  }
+
   removeToken(): void {
     this.token = null;
+    this.statsCache = null; // Pulisci cache al logout
+    this.stopHeartbeat(); // Ferma heartbeat al logout
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('id');
@@ -113,16 +125,47 @@ export class ApiService {
   }
 
   async getAllStats(): Promise<Stats[]> {
-    const response = await this.makeAuthenticatedRequest('/allstats', {
-      method: 'GET'
-    });
-
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.error || 'Failed to fetch all stats');
+    // Se c'è già una richiesta in corso, aspetta quella invece di fare una nuova
+    if (this.statsLoadingPromise) {
+      console.log('Waiting for ongoing stats request...');
+      return this.statsLoadingPromise;
     }
 
-    return await response.json();
+    // Controlla se abbiamo dati in cache ancora validi
+    const now = Date.now();
+    if (this.statsCache && (now - this.statsCache.timestamp) < this.STATS_CACHE_DURATION) {
+      console.log('Using cached stats data');
+      return this.statsCache.data;
+    }
+
+    // Crea la promise e salvala per prevenire richieste duplicate
+    this.statsLoadingPromise = (async () => {
+      try {
+        const response = await this.makeAuthenticatedRequest('/allstats', {
+          method: 'GET'
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to fetch all stats');
+        }
+
+        const data = await response.json();
+        
+        // Salva in cache
+        this.statsCache = {
+          data: data,
+          timestamp: Date.now()
+        };
+        
+        return data;
+      } finally {
+        // Pulisci la promise dopo il completamento
+        this.statsLoadingPromise = null;
+      }
+    })();
+
+    return this.statsLoadingPromise;
   }
 
   // ==================== FRIENDS ====================
@@ -306,33 +349,7 @@ export class ApiService {
     return await response.json();
   }
 
-  // ==================== HEARTBEAT & LOGOUT ====================
-
-  async sendHeartbeat(): Promise<{ ok: boolean }> {
-    const response = await this.makeAuthenticatedRequest('/heartbeat', {
-      method: 'POST'
-    });
-
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.error || 'Failed to send heartbeat');
-    }
-
-    return await response.json();
-  }
-
-  async getUserLastActive(id: number): Promise<HeartbeatResponse> {
-    const response = await this.makeAuthenticatedRequest(`/heartbeat/get?id=${id}`, {
-      method: 'GET'
-    });
-
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.error || 'Failed to get user status');
-    }
-
-    return await response.json();
-  }
+  // ==================== BLOCKING & LOGOUT ====================
 
   async blockUser(id: number, id_blocked: number): Promise<{ success: boolean }> {
     const response = await this.makeAuthenticatedRequest('/blockuser', {
@@ -389,10 +406,87 @@ export class ApiService {
     this.removeToken();
     return data;
   }
+
+  // ==================== PROFILE UPDATE ====================
+
+  async updateProfile(updates: { username?: string; password?: string; currentPassword?: string }): Promise<AuthResponse> {
+    const response = await this.makeAuthenticatedRequest('/updateprofile', {
+      method: 'PUT',
+      body: JSON.stringify(updates)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to update profile');
+    }
+
+    // Update stored token if provided
+    if (data.token) {
+      this.saveToken(data.token);
+    }
+
+    return data;
+  }
+
+  // ==================== HEARTBEAT ====================
+
+  startHeartbeat(): void {
+    // Se già attivo, non avviare di nuovo
+    if (this.heartbeatInterval !== null) {
+      return;
+    }
+
+    // Invia subito il primo heartbeat
+    this.sendHeartbeat();
+
+    // Poi ogni 30 secondi
+    this.heartbeatInterval = window.setInterval(() => {
+      this.sendHeartbeat();
+    }, 30000);
+
+    console.log('Heartbeat started');
+  }
+
+  stopHeartbeat(): void {
+    if (this.heartbeatInterval !== null) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+      console.log('Heartbeat stopped');
+    }
+  }
+
+  private async sendHeartbeat(): Promise<void> {
+    try {
+      const response = await this.makeAuthenticatedRequest('/heartbeat', {
+        method: 'POST',
+        body: JSON.stringify({})
+      });
+
+      if (!response.ok) {
+        console.error('Heartbeat failed:', response.status);
+      }
+    } catch (error) {
+      console.error('Heartbeat error:', error);
+    }
+  }
+
+  async signalOffline(): Promise<void> {
+    try {
+      // Imposta last_active a una data vecchia per segnalare offline
+      const response = await this.makeAuthenticatedRequest('/heartbeat', {
+        method: 'POST',
+        body: JSON.stringify({ offline: true })
+      });
+
+      if (!response.ok) {
+        console.error('Failed to signal offline:', response.status);
+      }
+    } catch (error) {
+      console.error('Error signaling offline:', error);
+    }
+  }
+
 }
-
-
-
-
 
 export const apiService = new ApiService();

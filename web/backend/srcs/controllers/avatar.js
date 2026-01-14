@@ -1,31 +1,19 @@
-import { uploadAvatar_db, getAvatar_db, searchByToken } from "../database_comunication/user_db.js";
+import { uploadAvatar_db, getAvatar_db } from "../database_comunication/user_db.js";
 
 export default async function (fastify, opts) {
-  fastify.post('/avatar', async (req, reply) => {
+  fastify.post('/avatar', {
+    preHandler: fastify.authenticate
+  }, async (req, reply) => {
     try {
       const file = await req.file();
       if (!file) {
         return reply.status(400).send({ error: 'Nessun file ricevuto' });
       }
 
-      // Prefer explicit id in form, otherwise derive from Bearer token
-      let id = req.body?.id;
+      // Get user ID from decoded JWT token (populated by fastify.authenticate)
+      const id = req.user?.id;
       if (!id) {
-        const auth = req.headers?.authorization || req.headers?.Authorization;
-        if (!auth) {
-          return reply.status(401).send({ error: 'Unauthorized: missing token' });
-        }
-        const parts = auth.split(' ');
-        const token = parts.length === 2 && parts[0].toLowerCase() === 'bearer' ? parts[1] : parts[0];
-        if (!token) {
-          return reply.status(401).send({ error: 'Unauthorized: invalid token' });
-        }
-
-        const users = await searchByToken(token);
-        if (!users || users.length === 0) {
-          return reply.status(401).send({ error: 'Unauthorized: token not found' });
-        }
-        id = users[0].id;
+        return reply.status(401).send({ error: 'Unauthorized: user ID not found in token' });
       }
 
       const buffer = await file.toBuffer();
