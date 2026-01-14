@@ -1,7 +1,6 @@
 import { type PaddleOrientation, keysPressed, FIELD_WIDTH, FIELD_HEIGHT } from "./variables3D.js"
 import { nbrPlayer } from "../script.js"
 
-// Babylon.js caricato come file locale - variabili globali
 declare const BABYLON: any;
 
 export class Paddles {

@@ -215,6 +215,14 @@
   <h1 id="PongGame">Pong Game 3D</h1>
 
   <div id="menu-container">
+    <div id="playerName" style="display: none; position: fixed;">
+      <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; text-align: center;">
+        <h2 id="modalTitle">Inserisci i nomi dei giocatori</h2>
+        <div id="playerInputsContainer"></div>
+        <button id="startGameButton" style="margin-top: 20px; padding: 10px 20px; font-size: 16px;">Inizia partita</button>
+        <button id="cancelButton" style="margin-top: 10px; padding: 10px 20px; font-size: 16px;">Annulla</button>
+      </div>
+    </div>
     <button id="LocalPlay" value="1">Local</button>
     <button id="RemotePlay" value="2">Remote</button>
     <button id="Play2P" value="2" style="display: none;">2 Player</button>
