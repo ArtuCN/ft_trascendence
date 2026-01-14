@@ -1,5 +1,6 @@
 import { canvas, ctx, canvas_container, cornerWallSize } from "./typescriptFile/variables.js";
 import { Player } from "./typescriptFile/classPlayer.js";
+import type { Player as Player3D } from "./typescriptFile3D/classPlayer.js";
 import { BracketMatch, showMenu, players, nbrPlayer, buttonPlayGame, quarterfinals, semifinals, final, currentMatchIndex, currentRound, countPlayers, playerGoals, playerGoalsRecived, TournamentID } from "./script.js";
 
 export function resetCanvas() {
@@ -193,7 +194,7 @@ export function drawCornerWalls() {
 	ctx.fillRect(canvas.width - cornerWallSize, canvas.height - cornerWallSize, cornerWallSize, cornerWallSize);
 }
 
-export function clonePlayer(original: Player, newID: number): Player {
+export function clonePlayer(original: Player | Player3D, newID: number): Player {
     return new Player(original.getNameTag(), newID, original.getUserID(), original.getPaddle().getOrientation());
 }
 
@@ -232,7 +233,7 @@ export function sendTournamentData() {
         final: final
     };
 	const token = getToken()
-    fetch("/api/tournament/", {
+    fetch("/api/tournament", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

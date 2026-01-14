@@ -7,7 +7,7 @@
 
 # punti per persona: finito (in progress)
 	- Arturo: 3 (3)
-	- Matteo: 2 (2)
+	- Matteo: 3 (4)
 	- Khadim: 0 (1)
 	- Petre: 0 (1)
 	- Tjaz: 5 (5)
@@ -62,6 +62,7 @@
 - remote players
 - multiple players
 - ai oponent
+- 3d
 
 
 
@@ -70,7 +71,6 @@
 
 -----
 ## major not completed TODO
-- 3d 
 - blockchain (implementare bene in FE)
 - live chat
 - micro-service (only if live chat is included)
@@ -88,3 +88,5 @@
     - SECRET HARDCODATI!!! Arturo inizio 02,1 fixed
     - caricare imagine di avatar, devi fare refresh che si vede ,1, funziona
     - protection against sql/xss injection atacks ,2 tjaz,  fatto
+    - added Allowed origins to env
+    - 3d, sistemati tutti i vari problemi

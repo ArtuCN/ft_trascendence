@@ -3,7 +3,7 @@
 **giovedì 15.1. 21:00**
 
 ## Consegna  
-**venerdì 16.1. tardi pomeriggio**
+**lunedi 19.1. tardi pomeriggio**
 
 ---
 ## timeline:
@@ -68,12 +68,15 @@
 - **Aggiungere online/offline status agli amici** — *Khadim* (con Arturo se serve qualche modifica in BE)
 - **O avere user id in user profile, o poter scrivere username o email per trovare un amico in social** — *Khadim*
 - **3d** — *Petre*
-    + Il gioco non ha score - *Matteo*
-    + Non si finisce - *Matteo*
-    + Quando giochi 2 player, c'è pulsante per 4 player che ti porta durante il gioco a giocare - *Matteo*
-    + Playground/field è troppo grande per la viewport che c'è all'inizio
-- **Fare VM su computer di scuola e testare se tutto funziona** — *Petre-Arturo*
+    + Il gioco non ha score - *Matteo* fatto
+    + Non si finisce - *Matteo* fatto
+    + Quando giochi 2 player, c'è pulsante per 4 player che ti porta durante il gioco a giocare - *Matteo* fatto
+    + Playground/field è troppo grande per la viewport che c'è all'inizio *Matteo* fatto
+- **Fare VM su computer di scuola e testare se tutto funziona** — *Petre-Arturo* -*Fatto*
+- **Sistemare makefile e .env in base alla VM** - *Arturo* - *Fatto*
 - **Fare ultime modifiche per integrare blockchain con FE** — *Tjaz-Khadim*
+    - wallet non rimane conneso doppo refresh di pagina
+- **Sistemare visuale gameplay 2d che non fa vedere un player** - *Matteo*
 
 ---
 

@@ -175,7 +175,7 @@ export class Ball {
 				if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
 				playerGoalsRecived[0]++;
 				drawScore(nbrPlayer);
-				if (playerGoals[this.lastTouchedPlayer] == 5) {
+				if (playerGoals[this.lastTouchedPlayer] >= 5) {
 					if (typeof showMenu === "function") {
 						stopGame();
 						showVictoryScreen(players[this.lastTouchedPlayer]);
@@ -195,7 +195,7 @@ export class Ball {
 				if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
 				drawScore(nbrPlayer);
 				playerGoalsRecived[1]++;
-				if (playerGoals[this.lastTouchedPlayer] == 5) {
+				if (playerGoals[this.lastTouchedPlayer] >= 5) {
 					if (typeof showMenu === "function") {
 						stopGame();
 						showVictoryScreen(players[this.lastTouchedPlayer]);
@@ -213,7 +213,7 @@ export class Ball {
 				if (this.lastTouchedPlayer !== -1) playerGoals[this.lastTouchedPlayer]++;
 				playerGoalsRecived[2]++;
 				drawScore(nbrPlayer);
-				if (playerGoals[this.lastTouchedPlayer]  == 5) {
+				if (playerGoals[this.lastTouchedPlayer] >= 5) {
 					for (let i = 0; i < players.length; i++) {
 						if (i !== this.lastTouchedPlayer) {
 							players[i].getPaddle().stopBotPolling();
@@ -231,7 +231,7 @@ export class Ball {
 				playerGoalsRecived[3]++;
 				drawScore(nbrPlayer);
 				this.resetGame(players);
-				if (playerGoals[this.lastTouchedPlayer] == 5) {
+				if (playerGoals[this.lastTouchedPlayer] >= 5) {
 					for (let i = 0; i < players.length; i++) {
 						if (i !== this.lastTouchedPlayer) {
 							players[i].getPaddle().stopBotPolling();
@@ -242,6 +242,7 @@ export class Ball {
 				}
 				return;
 			}
+			console.log("score", playerGoals)
 		}
 	}
 

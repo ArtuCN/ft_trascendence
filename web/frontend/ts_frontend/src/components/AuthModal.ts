@@ -1,20 +1,7 @@
 import { createElement, createButton, createInput } from '../utils/dom.js';
 import { authState } from '../state/auth.js';
 import { googleAuthService } from '../services/googleAuth.js';
-
-const COLORS = {
-  // Fruitiger / Aero inspired cool-blue palette
-  primary: '#00B4D8',        // cyan accent
-  error: '#EF4444',          // red-500
-  errorHover: '#DC2626',
-  dark: '#062A3A',           // deep cool background
-  darkText: '#9BCAD8',       // muted cyan text
-  loginButton: '#0077B6',    // deeper blue for action
-  loginButtonHover: '#0096C7',
-  inputBg: '#E6F9FF',        // very light cyan
-  white: '#ffffff',
-  lightGray: '#E6F6FB'
-} as const;
+import { COLORS } from '../utils/constants.js';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

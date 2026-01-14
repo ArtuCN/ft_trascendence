@@ -3,7 +3,9 @@ import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 import fastifyMultipart from 'fastify-multipart';
 import rateLimit from '@fastify/rate-limit';
+import dotenv from 'dotenv';
 
+dotenv.config();
 
 import { getAllUsers } from './database_comunication/user_db.js';
 import { sanitizeUsers } from './utils/sanitize.js';
@@ -31,18 +33,18 @@ const fastify = Fastify({ logger: true });
 
 // Rate limiting to prevent brute force attacks
 await fastify.register(rateLimit, {
-  max: 100, // Maximum 100 requests
-  timeWindow: '15 minutes', // Per 15 minutes
-  cache: 10000, // Cache size
-  allowList: [], // IPs to whitelist
-  redis: null, // No redis needed for simple rate limiting
-  skipOnError: true, // Skip rate limiting on errors
+  max: 100, 
+  timeWindow: '15 minutes', 
+  cache: 10000,
+  allowList: [],
+  redis: null,
+  skipOnError: true,
   keyGenerator: (request) => {
     return request.ip; // Rate limit by IP address
   }
 });
 
-// Abilita CORS - restrict to specific origins
+// Abilita CORS
 await fastify.register(cors, {
   origin: process.env.ALLOWED_ORIGINS?.split(',') || [
     'https://192.168.1.203',
@@ -57,7 +59,7 @@ await fastify.register(fastifyMultipart, {
 });
 
 // Configura JWT
-await fastify.register(jwt, { secret: process.env.JWT_SECRET }); // 🔐 usa un valore sicuro in .env
+await fastify.register(jwt, { secret: process.env.JWT_SECRET });
 
 // per preHandler - estrare dati di user da token, senza lookup in database
 fastify.decorate('authenticate', async function (request, reply) {

@@ -1,5 +1,6 @@
 import { gameRunning, stopGame, startGame, canvas, ctx, canvas_container, bracketContainer } from "./typescriptFile/variables.js";
 import { Player } from "./typescriptFile/classPlayer.js";
+import type { Player as Player3D } from "./typescriptFile3D/classPlayer.js";
 import { Ball, drawScore } from "./typescriptFile/classBall.js";
 import { resetCanvas, generateBracket, renderBracket, drawCornerWalls, drawMiddleLine, clonePlayer, sendMatchData, sendTournamentData, showVictoryScreen } from "./utilities.js";
 
@@ -40,9 +41,9 @@ export let playerGoalsRecived: number[] = [];
 export let Pebble: Ball = new Ball();
 export let players: Player[] = [];
 export type BracketMatch = {
-	player1: Player | null;
-	player2: Player | null;
-	matchWinner: Player | null;
+	player1: Player | Player3D | null;
+	player2: Player | Player3D | null;
+	matchWinner: Player | Player3D | null;
 	users_goal: number[];
 	users_goal_recived: number[];
 	round: string;
@@ -266,7 +267,7 @@ function showPlayerName(numberPlayers: number, gameType: 'local' | 'tournament')
 	playerNamesModal.style.display = 'block';
 }
 
-export function advanceWinner(winner: Player) {
+export function advanceWinner(winner: Player | Player3D) {
 	if (currentRound === "quarterfinals") {
 		quarterfinals[currentMatchIndex].matchWinner = winner;
 		quarterfinals[currentMatchIndex].users_goal = playerGoals;
@@ -314,7 +315,7 @@ export function advanceWinner(winner: Player) {
 	Tournament = true;
 }
 
-export function showMenu(winner: Player) {
+export function showMenu(winner: Player | Player3D | null) {
 
 	if (animationFrameId) {
 		cancelAnimationFrame(animationFrameId);
@@ -325,7 +326,7 @@ export function showMenu(winner: Player) {
 	if (Tournament == true) {
 		Tournament = false;
 		canvas_container.style.display = "none";
-		advanceWinner(winner);
+		advanceWinner(winner!);
 		if (currentRound === "finished") {
 			for (const player of players)
 				player.getPaddle().stopBotPolling();
@@ -336,6 +337,7 @@ export function showMenu(winner: Player) {
 			buttonRemotePlay.style.display = 'inline-block';
 			buttonLocalPlay.style.display = 'inline-block';
 			sendTournamentData();
+			TournamentID = "0";
 		}
 	}
 	else {
@@ -349,7 +351,6 @@ export function showMenu(winner: Player) {
 		buttonRemotePlay.style.display = 'inline-block';
 		buttonLocalPlay.style.display = 'inline-block';
 		sendMatchData();
-		TournamentID = "0";
 	}
 }
 
@@ -423,7 +424,7 @@ function resetGameState() {
 }
 
 
-function startMatch(player1: Player, player2: Player) {
+function startMatch(player1: Player | Player3D, player2: Player | Player3D) {
 	if (animationFrameId) {
 		cancelAnimationFrame(animationFrameId);
 		animationFrameId = null;
