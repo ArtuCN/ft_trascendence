@@ -133,7 +133,7 @@ export function showVictoryScreen3D(winner: any) {
     };
     
     const ctx = canvas2D.getContext("2d")!;
-    canvas2D.style.zIndex = "999";
+    canvas2D.style.display = "block";
     if (!ctx) {
         console.error("Could not get 2D context from canvas");
         return;
