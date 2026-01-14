@@ -212,7 +212,7 @@ function createGameObjects(scene: any) {
         
             const halfW = FIELD_WIDTH_3D / 2;
             const halfH = FIELD_HEIGHT_3D / 2;
-            if (nbrPlayer === 2) {
+            if (nbrPlayer <= 2) {
                 // 2-player mode: check left/right goals
                 if (this.position.x < -halfW) {
                     if (this.rallyActive) {
