@@ -11,6 +11,7 @@ const buttonAI3D = document.getElementById("PlayAI3D") as HTMLButtonElement;
 const button4P3D = document.getElementById("Play4P3D") as HTMLButtonElement;
 const buttonMainMenu3D = document.getElementById("returnMenu") as HTMLButtonElement;
 const textPong = document.getElementById("PongGame") as HTMLHeadingElement;
+const canvas2D = document.getElementById("gameCanvas") as HTMLCanvasElement;
 const scoreDiv = document.getElementById("score3d") as HTMLDivElement;
 
 function getCurrentUserId(): number {
@@ -66,6 +67,25 @@ const COLORS = {
     ground:         new BABYLON.Color3(0.36, 0.68, 0.78)   // azzurro più profondo
 };
 
+function disposeBabylon() {
+    if (engine) {
+        engine.stopRenderLoop();
+        engine.dispose();
+        engine = null;
+    }
+
+    if (scene) {
+        scene.dispose();
+        scene = null;
+    }
+
+    ball = null;
+    players = [];
+    cornerCubes = [];
+
+    console.log("🧹 Babylon disposed");
+}
+
 function showMenu(winner: Player) {
     canvas.style.display = "none";
     textPong3D.style.display = "block";
@@ -73,13 +93,25 @@ function showMenu(winner: Player) {
     buttonRemotePlay3D.style.display = 'inline-block';
     buttonLocalPlay3D.style.display = 'inline-block';
     scoreDiv.style.display = "none";
+    canvas2D.style.display = "none";
+}
+
+function showGameCanvas3D() {
+    canvas_container.style.display = "block";
+    canvasContainer3D.style.display = "block";
+    scoreDiv.style.display = "block";
+
+    const canvas3D = document.getElementById("gameCanvas3D") as HTMLCanvasElement;
+    if (canvas3D) {
+        canvas3D.style.display = "block";
+    }
+
+    canvas2D.style.display = "none"; // overlay solo per vittoria
 }
 
 export function showVictoryScreen3D(winner: any) {
     canvas_container.style.display = "block";
-    const canvas2D = document.getElementById("gameCanvas") as HTMLCanvasElement;
-    const ctx = canvas2D.getContext("2d")!;
-
+    
     const btnBack = document.getElementById("btnBackToMenu") as HTMLButtonElement;
     if (!btnBack) {
         console.error("Could not find btnBackToMenu element");
@@ -91,13 +123,17 @@ export function showVictoryScreen3D(winner: any) {
     btnBack.style.top = "60%";
     btnBack.style.transform = "translate(-50%, -50%)";
     btnBack.style.zIndex = "999";
-
+    
     btnBack.onclick = () => {
-      btnBack.style.display = "none";
-      canvas_container.style.display = "none";
-      showMenu(winner); // or showMenu(null) if you want to reset
+        gameStarted = false;
+        disposeBabylon();
+        btnBack.style.display = "none";
+        canvas_container.style.display = "none";
+        showMenu(winner); // or showMenu(null) if you want to reset
     };
-
+    
+    const ctx = canvas2D.getContext("2d")!;
+    canvas2D.style.zIndex = "999";
     if (!ctx) {
         console.error("Could not get 2D context from canvas");
         return;
@@ -270,8 +306,9 @@ function createGameObjects(scene: any) {
             
             players.forEach((player: any, index: number) => {
                 const paddlePos = player.position;
-                const paddleWidth = 0.3;
-                const paddleDepth = 3;
+                const isHorizontal = (nbrPlayer === 4 && (index === 2 || index === 3));
+                const paddleWidth = isHorizontal ? 3 : 0.3;
+                const paddleDepth = isHorizontal ? 0.3 : 3;
                 const paddleHeight = 1;
                 
                 const paddleMinX = paddlePos.x - paddleWidth / 2;
@@ -293,19 +330,33 @@ function createGameObjects(scene: any) {
                     this.lastTouched = index;
                     this.rallyActive = true;
 
-                    this.velocity.x *= -1;
-           
-                    const hitPosition = (this.position.z - paddlePos.z) / (paddleDepth / 2);
-                    this.velocity.z += hitPosition * 0.05;
+                    if (isHorizontal) {
+                        this.velocity.z *= -1;
                     
-                    if (this.position.x > paddlePos.x) {
-                        this.position.x = paddleMaxX + ballRadius + 0.1;
+                        const hitPosition = (this.position.x - paddlePos.x) / (paddleWidth / 2);
+                        this.velocity.x += hitPosition * 0.05;
+                    
+                        if (this.position.z > paddlePos.z) {
+                            this.position.z = paddleMaxZ + ballRadius + 0.1;
+                        } else {
+                            this.position.z = paddleMinZ - ballRadius - 0.1;
+                        }
                     } else {
-                        this.position.x = paddleMinX - ballRadius - 0.1;
-                    }
-                    this.mesh.position.copyFrom(this.position);
+                        this.velocity.x *= -1;
                     
-                    // leggero aumento velocità ad ogni rimbalzo
+                        const hitPosition = (this.position.z - paddlePos.z) / (paddleDepth / 2);
+                        this.velocity.z += hitPosition * 0.05;
+                    
+                        if (this.position.x > paddlePos.x) {
+                            this.position.x = paddleMaxX + ballRadius + 0.1;
+                        } else {
+                            this.position.x = paddleMinX - ballRadius - 0.1;
+                        }
+                    }
+
+                    this.mesh.position.copyFrom(this.position);
+
+                    // speed up
                     this.velocity.x *= 1.05;
                     this.velocity.z *= 1.02;
                 }
@@ -875,6 +926,7 @@ buttonLocalPlay3D.addEventListener("click", () => {
         canvasContainer3D.style.display = "block";
         
         // set player count BEFORE initializing Babylon
+        showGameCanvas3D();
         nbrPlayer = 2;
         initBabylon();
         //  start game (initializes score array etc.)
@@ -893,6 +945,7 @@ buttonLocalPlay3D.addEventListener("click", () => {
         textPong3D.style.display = "none";
         canvasContainer3D.style.display = "block";
         
+        showGameCanvas3D();
         nbrPlayer = 1;
         initBabylon();
         startGame();
@@ -907,6 +960,7 @@ buttonLocalPlay3D.addEventListener("click", () => {
         buttonMainMenu3D.style.display = "none";
         textPong3D.style.display = "none";
         canvasContainer3D.style.display = "block";
+        showGameCanvas3D();
         nbrPlayer = 4;
         FIELD_HEIGHT_3D = FIELD_WIDTH_3D;
         initBabylon();
