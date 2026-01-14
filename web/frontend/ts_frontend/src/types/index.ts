@@ -59,10 +59,6 @@ export interface Friendship {
   id_user2: number;
 }
 
-export interface HeartbeatResponse {
-  last_active: string;
-}
-
 // Blockchain types
 export interface GameData {
   user_ids: bigint[];

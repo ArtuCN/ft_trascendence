@@ -356,7 +356,18 @@ export async function winTournament(id_player)
 export async function getAllPlayerStats() {
     return new Promise((resolve, reject) => {
         const query = `
-        SELECT * FROM player_all_time_stats
+        SELECT 
+            s.id_player,
+            u.username,
+            s.goal_scored,
+            s.goal_taken,
+            s.tournament_won,
+            (SELECT COUNT(*) FROM player_match_stats WHERE id_user = s.id_player) as matches_played,
+            (SELECT COUNT(*) FROM player_match_stats WHERE id_user = s.id_player AND goal_scored > goal_taken) as matches_won,
+            (SELECT COUNT(*) FROM player_match_stats WHERE id_user = s.id_player AND goal_scored < goal_taken) as matches_lost
+        FROM player_all_time_stats s
+        JOIN user u ON s.id_player = u.id
+        ORDER BY s.tournament_won DESC, matches_won DESC, s.goal_scored DESC
         `;
         db.all(query, [], (err, rows) => {
             if (err) {
@@ -414,6 +425,40 @@ export async function getAvatar_db(userId) {
         reject(err);
       } else {
         resolve(row ? row.avatar : null);
+      }
+    });
+  });
+}
+
+// Update user profile (username and/or password)
+export async function updateUserProfile(userId, updates) {
+  return new Promise((resolve, reject) => {
+    const fields = [];
+    const values = [];
+
+    if (updates.username !== undefined) {
+      fields.push('username = ?');
+      values.push(updates.username);
+    }
+
+    if (updates.psw !== undefined) {
+      fields.push('psw = ?');
+      values.push(updates.psw);
+    }
+
+    if (fields.length === 0) {
+      return reject(new Error('No fields to update'));
+    }
+
+    values.push(userId);
+    const query = `UPDATE user SET ${fields.join(', ')} WHERE id = ?`;
+
+    db.run(query, values, function (err) {
+      if (err) {
+        console.error('Error while updating user profile:', err);
+        reject(err);
+      } else {
+        resolve({ id: userId, changes: this.changes });
       }
     });
   });

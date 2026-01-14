@@ -162,6 +162,11 @@ export class AuthState {
   }
 
   logout(): void {
+    // Segnala al backend che l'utente è offline prima di rimuovere il token
+    apiService.signalOffline().catch(err => {
+      console.error('Failed to signal offline on logout:', err);
+    });
+    
     apiService.removeToken();
     this.user = null;
     this.error = null;
