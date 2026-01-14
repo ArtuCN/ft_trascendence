@@ -21,10 +21,11 @@
     - utenti non possono modificare sui dati!, 2
     - aggiungere online/offline status a amici, 1
     - 3d:, 2
-        - giocho no ha score
-        - no si finisce
-        - quando giochi 2 player, ce pulsante per 4 player che ti porta durante giocho giocare
-        - playground/field e troppo grande per viewport che ce al inizio,
+        - giocho no ha score finito
+        - no si finisce finito
+        - quando giochi 2 player, ce pulsante per 4 player che ti porta durante giocho giocare finito
+        - playground/field e troppo grande per viewport che ce al inizio, finito
+        - fisica palla 4 giocatori rotta per i giocatori sopra e sotto
    
 ## COSE DA FARE MEDIE:
     - Address any compatibility issues or rendering discrepancies in browser other than firefox, 1-2

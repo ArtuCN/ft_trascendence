@@ -2,7 +2,5 @@
 **/.env
 node_modules
 **/node_modules
-
-
 game_logic/AI/__pycache__
 __pycache__/
