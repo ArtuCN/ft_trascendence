@@ -82,7 +82,7 @@
 
 ## Ticket meno importanti
 
-- **Address any compatibility issues or rendering discrepancies in browsers other than Firefox** — *Arturo*
+- **Address any compatibility issues or rendering discrepancies in browsers other than Firefox** — *Arturo* - *fatto*
 - **Caricare avatar da un alert notice, ma immagine si carica** — *Khadim*
 - **3d** — *Petre*
     - Qualcosa in più, o pensare come difendere le prossime cose che chiede il subject su 3d: (scegli uno)
