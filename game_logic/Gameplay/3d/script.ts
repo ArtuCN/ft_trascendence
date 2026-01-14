@@ -12,6 +12,7 @@ const button4P3D = document.getElementById("Play4P3D") as HTMLButtonElement;
 const buttonMainMenu3D = document.getElementById("returnMenu") as HTMLButtonElement;
 const textPong = document.getElementById("PongGame") as HTMLHeadingElement;
 const scoreDiv = document.getElementById("score3d") as HTMLDivElement;
+const buttonTournament3D = document.getElementById("Tournament") as HTMLButtonElement;
 
 function getCurrentUserId(): number {
     const userId = localStorage.getItem('id');
@@ -240,7 +241,7 @@ function createGameObjects(scene: any) {
                         const scorer = this.lastTouched;
                         score3d[scorer] = (score3d[scorer] || 0) + 1;
                         updateScoreDisplay();
-                        checkVictory();
+                          checkVictory();
                     }
                     if (score3d[this.lastTouched || 0] >= 5) {
                         gameStarted = false;
