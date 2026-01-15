@@ -271,14 +271,16 @@ function createGameObjects(scene: any) {
                     }
                     this.resetBall();
                     return;
+                } else {
+                    if (this.position.x < -halfW) {
+                        if (this.rallyActive && this.lastTouched !== null) {
+                            const scorer = this.lastTouched;
+                            score3d[scorer] = (score3d[scorer] || 0) + 1;
+                            updateScoreDisplay();
+                            checkVictory();
+                    }
                 }
-                if (this.position.x < -halfW) {
-                    if (this.rallyActive && this.lastTouched !== null) {
-                        const scorer = this.lastTouched;
-                        score3d[scorer] = (score3d[scorer] || 0) + 1;
-                        updateScoreDisplay();
-                        checkVictory();
-                }
+                
                     if (score3d[this.lastTouched || 0] >= 5) {
                         gameStarted = false;
                         showVictoryScreen3D(players[this.lastTouched || 0]);
