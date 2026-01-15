@@ -1,9 +1,8 @@
 declare const BABYLON: any;
-import { Player } from "../typescriptFile3D/classPlayer";
+// import "@babylonjs/materials/grid/gridMaterial";
 
 export const canvas_container = document.getElementById("canvas-container")!;
 const buttonLocalPlay3D = document.getElementById("LocalPlay3D") as HTMLButtonElement;
-const buttonRemotePlay3D = document.getElementById("RemotePlay3D") as HTMLButtonElement;
 const canvasContainer3D = document.getElementById("canvas-container")!;
 const textPong3D = document.getElementById("PongGame") as HTMLHeadingElement;
 const button2P3D = document.getElementById("Play2P3D") as HTMLButtonElement;
@@ -13,6 +12,17 @@ const buttonMainMenu3D = document.getElementById("returnMenu") as HTMLButtonElem
 const textPong = document.getElementById("PongGame") as HTMLHeadingElement;
 const canvas2D = document.getElementById("gameCanvas") as HTMLCanvasElement;
 const scoreDiv = document.getElementById("score3d") as HTMLDivElement;
+const playerNamesModal3D = document.getElementById("playerName") as HTMLDivElement | null;
+const playerInputsContainer3D = document.getElementById("playerInputsContainer") as HTMLDivElement | null;
+const startGameButton3D = document.getElementById("startGameButton") as HTMLButtonElement | null;
+const cancelButton3D = document.getElementById("cancelButton") as HTMLButtonElement | null;
+const modalTitle3D = document.getElementById("modalTitle") as HTMLHeadingElement | null;
+const buttonTournament3D = document.getElementById("Tournament") as HTMLButtonElement | null;
+const buttonNbrPlayer3D = document.getElementById("nbrPlayer") as HTMLSelectElement | null;
+const startTournamentButton3D = document.getElementById("StartTournament") as HTMLButtonElement | null;
+const bracketContainer3D = document.getElementById("bracket-container") as HTMLDivElement | null;
+const buttonPlayGame3D = document.getElementById("PlayGame") as HTMLButtonElement | null;
+const tournamentPlayerCountLabel3D = document.querySelector('label[for="nbrPlayer"]') as HTMLLabelElement | null;
 
 function getCurrentUserId(): number {
     const userId = localStorage.getItem('id');
@@ -34,13 +44,15 @@ let playerGoals = [0, 0, 0, 0];
 let isAIMode = false;
 let aiUpdateInterval = 100;
 
+const FIELD_HEIGHT_BASE = 12;
 let FIELD_WIDTH_3D = 18;
-let FIELD_HEIGHT_3D = 12;
+let FIELD_HEIGHT_3D = FIELD_HEIGHT_BASE;
 const FIELD_DEPTH_3D = 0.5;
 
 let ball: any; 
 let players: any[] = [];
 let cornerCubes: any[] = [];
+let localPlayerNames: string[] | null = null;
 
 // particelle ball
 let ballParticleSystem: any = null;
@@ -57,15 +69,466 @@ window.addEventListener('keyup', (e) => {
 });
 
 const COLORS = {
-	// materiali
-   ballDiffuse:    new BABYLON.Color3(0.88, 0.92, 0.98),  // bianco glaciale
-    ballEmissive:   new BABYLON.Color3(0.50, 0.82, 0.95),  // azzurro acqua
-    paddleDefault:  new BABYLON.Color3(0.78, 0.90, 0.98),  // bianco-blu
-    paddleRight:    new BABYLON.Color3(0.00, 0.60, 0.90),  // blu frutiger
-    paddleTop:      new BABYLON.Color3(0.00, 0.88, 0.78),  // turchese acqua
-    paddleBottom:   new BABYLON.Color3(0.28, 0.85, 0.82),  // acqua pastello
-    ground:         new BABYLON.Color3(0.36, 0.68, 0.78)   // azzurro più profondo
+    // neon cyberpunk palette inspired by requested hues
+    ballDiffuse:   new BABYLON.Color3(0.6078, 0.7922, 0.8471), // #ffffff muted cyan
+    ballEmissive:  new BABYLON.Color3(0.0000, 0.7059, 0.8471), // #00B4D8 cyan glow
+    paddleDefault: new BABYLON.Color3(0.0000, 0.4627, 0.7137), // #0077B6 primary tone
+    paddleRight:   new BABYLON.Color3(0.3922, 0.4235, 1.0000), // #646CFF neon indigo
+    paddleTop:     new BABYLON.Color3(1.0000, 0.8196, 0.4000), // #FFD166 vibrant yellow
+    paddleBottom:  new BABYLON.Color3(0.9686, 0.4196, 0.1098), // #F76B1C electric orange
+    ground:        new BABYLON.Color3(0.0235, 0.1647, 0.2275)  // #FF6EC7 pink accent
 };
+
+function createEmptyMatch3D(round: "quarterfinals" | "semifinals" | "final"): TournamentMatch3D {
+    return {
+        player1: null,
+        player2: null,
+        matchWinner: null,
+        round
+    };
+}
+
+type TournamentPlayer3D = {
+    name: string;
+    seed: number;
+};
+
+type TournamentMatch3D = {
+    player1: TournamentPlayer3D | null;
+    player2: TournamentPlayer3D | null;
+    matchWinner: TournamentPlayer3D | null;
+    round: "quarterfinals" | "semifinals" | "final";
+};
+
+type TournamentRound3D = "quarterfinals" | "semifinals" | "final" | "finished";
+type WinnerLike = { playerName?: string; getNameTag?: () => string } | null;
+
+let tournamentActive3D = false;
+let tournamentPlayers3D: TournamentPlayer3D[] = [];
+let tournamentPlayerCount3D = 0;
+let quarterfinals3D: TournamentMatch3D[] = [];
+let semifinals3D: TournamentMatch3D[] = [];
+let final3D: TournamentMatch3D = createEmptyMatch3D("final");
+let currentTournamentRound: TournamentRound3D = "quarterfinals";
+let currentTournamentMatchIndex = 0;
+let tournamentMatchInProgress: { round: TournamentRound3D; index: number } | null = null;
+let tournamentId3D: string | null = null;
+
+function resolveWinnerName(winner: WinnerLike): string | null {
+    if (!winner) return null;
+    if ("playerName" in winner && typeof winner.playerName === "string") {
+        return winner.playerName;
+    }
+    if ("getNameTag" in winner && typeof winner.getNameTag === "function") {
+        const nameTag = winner.getNameTag();
+        return typeof nameTag === "string" ? nameTag : null;
+    }
+    return null;
+}
+
+function hidePlayerNameModal() {
+    if (!playerNamesModal3D || !startGameButton3D || !cancelButton3D || !playerInputsContainer3D) return;
+    playerNamesModal3D.style.display = "none";
+    startGameButton3D.style.display = "none";
+    cancelButton3D.style.display = "none";
+    playerInputsContainer3D.innerHTML = "";
+}
+
+function showLocalOptionsMenu() {
+    buttonLocalPlay3D.style.display = "none";
+    button2P3D.style.display = "inline-block";
+    buttonAI3D.style.display = "inline-block";
+    button4P3D.style.display = "inline-block";
+    if (buttonTournament3D) buttonTournament3D.style.display = "inline-block";
+    buttonMainMenu3D.style.display = "inline-block";
+    hideTournamentSetupControls();
+    if (bracketContainer3D) bracketContainer3D.style.display = "none";
+    if (buttonPlayGame3D) buttonPlayGame3D.style.display = "none";
+}
+
+function enterTournamentSetupMode() {
+    resetTournamentState3D();
+    hidePlayerNameModal();
+    buttonLocalPlay3D.style.display = "none";
+    button2P3D.style.display = "none";
+    buttonAI3D.style.display = "none";
+    button4P3D.style.display = "none";
+    if (buttonTournament3D) buttonTournament3D.style.display = "none";
+    buttonMainMenu3D.style.display = "inline-block";
+    textPong3D.style.display = "none";
+    showTournamentSetupControls();
+    if (bracketContainer3D) bracketContainer3D.style.display = "none";
+    if (buttonPlayGame3D) buttonPlayGame3D.style.display = "none";
+}
+
+function hideMenuForMatch() {
+    buttonLocalPlay3D.style.display = "none";
+    button2P3D.style.display = "none";
+    buttonAI3D.style.display = "none";
+    button4P3D.style.display = "none";
+    buttonMainMenu3D.style.display = "none";
+    textPong3D.style.display = "none";
+    if (buttonTournament3D) buttonTournament3D.style.display = "none";
+    hideTournamentSetupControls();
+    if (buttonPlayGame3D) buttonPlayGame3D.style.display = "none";
+    if (bracketContainer3D) bracketContainer3D.style.display = "none";
+}
+
+type PlayerNameModalOptions = {
+    title: string;
+    includeSelfName?: boolean;
+    onConfirm: (names: string[]) => void;
+    onCancel: () => void;
+};
+
+function requestPlayerNames(playerCount: number, options: PlayerNameModalOptions) {
+    const { title, includeSelfName = true, onConfirm, onCancel } = options;
+
+    if (!playerNamesModal3D || !playerInputsContainer3D || !startGameButton3D || !cancelButton3D || !modalTitle3D) {
+        const fallback = Array.from({length: playerCount}, (_, idx) => {
+            if (includeSelfName && idx === 0) return username || `Player ${idx + 1}`;
+            return `Player ${idx + 1}`;
+        });
+        onConfirm(fallback);
+        return;
+    }
+
+    modalTitle3D.textContent = title;
+    playerInputsContainer3D.innerHTML = "";
+
+    const startIdx = includeSelfName ? 1 : 0;
+    for (let i = startIdx; i < playerCount; i++) {
+        const label = document.createElement("label");
+        label.style.display = "block";
+        label.style.marginTop = "10px";
+        label.textContent = `Player Name ${i + 1}:`;
+
+        const input = document.createElement("input");
+        input.type = "text";
+        input.placeholder = `Player Name ${i + 1}`;
+        input.id = `playerNameInput${i}`;
+        input.style.display = "block";
+        input.style.margin = "10px auto";
+
+        playerInputsContainer3D.appendChild(label);
+        playerInputsContainer3D.appendChild(input);
+    }
+
+    const gatherNames = () => {
+        const names: string[] = [];
+        for (let i = 0; i < playerCount; i++) {
+            if (includeSelfName && i === 0) {
+                names.push(username || `Player ${i + 1}`);
+            } else {
+                const input = document.getElementById(`playerNameInput${i}`) as HTMLInputElement | null;
+                names.push(input && input.value.trim() ? input.value.trim() : `Player ${i + 1}`);
+            }
+        }
+        return names;
+    };
+
+    const cleanup = () => {
+        startGameButton3D.removeEventListener("click", handleSubmit);
+        cancelButton3D.removeEventListener("click", handleCancel);
+        hidePlayerNameModal();
+    };
+
+    const handleSubmit = () => {
+        const names = gatherNames();
+        cleanup();
+        onConfirm(names);
+    };
+
+    const handleCancel = () => {
+        cleanup();
+        onCancel();
+    };
+
+    startGameButton3D.style.display = "inline-block";
+    cancelButton3D.style.display = "inline-block";
+    playerNamesModal3D.style.display = "block";
+
+    startGameButton3D.addEventListener("click", handleSubmit);
+    cancelButton3D.addEventListener("click", handleCancel);
+}
+
+function promptPlayerNames(playerCount: number, onConfirm: (names: string[]) => void) {
+    requestPlayerNames(playerCount, {
+        title: "Inserisci i nomi dei giocatori",
+        includeSelfName: true,
+        onConfirm,
+        onCancel: showLocalOptionsMenu
+    });
+}
+
+function hideTournamentSetupControls() {
+    if (startTournamentButton3D) startTournamentButton3D.style.display = "none";
+    if (buttonNbrPlayer3D) buttonNbrPlayer3D.style.display = "none";
+    if (tournamentPlayerCountLabel3D) tournamentPlayerCountLabel3D.style.display = "none";
+}
+
+function showTournamentSetupControls() {
+    if (startTournamentButton3D) startTournamentButton3D.style.display = "inline-block";
+    if (buttonNbrPlayer3D) buttonNbrPlayer3D.style.display = "inline-block";
+    if (tournamentPlayerCountLabel3D) tournamentPlayerCountLabel3D.style.display = "inline-block";
+}
+
+function resetTournamentState3D() {
+    tournamentActive3D = false;
+    tournamentPlayers3D = [];
+    tournamentPlayerCount3D = 0;
+    quarterfinals3D = [];
+    semifinals3D = [];
+    final3D = createEmptyMatch3D("final");
+    currentTournamentRound = "quarterfinals";
+    currentTournamentMatchIndex = 0;
+    tournamentMatchInProgress = null;
+    tournamentId3D = null;
+    hideTournamentSetupControls();
+    if (buttonPlayGame3D) {
+        buttonPlayGame3D.disabled = false;
+        buttonPlayGame3D.style.display = "none";
+    }
+    if (bracketContainer3D) bracketContainer3D.style.display = "none";
+}
+
+function generateTournamentId3D(prefix = "PONG3D") {
+    return `${prefix}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+}
+
+function collectTournamentPlayerNames(playerCount: number): Promise<string[]> {
+    return new Promise((resolve, reject) => {
+        requestPlayerNames(playerCount, {
+            title: "Inserisci i nomi dei partecipanti al torneo",
+            includeSelfName: true,
+            onConfirm: resolve,
+            onCancel: () => {
+                showTournamentSetupControls();
+                reject(new Error("tournament cancelled"));
+            }
+        });
+    });
+}
+
+function initializeTournament3D(names: string[]) {
+    tournamentPlayers3D = names.map((name, idx) => ({ name, seed: idx }));
+    tournamentPlayerCount3D = names.length;
+    quarterfinals3D = [];
+    semifinals3D = [];
+    final3D = createEmptyMatch3D("final");
+
+    if (tournamentPlayerCount3D === 8) {
+        for (let i = 0; i < tournamentPlayerCount3D / 2; i++) {
+            quarterfinals3D.push({
+                player1: tournamentPlayers3D[2 * i] || null,
+                player2: tournamentPlayers3D[2 * i + 1] || null,
+                matchWinner: null,
+                round: "quarterfinals"
+            });
+        }
+        semifinals3D = [createEmptyMatch3D("semifinals"), createEmptyMatch3D("semifinals")];
+        currentTournamentRound = "quarterfinals";
+    } else {
+        for (let i = 0; i < tournamentPlayerCount3D / 2; i++) {
+            semifinals3D.push({
+                player1: tournamentPlayers3D[2 * i] || null,
+                player2: tournamentPlayers3D[2 * i + 1] || null,
+                matchWinner: null,
+                round: "semifinals"
+            });
+        }
+        currentTournamentRound = "semifinals";
+    }
+
+    currentTournamentMatchIndex = 0;
+    tournamentMatchInProgress = null;
+    tournamentActive3D = true;
+
+    renderTournamentBracket3D();
+    if (bracketContainer3D) bracketContainer3D.style.display = "block";
+    if (buttonPlayGame3D) {
+        buttonPlayGame3D.disabled = false;
+        buttonPlayGame3D.style.display = "inline-block";
+    }
+}
+
+function getCurrentTournamentMatch(): TournamentMatch3D | null {
+    if (!tournamentActive3D) return null;
+    if (currentTournamentRound === "quarterfinals") {
+        return quarterfinals3D[currentTournamentMatchIndex] || null;
+    }
+    if (currentTournamentRound === "semifinals") {
+        return semifinals3D[currentTournamentMatchIndex] || null;
+    }
+    if (currentTournamentRound === "final") {
+        return final3D;
+    }
+    return null;
+}
+
+function renderTournamentBracket3D() {
+    if (!bracketContainer3D) return;
+
+    const renderMatch = (match: TournamentMatch3D | undefined, label: string, roundName: string, index: number) => {
+        const safeMatch = match || createEmptyMatch3D(roundName as "quarterfinals" | "semifinals" | "final");
+        const p1 = safeMatch.player1?.name || "TBD";
+        const p2 = safeMatch.player2?.name || "TBD";
+        const winner = safeMatch.matchWinner ? `<div class="winner">Winner: ${safeMatch.matchWinner.name}</div>` : "";
+        const playing = (currentTournamentRound === roundName && currentTournamentMatchIndex === index)
+            ? `<div class="playing-indicator">(Playing)</div>` : "";
+        return `
+          <div class="match-wrapper">
+            <div class="match-label">${label}</div>
+            <div class="match">
+              <div class="player">${p1}</div>
+              <div class="vs">vs</div>
+              <div class="player">${p2}</div>
+              ${winner}
+              ${playing}
+            </div>
+          </div>
+        `;
+    };
+
+    let html = `<div class="bracket">`;
+
+    if (tournamentPlayerCount3D === 8) {
+        html += `
+          <div class="column">
+            <div class="round-title">Quarterfinals</div>
+            ${renderMatch(quarterfinals3D[0], "QF1", "quarterfinals", 0)}
+            ${renderMatch(quarterfinals3D[1], "QF2", "quarterfinals", 1)}
+          </div>
+          <div class="column">
+            <div class="round-title">Semifinal</div>
+            ${renderMatch(semifinals3D[0], "SF1", "semifinals", 0)}
+          </div>
+          <div class="column center">
+            <div class="round-title">Final</div>
+            ${renderMatch(final3D, "Final", "final", 0)}
+          </div>
+          <div class="column">
+            <div class="round-title">Semifinal</div>
+            ${renderMatch(semifinals3D[1], "SF2", "semifinals", 1)}
+          </div>
+          <div class="column">
+            <div class="round-title">Quarterfinals</div>
+            ${renderMatch(quarterfinals3D[2], "QF3", "quarterfinals", 2)}
+            ${renderMatch(quarterfinals3D[3], "QF4", "quarterfinals", 3)}
+          </div>`;
+    } else if (tournamentPlayerCount3D === 4) {
+        html += `
+          <div class="column">
+            <div class="round-title">Semifinal</div>
+            ${renderMatch(semifinals3D[0], "SF1", "semifinals", 0)}
+          </div>
+          <div class="column center">
+            <div class="round-title">Final</div>
+            ${renderMatch(final3D, "Final", "final", 0)}
+          </div>
+          <div class="column">
+            <div class="round-title">Semifinal</div>
+            ${renderMatch(semifinals3D[1], "SF2", "semifinals", 1)}
+          </div>`;
+    }
+
+    html += `</div>`;
+    bracketContainer3D.innerHTML = html;
+    bracketContainer3D.style.display = "block";
+}
+
+function playCurrentTournamentMatch3D() {
+    if (!tournamentActive3D) return;
+    const match = getCurrentTournamentMatch();
+    if (!match || !match.player1 || !match.player2) {
+        console.warn("Tournament match not ready", currentTournamentRound, currentTournamentMatchIndex);
+        return;
+    }
+    tournamentMatchInProgress = { round: currentTournamentRound, index: currentTournamentMatchIndex };
+    if (buttonPlayGame3D) buttonPlayGame3D.style.display = "none";
+    if (bracketContainer3D) bracketContainer3D.style.display = "none";
+    startLocal3DMatch(2, [match.player1.name, match.player2.name]);
+}
+
+function handleTournamentMatchResult(winnerName: string | null) {
+    if (!tournamentActive3D) return;
+    const context = tournamentMatchInProgress;
+    tournamentMatchInProgress = null;
+    if (!context || !winnerName) {
+        showTournamentSetupControls();
+        return;
+    }
+
+    let match: TournamentMatch3D | undefined;
+    if (context.round === "quarterfinals") {
+        match = quarterfinals3D[context.index];
+    } else if (context.round === "semifinals") {
+        match = semifinals3D[context.index];
+    } else if (context.round === "final") {
+        match = final3D;
+    }
+    if (!match) return;
+
+    const winner = match.player1?.name === winnerName ? match.player1 : match.player2?.name === winnerName ? match.player2 : { name: winnerName, seed: -1 };
+    match.matchWinner = winner;
+
+    if (context.round === "quarterfinals") {
+        const semiIdx = Math.floor(context.index / 2);
+        if (!semifinals3D[semiIdx]) semifinals3D[semiIdx] = createEmptyMatch3D("semifinals");
+        if (context.index % 2 === 0) semifinals3D[semiIdx].player1 = winner;
+        else semifinals3D[semiIdx].player2 = winner;
+        currentTournamentMatchIndex++;
+        if (currentTournamentMatchIndex >= quarterfinals3D.length) {
+            currentTournamentRound = "semifinals";
+            currentTournamentMatchIndex = 0;
+        }
+    } else if (context.round === "semifinals") {
+        if (context.index === 0) final3D.player1 = winner;
+        else final3D.player2 = winner;
+        currentTournamentMatchIndex++;
+        if (currentTournamentMatchIndex >= semifinals3D.length) {
+            currentTournamentRound = "final";
+            currentTournamentMatchIndex = 0;
+        }
+    } else if (context.round === "final") {
+        final3D.matchWinner = winner;
+        currentTournamentRound = "finished";
+    }
+
+    renderTournamentBracket3D();
+
+    if (buttonPlayGame3D) {
+        if (currentTournamentRound === "finished") {
+            buttonPlayGame3D.style.display = "none";
+        } else {
+            buttonPlayGame3D.disabled = false;
+            buttonPlayGame3D.style.display = "inline-block";
+        }
+    }
+    if (bracketContainer3D) bracketContainer3D.style.display = "block";
+
+    if (currentTournamentRound === "finished") {
+        tournamentActive3D = false;
+    }
+}
+
+function startLocal3DMatch(playerCount: number, names: string[]) {
+    hideMenuForMatch();
+    showGameCanvas3D();
+    nbrPlayer = playerCount;
+    FIELD_HEIGHT_3D = playerCount === 4 ? FIELD_WIDTH_3D : FIELD_HEIGHT_BASE;
+    localPlayerNames = names;
+    initBabylon();
+    startGame();
+    stopBotPolling();
+}
+
+function resolvePlayerName(index: number, fallback: string) {
+    if (localPlayerNames && localPlayerNames[index]) {
+        return localPlayerNames[index];
+    }
+    return fallback;
+}
 
 function disposeBabylon() {
     if (engine) {
@@ -86,14 +549,44 @@ function disposeBabylon() {
     console.log("🧹 Babylon disposed");
 }
 
-function showMenu(winner: Player) {
+function showMenu(winner: WinnerLike) {
+    localPlayerNames = null;
+    FIELD_HEIGHT_3D = FIELD_HEIGHT_BASE;
+    hidePlayerNameModal();
     canvas.style.display = "none";
-    textPong3D.style.display = "block";
     canvasContainer3D.style.display = "none";
-    buttonRemotePlay3D.style.display = 'inline-block';
-    buttonLocalPlay3D.style.display = 'inline-block';
     scoreDiv.style.display = "none";
     canvas2D.style.display = "none";
+
+    const winnerName = resolveWinnerName(winner);
+
+    if (tournamentMatchInProgress) {
+        handleTournamentMatchResult(winnerName);
+    }
+
+    if (currentTournamentRound === "finished" && !tournamentActive3D) {
+        resetTournamentState3D();
+        textPong3D.style.display = "block";
+        buttonLocalPlay3D.style.display = 'inline-block';
+        buttonMainMenu3D.style.display = "none";
+        return;
+    }
+
+    if (tournamentActive3D) {
+        textPong3D.style.display = "block";
+        if (buttonPlayGame3D && currentTournamentRound !== "finished") {
+            buttonPlayGame3D.disabled = false;
+            buttonPlayGame3D.style.display = "inline-block";
+        }
+        if (bracketContainer3D) bracketContainer3D.style.display = "block";
+        buttonLocalPlay3D.style.display = "none";
+        buttonMainMenu3D.style.display = "inline-block";
+        return;
+    }
+
+    textPong3D.style.display = "block";
+    buttonLocalPlay3D.style.display = 'inline-block';
+    buttonMainMenu3D.style.display = "none";
 }
 
 function showGameCanvas3D() {
@@ -148,11 +641,12 @@ export function showVictoryScreen3D(winner: any) {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     
-    ctx.fillText(
-      `🏆 ${winner.playerName} Wins 🏆`,
-      canvas2D.width / 2,
-      canvas2D.height / 2
-    );
+        const winnerName = resolveWinnerName(winner) || "Player";
+        ctx.fillText(
+            `🏆 ${winnerName} Wins 🏆`,
+            canvas2D.width / 2,
+            canvas2D.height / 2
+        );
 }
 
 function createGameObjects(scene: any) {
@@ -167,14 +661,21 @@ function createGameObjects(scene: any) {
 
     try {
         ballParticleSystem = new BABYLON.ParticleSystem("ballTrail", 400, scene);
-        // TODO place a small glowing sprite at public/textures/flare.png
-        ballParticleSystem.particleTexture = new BABYLON.Texture("textures/flare.png", scene);
+        const trailTexture = new BABYLON.DynamicTexture("ballTrailTexture", {width: 64, height: 64}, scene, false);
+        const trailCtx = trailTexture.getContext();
+        trailCtx.clearRect(0, 0, 64, 64);
+        trailCtx.fillStyle = "white";
+        trailCtx.beginPath();
+        trailCtx.arc(32, 32, 26, 0, Math.PI * 2);
+        trailCtx.fill();
+        trailTexture.update();
+        ballParticleSystem.particleTexture = trailTexture;
         ballParticleSystem.emitter = ballMesh;
         ballParticleSystem.minEmitBox = new BABYLON.Vector3(0, 0, 0); // emission from center
         ballParticleSystem.maxEmitBox = new BABYLON.Vector3(0, 0, 0);
 
         ballParticleSystem.color1 = new BABYLON.Color4(1, 1, 1, 0.9);
-        ballParticleSystem.color2 = new BABYLON.Color4(0.8, 0.95, 1, 0.6);
+        ballParticleSystem.color2 = new BABYLON.Color4(1, 1, 1, 0.6);
         ballParticleSystem.minSize = 0.04;
         ballParticleSystem.maxSize = 0.16;
         ballParticleSystem.minLifeTime = 0.2;
@@ -416,7 +917,8 @@ function createGameObjects(scene: any) {
         {width: 0.3, height: 1, depth: 3}, scene);
     const paddle1Material = new BABYLON.StandardMaterial("paddle0Material", scene);
     paddle1Material.diffuseColor = COLORS.paddleDefault;
-    paddle1Material.emissiveColor = new BABYLON.Color3(0.2,0.2,0.2);
+    paddle1Material.emissiveColor = COLORS.paddleDefault;
+    paddle1Material.disableLighting = true;
     paddle1Mesh.material = paddle1Material;
     paddle1Mesh.position = new BABYLON.Vector3(-FIELD_WIDTH_3D / 2 + 0.2, 0.5, 0);
     
@@ -424,14 +926,15 @@ function createGameObjects(scene: any) {
         {width: 0.3, height: 1, depth: 3}, scene);
     const paddle2Material = new BABYLON.StandardMaterial("paddle1Material", scene);
     paddle2Material.diffuseColor = COLORS.paddleRight;
-    paddle2Material.emissiveColor = new BABYLON.Color3(0.2,0,0);
+    paddle2Material.emissiveColor = COLORS.paddleRight;
+    paddle2Material.disableLighting = true;
     paddle2Mesh.material = paddle2Material;
     paddle2Mesh.position = new BABYLON.Vector3(FIELD_WIDTH_3D / 2 - 0.2, 0.5, 0);
     
     players.push({
         id: 0,
         user_ids: [userId],
-        playerName: username,
+        playerName: resolvePlayerName(0, username),
         mesh: paddle1Mesh,
         position: paddle1Mesh.position,
         drawAndMove: function() {
@@ -470,7 +973,7 @@ function createGameObjects(scene: any) {
     const player1 = {
         id: 1,
         mesh: paddle2Mesh,
-        playerName: "Guest 1",
+        playerName: resolvePlayerName(1, "Guest 1"),
         position: paddle2Mesh.position,
         drawAndMove: function() {
             const step = 0.15;
@@ -539,14 +1042,15 @@ function createGameObjects(scene: any) {
             {width: 3, height: 1, depth: 0.3}, scene);
         const paddle3Material = new BABYLON.StandardMaterial("paddle2Material", scene);
         paddle3Material.diffuseColor = COLORS.paddleTop;
-        paddle3Material.emissiveColor = new BABYLON.Color3(0,0,0.2);
+        paddle3Material.emissiveColor = COLORS.paddleTop;
+        paddle3Material.disableLighting = true;
         paddle3Mesh.material = paddle3Material;
         paddle3Mesh.position = new BABYLON.Vector3(0, 0.5, FIELD_HEIGHT_3D / 2 - 0.3);
 
         players.push({
             id: 2,
             mesh: paddle3Mesh,
-            playerName: "Guest 2",
+            playerName: resolvePlayerName(2, "Guest 2"),
             position: paddle3Mesh.position,
             drawAndMove: function() {
                 // Player 2 controls
@@ -584,7 +1088,8 @@ function createGameObjects(scene: any) {
             {width: 3, height: 1, depth: 0.3}, scene);
         const paddle4Material = new BABYLON.StandardMaterial("paddle3Material", scene);
         paddle4Material.diffuseColor = COLORS.paddleBottom;
-        paddle4Material.emissiveColor = new BABYLON.Color3(0.2,0.2,0);
+        paddle4Material.emissiveColor = COLORS.paddleBottom;
+        paddle4Material.disableLighting = true;
         paddle4Mesh.material = paddle4Material;
         paddle4Mesh.position = new BABYLON.Vector3(0, 0.5, -FIELD_HEIGHT_3D / 2 + 0.3);
         console.log("Paddle4 initial position:", paddle4Mesh.position);
@@ -592,7 +1097,7 @@ function createGameObjects(scene: any) {
         players.push({
             id: 3,
             mesh: paddle4Mesh,
-            playerName: "Guest 3",
+            playerName: resolvePlayerName(3, "Guest 3"),
             position: paddle4Mesh.position,
             drawAndMove: function() {
                 // Player 3 controls
@@ -761,7 +1266,10 @@ function initBabylon() {
         engine = new BABYLON.Engine(canvas, true);
         console.log("✅ Engine created successfully");
         scene = new BABYLON.Scene(engine);
-        scene.clearColor = new BABYLON.Color4(0.20, 0.45, 0.70, 1.0);
+        scene.clearColor = new BABYLON.Color4(0.10196, 0.07843, 0.21176, 1.0); // rgb(26,20,54)
+        const glowLayer = new BABYLON.GlowLayer("neonGlow", scene);
+        glowLayer.intensity = 0.5;
+        console.log("✅ Glow layer ready");
         console.log("✅ Scene created successfully");
     } catch (error) {
         console.error("❌ Error creating engine/scene:", error);
@@ -800,10 +1308,23 @@ function initBabylon() {
         console.log("✅ Light created");
 
         const ground = BABYLON.MeshBuilder.CreateGround("ground", {width: FIELD_WIDTH_3D, height: FIELD_HEIGHT_3D}, scene);
-        const groundMaterial = new BABYLON.StandardMaterial("groundMat", scene);
-        groundMaterial.diffuseColor = COLORS.ground;
-        groundMaterial.specularColor = new BABYLON.Color3(0.03, 0.03, 0.03);
-        groundMaterial.specularPower = 8;
+        let groundMaterial: any;
+        if (BABYLON.GridMaterial) {
+            groundMaterial = new BABYLON.GridMaterial("gridMat", scene);
+            groundMaterial.mainColor = new BABYLON.Color3(1.0, 1.0, 1.0); // white base so lines glow cleanly
+            groundMaterial.lineColor = new BABYLON.Color3(1.0, 0.4314, 0.7804); // pink grid lines
+            groundMaterial.emissiveColor = new BABYLON.Color3(0.6, 0.2588, 0.4706); // soften glow
+            groundMaterial.opacity = 0.75;
+            groundMaterial.gridRatio = 1.2;
+            groundMaterial.minorUnitVisibility = 0.45;
+            groundMaterial.disableLighting = true;
+        } else {
+            groundMaterial = new BABYLON.StandardMaterial("groundMat", scene);
+            groundMaterial.diffuseColor = COLORS.ground;
+            groundMaterial.specularColor = new BABYLON.Color3(0.6, 0.2588, 0.4706);
+            groundMaterial.emissiveColor = new BABYLON.Color3(0.6, 0.2588, 0.4706);
+            groundMaterial.specularPower = 8;
+        }
         ground.material = groundMaterial;
         console.log("✅ Playing field created");
 
@@ -813,8 +1334,6 @@ function initBabylon() {
                 const halfH = FIELD_HEIGHT_3D / 2;
                 const cornerSize = 1.5; // doubled size
                 const cornerY = cornerSize / 2; // sit on the ground
-
-                const cornerColors = [COLORS.paddleRight, COLORS.paddleTop, COLORS.paddleBottom, COLORS.paddleDefault];
 
                 const cornerPositions = [
                     new BABYLON.Vector3(-halfW + cornerSize/2, cornerY, -halfH + cornerSize/2), // bottom-left
@@ -826,8 +1345,9 @@ function initBabylon() {
                 cornerPositions.forEach((pos, idx) => {
                     const cube = BABYLON.MeshBuilder.CreateBox(`cornerCube${idx}`, {size: cornerSize}, scene);
                     const mat = new BABYLON.StandardMaterial(`cornerMat${idx}`, scene);
-                    // use predefined palette colors
-                    mat.diffuseColor = cornerColors[idx % cornerColors.length];
+                    mat.diffuseColor = new BABYLON.Color3(1, 1, 1);
+                    mat.specularColor = new BABYLON.Color3(0.1, 0.1, 0.1);
+                    mat.alpha = 0.5;
                     cube.material = mat;
                     cube.position = pos;
                     //mark with half-size for collision checks and register
@@ -853,7 +1373,7 @@ function initBabylon() {
     console.log("✅ All 3D objects created successfully");
 
     scene.render();
-    scene.clearColor = new BABYLON.Color4(0.40, 0.45, 0.70, 1.0);
+    scene.clearColor = new BABYLON.Color4(0.10196, 0.07843, 0.21176, 1.0); // rgb(26,20,54)
     console.log("✅ First render executed");
 
     engine.runRenderLoop(() => {
@@ -869,6 +1389,37 @@ function initBabylon() {
 }
 
 let score3d: number[] = [];
+const PLAYER_SCORE_COLORS = ["#0077B6", "#646CFF", "#FFD166", "#F76B1C"];
+
+function getScoreLabelForPlayer(index: number) {
+    if (localPlayerNames && localPlayerNames[index]) {
+        return localPlayerNames[index];
+    }
+    const player = players[index];
+    if (player && player.playerName) {
+        return player.playerName;
+    }
+    return `Player ${index + 1}`;
+}
+
+function escapeHtml(value: string) {
+    return value.replace(/[&<>"']/g, (char) => {
+        switch (char) {
+            case "&": return "&amp;";
+            case "<": return "&lt;";
+            case ">": return "&gt;";
+            case '"': return "&quot;";
+            case "'": return "&#39;";
+            default: return char;
+        }
+    });
+}
+
+function renderColoredScoreLabel(idx: number, score: number) {
+    const color = PLAYER_SCORE_COLORS[idx] || "#FFFFFF";
+    const name = escapeHtml(getScoreLabelForPlayer(idx));
+    return `<span style="color:${color}">${name}: ${score}</span>`;
+}
 
 function updateScoreDisplay() {
     if (!scoreDiv) return;
@@ -878,8 +1429,8 @@ function updateScoreDisplay() {
         return;
     }
 
-    const labels = score3d.map((s, idx) => `Player ${idx + 1}: ${s}`);
-    scoreDiv.innerText = labels.join("   ");
+    const labels = score3d.map((s, idx) => renderColoredScoreLabel(idx, s));
+    scoreDiv.innerHTML = labels.join("&nbsp;&nbsp;&nbsp;");
 }
 
 function startGame() {
@@ -908,45 +1459,26 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("All UI elements found, setting up event listeners...");
 
 buttonLocalPlay3D.addEventListener("click", () => {
-    buttonLocalPlay3D.style.display = "none";
-    buttonRemotePlay3D.style.display = "none";
-    button2P3D.style.display = "inline-block";
-    buttonAI3D.style.display = "inline-block";
-    button4P3D.style.display = "inline-block";
-    buttonMainMenu3D.style.display = "inline-block";
+    hidePlayerNameModal();
+    showLocalOptionsMenu();
 });
 
     button2P3D.addEventListener("click", () => {
         console.log("2 Player button clicked!");
-        button2P3D.style.display = "none";
-        buttonAI3D.style.display = "none";
-        button4P3D.style.display = 'none';
-        buttonMainMenu3D.style.display = "none";
-        textPong3D.style.display = "none";
-        canvasContainer3D.style.display = "block";
-        
-        // set player count BEFORE initializing Babylon
-        showGameCanvas3D();
-        nbrPlayer = 2;
-        initBabylon();
-        //  start game (initializes score array etc.)
-        startGame();
-        stopBotPolling();
-        console.log("3D Local 2 Player Game Started!");
+        promptPlayerNames(2, (names) => {
+            console.log("3D Local 2 Player Game Started!");
+            startLocal3DMatch(2, names);
+        });
     });
 
     buttonAI3D.addEventListener("click", () => {
         console.log("VS Bot button clicked!");
 
-        button2P3D.style.display = "none";
-        buttonAI3D.style.display = "none";
-        button4P3D.style.display = 'none';
-        buttonMainMenu3D.style.display = "none";
-        textPong3D.style.display = "none";
-        canvasContainer3D.style.display = "block";
-        
+        hideMenuForMatch();
         showGameCanvas3D();
         nbrPlayer = 1;
+        FIELD_HEIGHT_3D = FIELD_HEIGHT_BASE;
+        localPlayerNames = null;
         initBabylon();
         startGame();
         console.log("🤖 3D VS Bot Game Started! nbrPlayer set to:", nbrPlayer);
@@ -954,40 +1486,58 @@ buttonLocalPlay3D.addEventListener("click", () => {
 
     button4P3D.addEventListener("click", () => {
         console.log("4 Player button clicked!");
+        promptPlayerNames(4, (names) => {
+            console.log("3D 4 Player Game Started!");
+            startLocal3DMatch(4, names);
+        });
+    });
+
+    if (buttonTournament3D) {
+        buttonTournament3D.addEventListener("click", () => {
+            enterTournamentSetupMode();
+        });
+    }
+
+    if (startTournamentButton3D) {
+        startTournamentButton3D.addEventListener("click", async () => {
+            if (!buttonNbrPlayer3D || tournamentActive3D) return;
+            const selectedValue = parseInt(buttonNbrPlayer3D.value, 10);
+            const playerCount = selectedValue === 8 ? 8 : 4;
+            try {
+                const names = await collectTournamentPlayerNames(playerCount);
+                hideTournamentSetupControls();
+                tournamentId3D = generateTournamentId3D();
+                initializeTournament3D(names);
+                textPong3D.style.display = "block";
+            } catch (error) {
+                console.log("Tournament setup cancelled", error);
+            }
+        });
+    }
+
+    if (buttonPlayGame3D) {
+        buttonPlayGame3D.addEventListener("click", () => {
+            buttonPlayGame3D.disabled = true;
+            playCurrentTournamentMatch3D();
+        });
+    }
+
+    buttonMainMenu3D.addEventListener("click", () => {
+        resetTournamentState3D();
+        buttonLocalPlay3D.style.display = "inline-block";
         button2P3D.style.display = "none";
         buttonAI3D.style.display = "none";
         button4P3D.style.display = "none";
+        if (buttonTournament3D) buttonTournament3D.style.display = "none";
         buttonMainMenu3D.style.display = "none";
-        textPong3D.style.display = "none";
-        canvasContainer3D.style.display = "block";
-        showGameCanvas3D();
-        nbrPlayer = 4;
-        FIELD_HEIGHT_3D = FIELD_WIDTH_3D;
-        initBabylon();
-        startGame();
-        stopBotPolling();
-        console.log("3D 4 Player Game Started!");
-    });
-
-    // buttonTournament3D.addEventListener("click", () => {
-    //     // Mostra solo il bottone 4 Player per il torneo
-    //     button4P3D.style.display = "inline-block";
-    //     // ...eventuali altri bottoni...
-    // });
-
-    // // Quando torni al menu, nascondi di nuovo il bottone
-    // buttonMainMenu3D.addEventListener("click", () => {
-    //     button4P3D.style.display = "none";
-    //     // ...eventuali altri bottoni...
-    // });
-
-    buttonMainMenu3D.addEventListener("click", () => {
-    // Return to main menu
-    buttonLocalPlay3D.style.display = "inline-block";
-    buttonRemotePlay3D.style.display = "inline-block";
-    button2P3D.style.display = "none";
-    buttonAI3D.style.display = "none";
-    buttonMainMenu3D.style.display = "none";
+        textPong3D.style.display = "block";
+        localPlayerNames = null;
+        FIELD_HEIGHT_3D = FIELD_HEIGHT_BASE;
+        hidePlayerNameModal();
+        canvas_container.style.display = "none";
+        canvasContainer3D.style.display = "none";
+        scoreDiv.style.display = "none";
+        canvas2D.style.display = "none";
     });
 });
 

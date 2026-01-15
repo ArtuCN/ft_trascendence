@@ -5,10 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Pong Game</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
     html {
       height: 100%;
       width: 100%;
-      background: linear-gradient(to bottom, #a2d4f5, #e0f7ff);
+      background: linear-gradient(rgb(10, 14, 39) 0%, rgb(26, 20, 54) 100%);
+      /* background: linear-gradient(to bottom, #00B4D8, #062A3A); */
     }
 
     body {
@@ -35,9 +37,15 @@
       text-align: center;
       padding: 30px 0;
       margin: 0;
-      font-size: 48px;
-      color: #004d66;
-      text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.6);
+      font-size: clamp(3rem, 8vw, 5rem);
+      letter-spacing: 0.15em;
+      font-family: "Press Start 2P", "Courier New", monospace;
+      background: linear-gradient(180deg, #ff00ff 0%, #ff6ec7 50%, #00e5ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 40px rgba(255, 110, 199, 0.9);
     }
 
     /* Centered menu buttons */
@@ -53,26 +61,113 @@
       padding: 0 20px;       /* optional padding for side spacing */
     }
 
-    /* Glossy, round, Aero-style buttons */
+    /* Neon arcade buttons */
     button {
-      width: 200px;
-      height: 50px;
-      font-size: 18px;
-      font-weight: bold;
-      padding: 10px 20px;
+      width: 220px;
+      min-height: 52px;
+      font-size: 0.85rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 14px 26px;
       margin: 10px;
-      border: none;
-      border-radius: 25px;
-      background: linear-gradient(to bottom, #5dd39e, #3fbf7f);
-      color: white;
+      border: 3px solid #ff6ec7;
+      border-radius: 999px;
+      background: rgba(255, 110, 199, 0.1);
+      color: #ff6ec7;
       cursor: pointer;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-      transition: all 0.2s ease;
+      box-shadow: 0 0 30px rgba(255, 110, 199, 0.6), inset 0 0 30px rgba(255, 110, 199, 0.15);
+      transition: all 0.25s ease;
+      font-family: "Press Start 2P", "Courier New", monospace;
+      text-shadow: 0 0 8px rgba(255, 110, 199, 0.35);
+      background-clip: padding-box;
     }
 
     button:hover {
-      background: linear-gradient(to bottom, #76e7b6, #4fd18d);
-      transform: translateY(-2px);
+      background: rgba(0, 229, 255, 0.1);
+      border-color: #00e5ff;
+      color: #00e5ff;
+      box-shadow: 0 0 30px rgba(0, 229, 255, 0.6), inset 0 0 30px rgba(0, 229, 255, 0.15);
+      transform: translateY(-3px) scale(1.01);
+      text-shadow: 0 0 10px rgba(0, 229, 255, 0.45);
+    }
+
+    /* Player modal */
+    #playerName {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      background: rgba(5, 8, 25, 0.85);
+      backdrop-filter: blur(10px);
+      z-index: 999;
+      font-family: "Press Start 2P", "Courier New", monospace;
+      color: #f4f8ff;
+    }
+
+    #playerName .modal-panel {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(90vw, 440px);
+      background: radial-gradient(circle at top, rgba(0, 229, 255, 0.12), rgba(10, 14, 39, 0.95));
+      border: 2px solid rgba(0, 229, 255, 0.6);
+      border-radius: 24px;
+      padding: 36px 30px;
+      box-shadow: 0 0 40px rgba(0, 229, 255, 0.35), 0 0 80px rgba(255, 110, 199, 0.25);
+      text-align: center;
+    }
+
+    #playerName .modal-title {
+      margin: 0 0 20px;
+      font-size: 1.1rem;
+      letter-spacing: 0.12em;
+      color: #00e5ff;
+      text-shadow: 0 0 12px rgba(0, 229, 255, 0.6);
+    }
+
+    #playerInputsContainer label {
+      display: block;
+      margin-top: 14px;
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      color: #ff6ec7;
+    }
+
+    #playerInputsContainer input {
+      width: 100%;
+      margin: 10px auto 0;
+      padding: 12px;
+      box-sizing: border-box;
+      border-radius: 14px;
+      border: 2px solid rgba(0, 229, 255, 0.6);
+      background: rgba(255, 255, 255, 0.04);
+      color: #f8fbff;
+      font-size: 0.85rem;
+      font-family: "Press Start 2P", "Courier New", monospace;
+      text-align: center;
+      outline: none;
+      box-shadow: inset 0 0 10px rgba(0, 229, 255, 0.2);
+    }
+
+    #playerInputsContainer input::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 0.7rem;
+    }
+
+    #playerName .modal-actions {
+      margin-top: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    #playerName button {
+      width: 100%;
+      font-size: 0.75rem;
+      padding: 12px 20px;
     }
 
     /* Canvas container */
@@ -89,10 +184,11 @@
     }
 
     canvas {
-      max-width: 100vw;
-      max-height: 100vh;
+      max-width: 90vw;
+      max-height: 90vh;
       background: black;
-      border: 4px solid white;
+      border: 2px solid #ff6ec7;
+      box-shadow: 0 0 24px rgba(255, 110, 199, 0.55);
       display: block;
     }
 
@@ -168,12 +264,14 @@
   <h1 id="PongGame">Pong Game</h1>
 
   <div id="menu-container">
-    <div id="playerName" style="display: none; position: fixed;">
-      <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; text-align: center;">
-        <h2 id="modalTitle">Inserisci i nomi dei giocatori</h2>
+    <div id="playerName">
+      <div class="modal-panel">
+        <h2 id="modalTitle" class="modal-title">Inserisci i nomi dei giocatori</h2>
         <div id="playerInputsContainer"></div>
-        <button id="startGameButton" style="margin-top: 20px; padding: 10px 20px; font-size: 16px;">Inizia partita</button>
-        <button id="cancelButton" style="margin-top: 10px; padding: 10px 20px; font-size: 16px;">Annulla</button>
+        <div class="modal-actions">
+          <button id="startGameButton">Inizia partita</button>
+          <button id="cancelButton">Annulla</button>
+        </div>
       </div>
     </div>
     <button id="LocalPlay" value="1">Local</button>

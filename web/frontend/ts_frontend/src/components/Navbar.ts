@@ -4,6 +4,45 @@ import { router } from '../router/router.js';
 import { ProfileModal } from './ProfileModal.js';
 import { SocialModal } from './SocialModal.js';
 
+const NAVBAR_GLOW_STYLE_ID = 'navbar-glow-animation';
+
+function ensureNavbarGlowStyles() {
+  if (document.getElementById(NAVBAR_GLOW_STYLE_ID)) return;
+  const style = document.createElement('style');
+  style.id = NAVBAR_GLOW_STYLE_ID;
+  style.textContent = `
+.navbar-glow {
+  position: relative;
+  background: linear-gradient(90deg, #062A3A 0%, #0B4F6C 100%);
+  box-shadow: 0 0 30px rgba(0, 229, 255, 0.25), inset 0 0 15px rgba(6, 42, 58, 0.65);
+}
+
+.navbar-glow::after {
+  content: '';
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -6px;
+  height: 5px;
+  border-radius: 999px;
+  background: linear-gradient(120deg, #ff6ec7, #00e5ff, #ff6ec7);
+  background-size: 300% 100%;
+  animation: navbarBorderPulse 3s linear infinite;
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.8), 0 0 25px rgba(255, 110, 199, 0.6);
+}
+
+@keyframes navbarBorderPulse {
+  0% {
+    background-position: 0% 0;
+  }
+  100% {
+    background-position: 300% 0;
+  }
+}
+`;
+  document.head.appendChild(style);
+}
+
 export class Navbar {
   private element: HTMLElement;
   private profileModal: ProfileModal;
@@ -11,6 +50,7 @@ export class Navbar {
   private unsubscribe?: () => void;
 
   constructor() {
+    ensureNavbarGlowStyles();
     this.profileModal = new ProfileModal();
     this.socialModal = new SocialModal();
     this.element = this.createNavbar();
@@ -25,9 +65,8 @@ export class Navbar {
 
   private createNavbar(): HTMLElement {
     const nav = createElement('nav', {
-      className: 'w-full py-4 px-8 flex items-center justify-center shadow-lg',
-      // Fruitiger / Aero inspired cool-blue palette
-      style: 'background: linear-gradient(90deg, #062A3A 0%, #0B4F6C 100%);'
+      className: 'navbar-glow w-full py-4 px-8 flex items-center justify-center shadow-lg',
+      style: 'padding: 1rem 1rem;'
     });
 
     this.element = nav;
