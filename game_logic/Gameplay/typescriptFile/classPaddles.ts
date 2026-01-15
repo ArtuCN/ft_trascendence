@@ -214,21 +214,21 @@ export class Paddles {
 		
 		if (this.orientation === "vertical") {
 			if (this.id === 0) {
-				ctx.fillStyle = "white";
+				ctx.fillStyle = "#0077B6";
 				ctx.fillRect(20, this.initialPosition, this.paddleThickness, this.paddleLength); // Left
 			}
 			else {
-				ctx.fillStyle = "red";
+				ctx.fillStyle = "#646CFF";
 				ctx.fillRect(canvas.width - 20 - this.paddleThickness, this.initialPosition, this.paddleThickness, this.paddleLength); // Right
 			}
 		}
 		else if (this.orientation === "horizontal") {
 			if (this.id === 2) {
-				ctx.fillStyle = "blue";
+				ctx.fillStyle = "#FFD166";
 				ctx.fillRect(this.initialPosition, 20, this.paddleLength, this.paddleThickness); // Top
 			}
 			else {
-				ctx.fillStyle = "green";
+				ctx.fillStyle = "#F76B1C";
 				ctx.fillRect(this.initialPosition, canvas.height - 20 - this.paddleThickness, this.paddleLength, this.paddleThickness); // Bottom
 			}
 		}

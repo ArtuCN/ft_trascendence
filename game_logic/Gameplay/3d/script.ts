@@ -54,6 +54,20 @@ let players: any[] = [];
 let cornerCubes: any[] = [];
 let localPlayerNames: string[] | null = null;
 
+type GoalSide = "left" | "right" | "top" | "bottom";
+type GoalGlowStrip = {
+    mesh: any;
+    material: any;
+};
+
+const GOAL_GLOW_COLOR_HEX = "#00B4D8";
+const GOAL_GLOW_IDLE_ALPHA = 0.18;
+const GOAL_GLOW_ACTIVE_ALPHA = 0.92;
+const GOAL_GLOW_DURATION_MS = 900;
+
+let goalGlowStrips: Partial<Record<GoalSide, GoalGlowStrip>> = {};
+let goalGlowTimeouts: Partial<Record<GoalSide, number>> = {};
+
 // particelle ball
 let ballParticleSystem: any = null;
 
@@ -69,9 +83,9 @@ window.addEventListener('keyup', (e) => {
 });
 
 const COLORS = {
-    // neon cyberpunk palette inspired by requested hues
-    ballDiffuse:   new BABYLON.Color3(0.6078, 0.7922, 0.8471), // #ffffff muted cyan
-    ballEmissive:  new BABYLON.Color3(0.0000, 0.7059, 0.8471), // #00B4D8 cyan glow
+    // neon cyberpunk palette inspired by requested hues(0.0000, 0.7059, 0.8471)
+    ballDiffuse:   new BABYLON.Color3(0.0000, 0.7059, 0.8471), // #ffffff muted cyan
+    ballEmissive:  new BABYLON.Color3(0.6078, 0.7922, 0.8471), // #00B4D8 cyan glow
     paddleDefault: new BABYLON.Color3(0.0000, 0.4627, 0.7137), // #0077B6 primary tone
     paddleRight:   new BABYLON.Color3(0.3922, 0.4235, 1.0000), // #646CFF neon indigo
     paddleTop:     new BABYLON.Color3(1.0000, 0.8196, 0.4000), // #FFD166 vibrant yellow
@@ -545,6 +559,7 @@ function disposeBabylon() {
     ball = null;
     players = [];
     cornerCubes = [];
+    disposeGoalGlowStrips();
 
     console.log("🧹 Babylon disposed");
 }
@@ -649,6 +664,93 @@ export function showVictoryScreen3D(winner: any) {
         );
 }
 
+function disposeGoalGlowStrips() {
+    Object.values(goalGlowTimeouts).forEach(timeoutId => {
+        if (typeof timeoutId === "number") {
+            window.clearTimeout(timeoutId);
+        }
+    });
+    goalGlowTimeouts = {};
+
+    Object.values(goalGlowStrips).forEach(strip => {
+        if (!strip) return;
+        if (strip.mesh && typeof strip.mesh.dispose === "function") {
+            strip.mesh.dispose();
+        }
+        if (strip.material && typeof strip.material.dispose === "function") {
+            strip.material.dispose();
+        }
+    });
+    goalGlowStrips = {};
+}
+
+function createGoalGlowStrips(scene: any) {
+    if (typeof BABYLON === "undefined") return;
+    disposeGoalGlowStrips();
+
+    const activeColor = BABYLON.Color3.FromHexString(GOAL_GLOW_COLOR_HEX);
+    const idleColor = activeColor.clone();
+    idleColor.scaleInPlace(0.2);
+
+    const stripeThickness = 0.28;
+    const inset = 0.05;
+    const elevation = 0.0025;
+    const halfW = FIELD_WIDTH_3D / 2;
+    const halfH = FIELD_HEIGHT_3D / 2;
+
+    const buildStrip = (side: GoalSide, width: number, height: number, x: number, z: number) => {
+        const mesh = BABYLON.MeshBuilder.CreateGround(`goalGlow-${side}`, { width, height }, scene);
+        mesh.position = new BABYLON.Vector3(x, elevation, z);
+        mesh.isPickable = false;
+        mesh.renderingGroupId = 0;
+
+        const material = new BABYLON.StandardMaterial(`goalGlowMat-${side}`, scene);
+        material.diffuseColor = activeColor.clone();
+        material.emissiveColor = idleColor.clone();
+        material.specularColor = BABYLON.Color3.Black();
+        material.alpha = GOAL_GLOW_IDLE_ALPHA;
+        material.disableLighting = true;
+        material.backFaceCulling = false;
+        material.zOffset = -2;
+        material.metadata = {
+            baseEmissive: idleColor.clone(),
+            activeEmissive: activeColor.clone()
+        };
+
+        mesh.material = material;
+        goalGlowStrips[side] = { mesh, material };
+    };
+
+    buildStrip("left", stripeThickness, FIELD_HEIGHT_3D, -halfW + stripeThickness / 2 + inset, 0);
+    buildStrip("right", stripeThickness, FIELD_HEIGHT_3D, halfW - stripeThickness / 2 - inset, 0);
+    buildStrip("top", FIELD_WIDTH_3D, stripeThickness, 0, halfH - stripeThickness / 2 - inset);
+    buildStrip("bottom", FIELD_WIDTH_3D, stripeThickness, 0, -halfH + stripeThickness / 2 + inset);
+}
+
+function triggerGoalGlow(side: GoalSide) {
+    const strip = goalGlowStrips[side];
+    if (!strip) return;
+
+    const { material } = strip;
+    const metadata = (material.metadata || {}) as { baseEmissive?: any; activeEmissive?: any };
+
+    if (metadata.activeEmissive && material.emissiveColor?.copyFrom) {
+        material.emissiveColor.copyFrom(metadata.activeEmissive);
+    }
+    material.alpha = GOAL_GLOW_ACTIVE_ALPHA;
+
+    if (goalGlowTimeouts[side]) {
+        window.clearTimeout(goalGlowTimeouts[side]!);
+    }
+
+    goalGlowTimeouts[side] = window.setTimeout(() => {
+        if (metadata.baseEmissive && material.emissiveColor?.copyFrom) {
+            material.emissiveColor.copyFrom(metadata.baseEmissive);
+        }
+        material.alpha = GOAL_GLOW_IDLE_ALPHA;
+    }, GOAL_GLOW_DURATION_MS);
+}
+
 function createGameObjects(scene: any) {
     console.log("Creating game objects...");
     
@@ -717,6 +819,7 @@ function createGameObjects(scene: any) {
                 // 2-player mode: check left/right goals
                 if (this.position.x < -halfW) {
                     if (this.rallyActive) {
+                        triggerGoalGlow("left");
                         score3d[1] = (score3d[1] || 0) + 1;
                         updateScoreDisplay();
                     }
@@ -730,6 +833,7 @@ function createGameObjects(scene: any) {
                 }
                 if (this.position.x > halfW) {
                     if (this.rallyActive) {
+                        triggerGoalGlow("right");
                         score3d[0] = (score3d[0] || 0) + 1;
                         updateScoreDisplay();
                     }
@@ -749,6 +853,7 @@ function createGameObjects(scene: any) {
             if (nbrPlayer === 4) {
                 if (this.position.z > halfH) {
                     if (this.rallyActive && this.lastTouched !== null) {
+                        triggerGoalGlow("top");
                         const scorer = this.lastTouched;
                         score3d[scorer] = (score3d[scorer] || 0) + 1;
                         updateScoreDisplay();
@@ -762,6 +867,7 @@ function createGameObjects(scene: any) {
                 }
                 if (this.position.z < -halfH) {
                     if (this.rallyActive && this.lastTouched !== null) {
+                        triggerGoalGlow("bottom");
                         const scorer = this.lastTouched;
                         score3d[scorer] = (score3d[scorer] || 0) + 1;
                         updateScoreDisplay();
@@ -775,6 +881,7 @@ function createGameObjects(scene: any) {
                 }
                 if (this.position.x < -halfW) {
                     if (this.rallyActive && this.lastTouched !== null) {
+                        triggerGoalGlow("left");
                         const scorer = this.lastTouched;
                         score3d[scorer] = (score3d[scorer] || 0) + 1;
                         updateScoreDisplay();
@@ -787,6 +894,7 @@ function createGameObjects(scene: any) {
                 }
                 if (this.position.x > halfW) {
                     if (this.rallyActive && this.lastTouched !== null) {
+                        triggerGoalGlow("right");
                         const scorer = this.lastTouched;
                         score3d[scorer] = (score3d[scorer] || 0) + 1;
                         updateScoreDisplay();
@@ -1360,6 +1468,7 @@ function initBabylon() {
                 console.warn("⚠️ Could not create corner cubes:", err);
             }
         }
+        createGoalGlowStrips(scene);
         createGameObjects(scene);
         console.log("✅ Game objects created using your classes");
 
