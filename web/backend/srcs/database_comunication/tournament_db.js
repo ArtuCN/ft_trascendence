@@ -228,7 +228,7 @@ export async function getTournamentDataForBlockchain(tournament_id)
 
 		// get scores for matches = all goals scored - all goals taken
 		const winner_id = tournament.id_winner;
-		const winner_name = uniqueUsers.find(user => user.id === winner_id)?.username || null;
+		const winner_name = uniqueUsers.find(user => user.id === winner_id)?.username || "john doe";
 		const user_scores = [];
 		for (const user of uniqueUsers) {
 			let total_score = uniqueStats.reduce((acc, stat) => {
