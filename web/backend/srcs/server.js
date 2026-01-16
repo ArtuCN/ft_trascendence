@@ -25,6 +25,7 @@ import avatarRoute from './controllers/avatar.js';
 import blockedRoute from './controllers/blocked.js';
 import chatRoute from './controllers/chat.js';
 import userRoute from './controllers/user.js';
+import blockchainRoute from './controllers/blockchain_tournament.js';
 
 // WebSocket matchmaking
 import { setupMatchmaking } from './controllers/online_match/online_match.js';
@@ -113,6 +114,7 @@ await fastify.register(avatarRoute);
 await fastify.register(blockedRoute);
 await fastify.register(chatRoute);
 await fastify.register(userRoute);
+await fastify.register(blockchainRoute);
 // Endpoint semplice per debug - Admin only
 fastify.get('/users', { preHandler: [fastify.authenticateAdmin] }, async (request, reply) => {
   try {
