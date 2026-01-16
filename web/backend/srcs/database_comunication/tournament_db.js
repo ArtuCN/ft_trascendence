@@ -175,7 +175,10 @@ export async function getTournamentDataForBlockchain(tournament_id)
 {
 	try {
 		// get tournament
-		const tournament = await getTournament(tournament_id);
+		const tournamentArray = await getTournament(tournament_id);
+		const tournament = tournamentArray[0];
+		// console.log("====TOURNAMENT COMMUNICATION=====");	
+		// console.log("tournament: ", tournament);
 
 		// get matches for the tournament and get match stats
 		// get users for all matches
@@ -190,6 +193,8 @@ export async function getTournamentDataForBlockchain(tournament_id)
 				return { stats, users };
 			})
 		);
+		// console.log("matches:", matches);
+		// console.log("matchResults:", matchResults);
 
 		//flatten and filter results
 		const allStats = [];
@@ -198,28 +203,32 @@ export async function getTournamentDataForBlockchain(tournament_id)
 			allStats.push(...result.stats);
 			allUsers.push(...result.users);
 		}
+		// console.log("allStats:", allStats);
+		// console.log("allUsers:", allUsers.map(user => user.id));
 
-		const uniqueStats = [];
+		const uniqueStats = allStats;
 		const uniqueUsers = [];
-		const seenMatchIds = new Set();
+		// const seenMatchIds = new Set();
 		const seenUsers = new Set();
 
-		for (const stat of allStats) {
-			if (!seenMatchIds.has(stat.match_id)) {
-				seenMatchIds.add(stat.match_id);
-				uniqueStats.push(stat);
-			}
-		}
+		// for (const stat of allStats) {
+		// 	if (!seenMatchIds.has(stat.id_user)) {
+		// 		seenMatchIds.add(stat.id_user);
+		// 		uniqueStats.push(stat);
+		// 	}
+		// }
 		for (const user of allUsers) {
 			if (!seenUsers.has(user.id)) {
 				seenUsers.add(user.id);
 				uniqueUsers.push(user);
 			}
 		}
+		// console.log("uniqueStats:", uniqueStats);
+		// console.log("uniqueUsers:", uniqueUsers.map(user => user.id));
 
 		// get scores for matches = all goals scored - all goals taken
 		const winner_id = tournament.id_winner;
-		const winner_name = uniqueUsers.find(user => user.id === winner_id).username;
+		const winner_name = uniqueUsers.find(user => user.id === winner_id)?.username || null;
 		const user_scores = [];
 		for (const user of uniqueUsers) {
 			let total_score = uniqueStats.reduce((acc, stat) => {
@@ -235,21 +244,33 @@ export async function getTournamentDataForBlockchain(tournament_id)
 			};
 			user_scores.push(score_obj);
 		}
+		// console.log("winner_id:", winner_id);
+		// console.log("winner_name:", winner_name);
+		// console.log("user_scores:", user_scores);
 
 
 		//organize data
-		const user_ids = uniqueUsers.map(user => user.id).sort((a,b) => a - b);
+		// const user_ids = uniqueUsers.map(user => user.id).sort((a,b) => a - b);
 		const scoreByUserId = new Map(
 			user_scores.map(score => [Number(score.id), score.score])
 		);
-		const userScores_sorted = user_ids.map(
-			id => scoreByUserId.get(id) ?? 0
-		);
+		const user_ids = Array.from(scoreByUserId.keys());
+		const user_scores_sorted = Array.from(scoreByUserId.values());
+
+		// console.log("user_ids:", user_ids);
+		// console.log("scoreByUserId:", scoreByUserId);
+		// console.log("userScores_sorted:", user_scores_sorted);
 
 		const user_ids_8     = padTo8(user_ids);
 		const user_scores_8  = padTo8(user_scores_sorted);
 		const winner_ids_8   = padTo8([Number(winner_id)]);
 		const winner_name_str = winner_name;
+
+		// console.log("user_ids_8:", user_ids_8);
+		// console.log("user_scores_8:", user_scores_8);
+		// console.log("winner_ids_8:", winner_ids_8);
+		// console.log("winner_name_str:", winner_name_str);
+		// console.log("====TOURNAMENT COMMUNICATION END=====");	
 
 		return {
 			"user_ids": user_ids_8,
