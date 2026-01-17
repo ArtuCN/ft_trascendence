@@ -2,7 +2,8 @@ import { gameRunning, stopGame, startGame, canvas, ctx, canvas_container, bracke
 import { Player } from "./typescriptFile/classPlayer.js";
 import type { Player as Player3D } from "./typescriptFile3D/classPlayer.js";
 import { Ball, drawScore } from "./typescriptFile/classBall.js";
-import { resetCanvas, generateBracket, renderBracket, drawCornerWalls, drawMiddleLine, clonePlayer, sendMatchData, sendTournamentData, showVictoryScreen } from "./utilities.js";
+import { resetCanvas, generateBracket, renderBracket, drawCornerWalls, drawMiddleLine, clonePlayer, sendMatchData, sendTournamentData, finishTournament, showVictoryScreen } from "./utilities.js";
+import { initWalletListener, setupSaveOnChainButton, setCurrentTournamentId } from "./blockchainIntegration.js";
 
 // Helper functions to get user data from localStorage
 function getCurrentUserId(): number {
@@ -24,6 +25,7 @@ const textPong = document.getElementById("PongGame") as HTMLHeadingElement;
 const buttonTournament = document.getElementById("Tournament") as HTMLButtonElement;
 const buttonNbrPlayer = document.getElementById("nbrPlayer") as HTMLSelectElement;
 const buttonMainMenu = document.getElementById("returnMenu") as HTMLButtonElement;
+const buttonSaveOnChain = document.getElementById("saveOnChain") as HTMLButtonElement;
 const startTournamentButton = document.getElementById("StartTournament") as HTMLButtonElement;
 export const buttonPlayGame = document.getElementById("PlayGame") as HTMLButtonElement;
 const playerNamesModal = document.getElementById("playerName") as HTMLDivElement;
@@ -35,7 +37,12 @@ const modalTitle = document.getElementById("modalTitle") as HTMLHeadingElement;
 export let nbrPlayer: number = 0;
 export let countPlayers: number = 0;
 export let Tournament: boolean = false;
-export let TournamentID: string;
+export let TournamentID: string = "0";
+
+export function setTournamentID(id: string) {
+	TournamentID = id;
+	setCurrentTournamentId(id);
+}
 export let playerGoals: number[] = [];
 export let playerGoalsRecived: number[] = [];
 export let Pebble: Ball = new Ball();
@@ -268,6 +275,8 @@ function showPlayerName(numberPlayers: number, gameType: 'local' | 'tournament')
 }
 
 export function advanceWinner(winner: Player | Player3D) {
+	sendMatchData().catch(err => console.error('Failed to save match data:', err));
+	
 	if (currentRound === "quarterfinals") {
 		quarterfinals[currentMatchIndex].matchWinner = winner;
 		quarterfinals[currentMatchIndex].users_goal = playerGoals;
@@ -315,7 +324,7 @@ export function advanceWinner(winner: Player | Player3D) {
 	Tournament = true;
 }
 
-export function showMenu(winner: Player | Player3D | null) {
+export async function showMenu(winner: Player | Player3D | null) {
 
 	if (animationFrameId) {
 		cancelAnimationFrame(animationFrameId);
@@ -330,14 +339,21 @@ export function showMenu(winner: Player | Player3D | null) {
 		if (currentRound === "finished") {
 			for (const player of players)
 				player.getPaddle().stopBotPolling();
+			canvas.style.display = "none";
 			textPong.style.display = "block";
 			bracketContainer.style.display = "none";
-			buttonLocalPlay.style.display = "none";
-			buttonRemotePlay.style.display = "none";
-			buttonRemotePlay.style.display = 'inline-block';
-			buttonLocalPlay.style.display = 'inline-block';
-			sendTournamentData();
+			buttonPlayGame.style.display = "none";
+			canvas_container.style.display = "none";
+			buttonLocalPlay.style.display = "inline-block";
+			buttonRemotePlay.style.display = "inline-block";
+			
+			if (winner && TournamentID && TournamentID !== "0") {
+				await finishTournament(TournamentID, winner.getUserID());
+			}
+			
+			currentRound = "quarterfinals";
 			TournamentID = "0";
+			return;
 		}
 	}
 	else {
@@ -353,6 +369,7 @@ export function showMenu(winner: Player | Player3D | null) {
 		sendMatchData();
 	}
 }
+
 
 function draw(myId?: number) {
 	if (!gameRunning)
@@ -615,7 +632,16 @@ buttonTournament.addEventListener("click", async () => {
 	textPong.style.display = "none";
 	startTournamentButton.style.display = "inline-block";
 	buttonNbrPlayer.style.display = "inline-block";
-	TournamentID= generateTournamentId();
+	
+	const backendTournamentId = await sendTournamentData();
+	if (backendTournamentId) {
+		setTournamentID(backendTournamentId);
+	} else {
+		console.warn('Failed to create tournament in backend, using local ID');
+		TournamentID = generateTournamentId();
+		setCurrentTournamentId(TournamentID);
+	}
+	
 	nbrPlayer = await waitForStartButton();
 	if (isNaN(nbrPlayer) || nbrPlayer <= 0) {
 		console.error("Invalid player count:", buttonNbrPlayer.value);
@@ -623,13 +649,6 @@ buttonTournament.addEventListener("click", async () => {
 	}
 	showPlayerName(nbrPlayer, 'tournament');
 	await waitForPlayerNames();
-	console.log(">>> after waitForPlayerNames, reading inputs... nbrPlayer =", nbrPlayer);
-
-	// debug: logga tutti gli input trovati
-	for (let i = 1; i < nbrPlayer; i++) {
-	  const input = document.getElementById(`playerNameInput${i}`) as HTMLInputElement | null;
-	  console.log(`input #${i}:`, input, input?.value);
-	}
 	players.push(new Player(username, 0, userId, "vertical"));
 	for (let i = 1; i < nbrPlayer; i++) {
 		const input = document.getElementById(`playerNameInput${i}`) as HTMLInputElement;
@@ -643,7 +662,6 @@ buttonTournament.addEventListener("click", async () => {
 	countPlayers = nbrPlayer;
 	playerGoals = new Array(nbrPlayer).fill(0);
 	playerGoalsRecived = new Array(nbrPlayer).fill(0);
-	console.log(">>> players array:", players);
 	if (nbrPlayer == 8) {
 		quarterfinals = [];
 		currentRound = "quarterfinals";
@@ -688,6 +706,7 @@ buttonTournament.addEventListener("click", async () => {
 	startTournamentButton.style.display = "none";
 	buttonNbrPlayer.style.display = "none";
 	canvas_container.style.display = "none";
+	buttonSaveOnChain.style.display = "none"; // Hide Save on Chain button during tournament
 	renderBracket();
 	if (!(currentRound === "final" && final.matchWinner)) {
 		buttonPlayGame.disabled = false;
@@ -705,3 +724,12 @@ buttonPlayGame.addEventListener("click", () => {
 	buttonPlayGame.style.display = "none";
 	bracketContainer.style.display = "none";
 });
+
+// Initialize blockchain integration
+initWalletListener();
+setupSaveOnChainButton(
+	() => TournamentID,
+	undefined,
+	(error) => console.error('Failed to save tournament to blockchain:', error)
+);
+

@@ -18,15 +18,19 @@ db.run("PRAGMA foreign_keys = ON")
 
 export async function insertTournamentInDB(name)
 {
-    const stmt = db.prepare("INSERT INTO tournament (tournament_name) VALUES (?)");
-    stmt.run(name, function (err) {
-        if (err) {
-            console.error('Error inserting tournament:', err);
-        } else {
-            console.log('Tournament inserted with ID:', this.lastID);
-        }
+    return new Promise((resolve, reject) => {
+        const stmt = db.prepare("INSERT INTO tournament (tournament_name) VALUES (?)");
+        stmt.run(name, function (err) {
+            if (err) {
+                console.error('Error inserting tournament:', err);
+                reject(err);
+            } else {
+                console.log('Tournament inserted with ID:', this.lastID);
+                resolve({ id: this.lastID });
+            }
+        });
+        stmt.finalize();
     });
-    return { id: stmt.lastID };
 }
 
 export async function getAllTournaments()
@@ -174,15 +178,18 @@ function padTo8(arr, fill = 0) {
 export async function getTournamentDataForBlockchain(tournament_id)
 {
 	try {
+		console.log('[getTournamentDataForBlockchain] tournament_id:', tournament_id);
+		
 		// get tournament
 		const tournamentArray = await getTournament(tournament_id);
 		const tournament = tournamentArray[0];
-		// console.log("====TOURNAMENT COMMUNICATION=====");	
-		// console.log("tournament: ", tournament);
+		console.log('[getTournamentDataForBlockchain] tournament:', tournament);
 
 		// get matches for the tournament and get match stats
 		// get users for all matches
 		const matches = await getMatchesOfTournament(tournament_id);
+		console.log('[getTournamentDataForBlockchain] matches found:', matches.length, matches);
+		
 		const matchResults = await Promise.all(
 			matches.map(async (match) => {
 				const [stats, users] = await Promise.all([
@@ -193,6 +200,7 @@ export async function getTournamentDataForBlockchain(tournament_id)
 				return { stats, users };
 			})
 		);
+		console.log('[getTournamentDataForBlockchain] matchResults:', matchResults);
 		// console.log("matches:", matches);
 		// console.log("matchResults:", matchResults);
 
