@@ -141,8 +141,8 @@ export async function insertMatch(id_tournament, users_ids, users_goal_scored, u
                 await insertPlayerMatchStats(users_ids, match.id, users_goal_scored, users_goal_taken);
                 await upsertStatsAfterMatch(users_ids, users_goal_scored, users_goal_taken, 0);
             } catch (err) {
-                console.error(`Error inserting stats for user ${userId}:`, err);
-                console.warn(`Warning: Could not save stats for user ${userId}. User may not exist in database.`);
+                console.error(`Error inserting stats for user ${users_ids}:`, err);
+                console.warn(`Warning: Could not save stats for user ${users_ids}. User may not exist in database.`);
                 console.warn(`Match will still be recorded, but without stats for this player.`);
             }
         }

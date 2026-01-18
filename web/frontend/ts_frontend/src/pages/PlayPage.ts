@@ -106,10 +106,18 @@ export class PlayPage {
         throw new Error('User not logged in');
       }
 
+	  await new Promise(resolve => setTimeout(resolve, 500));
+
       const tournamentData = await blockchainTournamentApi.getTournamentForBlockchain(
         userId,
         tournamentId
       );
+
+	  console.log("tournament data from backend: ", tournamentData);
+
+	  // if (!tournamentData.winner_ids || tournamentData.winner_ids[0] === 0) {
+             // throw new Error('Tournament winner not yet recorded. Please try again.');
+           // }
 
       const actualPlayers = tournamentData.user_ids.filter(id => id !== 0).length;
 
@@ -121,6 +129,12 @@ export class PlayPage {
         tournamentData.winner_names,
         tournamentData.tournament_id
       );
+
+	  // const saveBlockchainId = await blockchainService.insertTournament(
+		  // tournamentId,
+		  // 0
+	  // );
+
 
       this.sendMessageToIframe({
         type: 'tournament_saved',

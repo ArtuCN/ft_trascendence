@@ -347,9 +347,9 @@ export async function showMenu(winner: Player | Player3D | null) {
 			buttonLocalPlay.style.display = "inline-block";
 			buttonRemotePlay.style.display = "inline-block";
 			
-			if (winner && TournamentID && TournamentID !== "0") {
-				await finishTournament(TournamentID, winner.getUserID());
-			}
+			// if (winner && TournamentID && TournamentID !== "0") {
+			// 	await finishTournament(TournamentID, winner.getUserID());
+			// }
 			
 			currentRound = "quarterfinals";
 			TournamentID = "0";

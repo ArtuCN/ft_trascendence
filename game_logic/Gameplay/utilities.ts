@@ -264,6 +264,7 @@ export async function finishTournament(tournamentId: string, winnerId: number): 
                 id_winner: winnerId 
             })
         });
+		console.log("winner id in gameplay: ", winnerId);
         
         if (!response.ok) {
             console.error("Failed to finish tournament:", response.status);
@@ -317,7 +318,7 @@ export async function sendMatchData() {
     }
 }
 
-export function showVictoryScreen(winner: Player) {
+export async function showVictoryScreen(winner: Player) {
 
     canvas_container.style.display = "block";
 
@@ -337,6 +338,13 @@ export function showVictoryScreen(winner: Player) {
     const isTournamentFinal = currentRound === "final" && TournamentID && TournamentID !== "0";
     
     if (isTournamentFinal) {
+		try {
+			await finishTournament(TournamentID, winner.getUserID());
+			console.log('Tournament finished successfully, winner ID saved');
+		} catch (error) {
+			console.error('Error finishing tournament:', error);
+		}
+
         // Position buttons side by side
         btnBack.style.left = "40%";
         btnBack.style.top = "60%";
