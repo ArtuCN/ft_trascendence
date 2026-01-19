@@ -1,0 +1,47 @@
+# JWT Configuration
+JWT_SECRET=your_secret_key_change_in_production
+#cors
+ALLOWED_ORIGINS="https://localhost,https://192.168.1.203"
+
+# Database Configuration
+DB_PATH=/app/data/database.sqlite
+
+# Google OAuth (opzionale - riempire se si vuole usare Google login)
+GOOGLE_CLIENT_ID=575747097249-3bu3g738p6s49pisr9ael83r4p5p1urv.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your_google_client_secret_here
+
+# Blockchain Configuration (Avalanche Fuji Testnet)
+VITE_CONTRACT_ADDRESS=0xbEA64CfD3A78a5F0b5078b892e2c9983e2A5B341
+VITE_SCORES_ADDRESS=0xC47AD7A6D454Fa17eb89867b29a9FaF060A51bE6
+
+# Teleporter Configuration
+VITE_TELEPORTER_REGISTRY_ADDRESS=0x5DB9A7629912EBF95876228C24A848de0bfB43A9
+VITE_TELEPORTER_MESSENGER_ADDRESS=0x253b2784c75e510dD0fF1da844684a1aC0aa5fcf
+
+# Node Environment
+NODE_ENV=development
+
+HOST_LOCAL="127.0.0.1"
+JWT_SECRET="your_secret_key"
+FRONTEND_URL="http://localhost:5173"
+LIVECHAT_MAX_CONNECTIONS=100
+LIVECHAT_LOG_LEVEL="info"
+VITE_API_URL="http://livechat:4555"
+HOST="livechat"
+
+VITE_PORT=4555
+BACKEND_PORT=3000
+FRONTEND_PORT=5173
+GAMEPLAY_PORT=8000
+AI_PORT=8001
+NGINX_PORT=443
+
+HOST_LOCAL="127.0.0.1"
+VITE_PORT=4555
+JWT_SECRET="your_secret_key"
+FRONTEND_URL="http://localhost:5173"
+LIVECHAT_MAX_CONNECTIONS=100
+LIVECHAT_LOG_LEVEL="info"
+VITE_API_URL="http://livechat:4555"
+HOST="livechat"
+DOCKER_COMPOSE_TYPE="docker-compose"

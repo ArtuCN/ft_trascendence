@@ -25,7 +25,8 @@ $db->exec("CREATE TABLE IF NOT EXISTS tournament (
     tournament_name TEXT,
     has_started BOOLEAN DEFAULT FALSE,
     finished BOOLEAN DEFAULT FALSE,
-    id_winner INTEGER
+    id_winner INTEGER,
+    FOREIGN KEY (id_winner) REFERENCES user(id)
 )");
 
 //$db->exec("DROP TABLE IF EXISTS game_match");
@@ -36,6 +37,7 @@ $db->exec("CREATE TABLE IF NOT EXISTS game_match (
     number_of_players INTEGER
 )");
 
+//$db->exec("DROP TABLE IF EXISTS friendship");
 $db->exec("CREATE TABLE IF NOT EXISTS friendship (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     id_user_1 INTEGER,
@@ -43,6 +45,25 @@ $db->exec("CREATE TABLE IF NOT EXISTS friendship (
     FOREIGN KEY (id_user_1) REFERENCES user(id),
     FOREIGN KEY (id_user_2) REFERENCES user(id)
 )");
+
+$db->exec("CREATE TABLE IF NOT EXISTS chat_message (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_sender INTEGER,
+    id_receiver INTEGER,
+    message TEXT,
+    time_stamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_sender) REFERENCES user(id),
+    FOREIGN KEY (id_receiver) REFERENCES user(id)
+)");
+
+$db->exec("CREATE TABLE IF NOT EXISTS blocked (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_user_1 INTEGER,
+    id_blocked INTEGER,
+    FOREIGN KEY (id_user_1) REFERENCES user(id),
+    FOREIGN KEY (id_blocked) REFERENCES user(id)
+)");
+
 //non è obbligatorio che id_torunament ci sia, dipende se il game fa parte di un tournament o no
 
 //$db->exec("DROP TABLE IF EXISTS player_match_stats");
@@ -52,8 +73,7 @@ $db->exec("CREATE TABLE IF NOT EXISTS player_match_stats(
     id_match INTEGER,
     goal_scored INTEGER DEFAULT 0,
     goal_taken INTEGER DEFAULT 0,
-    FOREIGN KEY (id_user) REFERENCES user(id),
-    FOREIGN KEY (id_match) REFERENCES game_match(id)
+    FOREIGN KEY (id_user) REFERENCES user(id)
 )");
 
 //$db->exec("DROP TABLE IF EXISTS player_all_time_stats");
@@ -63,5 +83,12 @@ $db->exec("CREATE TABLE IF NOT EXISTS player_all_time_stats(
     goal_taken INTEGER DEFAULT 0,
     tournament_won INTEGER DEFAULT 0,
     FOREIGN KEY (id_player) REFERENCES user(id)
+)");
+
+$db->exec("CREATE TABLE IF NOT EXISTS blockchain_tournament(
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	id_backend INTEGER,
+	id_blockchain INTEGER,
+	FOREIGN KEY (id_backend) REFERENCES tournament(id)
 )");
 ?>

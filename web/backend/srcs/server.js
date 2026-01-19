@@ -1,8 +1,14 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
+import fastifyMultipart from 'fastify-multipart';
+import rateLimit from '@fastify/rate-limit';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 import { getAllUsers } from './database_comunication/user_db.js';
+import { sanitizeUsers } from './utils/sanitize.js';
 
 // Rotte modulari
 import registerRoute from './controllers/register.js';
@@ -15,14 +21,46 @@ import friendRoute from './controllers/friendship.js';
 import matchRoute from './controllers/match.js';
 import tournamentRoute from './controllers/tournament.js';
 import heartBeatRoute from './controllers/heartBeat.js';
+import avatarRoute from './controllers/avatar.js';
+import blockedRoute from './controllers/blocked.js';
+import chatRoute from './controllers/chat.js';
+import userRoute from './controllers/user.js';
+import blockchainRoute from './controllers/blockchain_tournament.js';
+
+// WebSocket matchmaking
+import { setupMatchmaking } from './controllers/online_match/online_match.js';
 
 const fastify = Fastify({ logger: true });
 
-// Abilita CORS (per il frontend React o altro)
-await fastify.register(cors, { origin: '*' });
+// Rate limiting to prevent brute force attacks
+await fastify.register(rateLimit, {
+  max: 100, 
+  timeWindow: '15 minutes', 
+  cache: 10000,
+  allowList: [],
+  redis: null,
+  skipOnError: true,
+  keyGenerator: (request) => {
+    return request.ip; // Rate limit by IP address
+  }
+});
+
+// Abilita CORS
+await fastify.register(cors, {
+  origin: process.env.ALLOWED_ORIGINS?.split(',') || [
+    'https://192.168.1.203',
+    'https://localhost'
+  ],
+  credentials: true
+});
+
+
+await fastify.register(fastifyMultipart, {
+  limits: { fileSize: 5 * 1024 * 1024 }, // opzionale, max 5MB
+});
 
 // Configura JWT
-await fastify.register(jwt, { secret: 'your_secret_key' }); // 🔐 usa un valore sicuro in .env
+await fastify.register(jwt, { secret: process.env.JWT_SECRET });
 
 // per preHandler - estrare dati di user da token, senza lookup in database
 fastify.decorate('authenticate', async function (request, reply) {
@@ -47,6 +85,20 @@ fastify.decorate('authenticate', async function (request, reply) {
   }
 });
 
+// Admin authentication decorator - prima fa autenticazione normale, poi guarda se is_admin
+fastify.decorate('authenticateAdmin', async function (request, reply) {
+  await fastify.authenticate(request, reply);
+
+  // If authenticate already sent a response, don't continue
+  if (reply.sent) {
+    return;
+  }
+
+  if (!request.user || !request.user.is_admin) {
+    return reply.code(403).send({ error: 'Forbidden: Admin access required' });
+  }
+});
+
 // Registra le rotte modulari
 await fastify.register(matchRoute);
 await fastify.register(loginRoute);
@@ -58,25 +110,46 @@ await fastify.register(statsRoute);
 await fastify.register(friendRoute);
 await fastify.register(tournamentRoute);
 await fastify.register(heartBeatRoute);
-
-// Endpoint semplice per debug
-fastify.get('/users', async (request, reply) => {
+await fastify.register(avatarRoute);
+await fastify.register(blockedRoute);
+await fastify.register(chatRoute);
+await fastify.register(userRoute);
+await fastify.register(blockchainRoute);
+// Endpoint semplice per debug - Admin only
+fastify.get('/users', { preHandler: [fastify.authenticateAdmin] }, async (request, reply) => {
   try {
     const result = await getAllUsers();
-    reply.send({ success: true, users: result });
+    const sanitized = sanitizeUsers(result);
+    reply.send({ success: true, users: sanitized });
   } catch (err) {
     request.log.error(err);
     reply.code(500).send({ error: 'Error searching in the db' });
   }
 });
 
-// Stampa tutte le rotte per debug
+// WebSocket setup per matchmaking online
+const wss = setupMatchmaking(fastify.server);
+
+setInterval(() => {
+  wss.clients.forEach((ws) => {
+      if (ws.readyState === ws.OPEN) {
+        console.log('Sending ping to client');
+        console.log('web socket status: ', ws.readyState);
+        ws.send(JSON.stringify({ type: 'ping' }));
+      }
+  });
+}, 10000); // Send a ping every 10 seconds
+
+fastify.server.on('upgrade', (request, socket, head) => {
+  if (request.url === '/ws') {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit('connection', ws, request);
+    });
+  } else {
+    socket.destroy();
+  }
+});
 
 // Avvia il server
-fastify.listen({ port: 3000, host: '0.0.0.0' }, (err, address) => {
-  if (err) {
-    fastify.log.error(err);
-    process.exit(1);
-  }
-  fastify.log.info(`Server listening at ${address}`);
-});
+const address = await fastify.listen({ port: 3000, host: '0.0.0.0' });
+fastify.log.info(`Server listening at ${address}`);

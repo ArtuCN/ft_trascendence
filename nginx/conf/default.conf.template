@@ -1,0 +1,105 @@
+server {
+    listen 443 ssl;
+
+    server_name localhost 192.168.1.29;
+
+    ssl_certificate     /etc/ssl/192.168.1.29+2.pem;
+    ssl_certificate_key /etc/ssl/192.168.1.29+2-key.pem;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+
+    # RIMUOVERE COOP per permettere Google OAuth
+    # add_header Cross-Origin-Opener-Policy "same-origin-allow-popups" always;
+    # add_header Cross-Origin-Embedder-Policy "require-corp" always;
+
+    location / {
+        proxy_pass http://frontend:${FRONTEND_PORT}/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        
+        # WebSocket support for Vite HMR
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+
+    location /api/ {
+        proxy_pass http://backend:${BACKEND_PORT}/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location /game/ {
+        proxy_pass http://gameplay:${GAMEPLAY_PORT}/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        # Headers for iframe embedding
+        add_header X-Frame-Options SAMEORIGIN;
+        add_header Content-Security-Policy "frame-ancestors 'self'";
+    }
+
+    location /ai/ {
+        proxy_pass http://ai:${AI_PORT}/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    # WebSocket endpoint for online multiplayer
+    location /ws {
+        proxy_pass http://backend:${BACKEND_PORT};
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+        proxy_connect_timeout 3600s;
+    }
+
+    # LiveChat REST API
+    location /chat/ {
+        proxy_pass http://livechat:${VITE_PORT}/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    # LiveChat Socket.io WebSocket (critical for real-time chat)
+    location /socket.io/ {
+        proxy_pass http://livechat:${VITE_PORT}/socket.io/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Long timeout for persistent WebSocket connections
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+        proxy_connect_timeout 60s;
+
+        # Buffering disabled for real-time communication
+        proxy_buffering off;
+    }
+}
+
+server {
+    listen 80;
+    server_name localhost 192.168.1.28;
+    return 301 https://$host$request_uri;
+}

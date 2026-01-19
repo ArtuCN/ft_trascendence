@@ -78,3 +78,9 @@ ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
 Transactions saved to: /home/thiew/ft_transcendence/chain/backend/broadcast/Deploy.s.sol/43113/run-latest.json
 
 Sensitive values saved to: /home/thiew/ft_transcendence/chain/backend/cache/Deploy.s.sol/43113/run-latest.json
+
+
+//new one - after modifying the tournament logic to be stand alone
+== Logs ==
+  TournamentScores deployed at: 0xd230892ab09554Bd6e18f48cC0b0fDaF21187f7A
+  Staking deployed at: 0x23eb62A4D21C1c23f95e1D53AB6A1F6BFdB45Fc4

@@ -1,36 +1,37 @@
-import { searchByToken } from '../database_comunication/user_db.js';
+import { getUserById } from '../database_comunication/user_db.js';
 
 export default async function (fastify, opts) {
-  fastify.get('/token', async (request, reply) => {
+  // Endpoint per validare token JWT e restituire dati utente
+  fastify.get('/token', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try {
-      const authHeader = request.headers.authorization;
-
-      if (!authHeader) {
-        return reply.code(401).send({ error: 'Missing Authorization header' });
+      // request.user è già popolato da fastify.authenticate
+      const userId = request.user.id;
+      
+      // Recupera dati freschi dal database
+      const user = await getUserById(userId);
+      
+      if (!user) {
+        return reply.code(404).send({ error: 'User not found' });
       }
-      const token = authHeader.split(' ')[1];
-      if (!token) {
-        return reply.code(401).send({ error: 'Invalid Authorization header format' });
-      }
-
-
-      const res = await searchByToken(token);
-
-      if (!res || res.length === 0) {
-        return reply.code(404).send({ error: 'Token not valid or user not present in the database!' });
-      }
-      const user = res[0];
+      
+      // Genera un nuovo token (refresh)
+      const newToken = fastify.jwt.sign({
+        id: user.id,
+        mail: user.mail,
+        username: user.username,
+        is_admin: user.is_admin || false
+      });
+      
       reply.send({
-        token,
+        token: newToken,
         user: {
           id: user.id,
           mail: user.mail,
           username: user.username
         }
       });
-      console.log(user);
     } catch (err) {
-      console.error("Errore:", err);
+      console.error("Token validation error:", err);
       reply.code(500).send({ error: 'Internal Server Error', details: err.message });
     }
   });

@@ -1,13 +1,12 @@
 # Makefile for Docker Compose management
-DOCKER_COMPOSE = docker compose -f docker-compose.yml
+include .env
+export
+
+DOCKER_COMPOSE = $(DOCKER_COMPOSE_TYPE) -f docker-compose.yml
 
 # --- Default Target (Help) ---
 help:  ## help menu
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
-
-# --- Main Commands ---
-build:  ## Only build containers
-	@$(DOCKER_COMPOSE) build
 
 up:  ## Start with build/rebuild
 	@$(DOCKER_COMPOSE) up -d --build
@@ -27,6 +26,16 @@ fclean: clean ## remove volumes and build cache
 clean_host_data: fclean ## removes all the volumes on your computer
 	@docker volume rm $$(docker volume ls -q)
 
+update_local_npm_all:  ## Run npm install in all project directories
+	@echo "Running npm install in chain/frontend..."
+	@cd chain/frontend && npm i
+	@echo "Running npm install in web/backend..."
+	@cd web/backend && npm i
+	@echo "Running npm install in web/liveChat..."
+	@cd web/liveChat && npm i
+	@echo "Running npm install in web/frontend/ts_frontend..."
+	@cd web/frontend/ts_frontend && npm i
+	@echo "All npm installations completed!"
 
 
 # --- Checks and Monitoring ---
@@ -46,7 +55,8 @@ check: ## Check DB connectivity and health
 
 re: down up  ## Rebuild and restart containers
 
-.PHONY: help build up down clean status logs check re
+
+.PHONY: help build up down clean status logs check re update_local_npm_all
 
 
 

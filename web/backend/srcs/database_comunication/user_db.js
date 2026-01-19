@@ -7,8 +7,6 @@ const dbPath = path.resolve('/app/data/database.sqlite');
 const db = new (verbose()).Database(dbPath, (err) => {
   if (err) {
     console.error('Error while opening db:', err);
-  } else {
-    console.log('DB opened successfully!');
   }
 });
 
@@ -64,7 +62,11 @@ export function insertUser(user) {
               console.error('Error while creating player stats:', err2);
               reject(err2);
             } else {
-              resolve({ id: newUserId });
+              resolve({ 
+                id: newUserId,
+                username: user.username,
+                mail: user.mail
+              });
             }
           });
         }
@@ -119,7 +121,7 @@ export function getUserById(id) {
         console.error('Error during SELECT by id:', err);
         reject(err);
       } else {
-        resolve(rows);
+        resolve(rows.length > 0 ? rows[0] : null);
       }
     });
   });
@@ -130,13 +132,62 @@ export function getUserById(id) {
 // -----------------------------
 export function getStatsById(id) {
   return new Promise((resolve, reject) => {
-    db.all('SELECT * FROM player_all_time_stats WHERE id_player = ?', [id], (err, rows) => {
+    // Get base stats from player_all_time_stats
+    const statsQuery = 'SELECT * FROM player_all_time_stats WHERE id_player = ?';
+    
+    db.get(statsQuery, [id], (err, statsRow) => {
       if (err) {
         console.error('Error during SELECT by id of stats:', err);
         reject(err);
-      } else {
-        resolve(rows);
+        return;
       }
+      
+      // Get matches count
+      const matchesQuery = 'SELECT COUNT(*) as count FROM player_match_stats WHERE id_user = ?';
+      
+      db.get(matchesQuery, [id], (err2, matchesRow) => {
+        if (err2) {
+          console.error('Error counting matches:', err2);
+          // Return basic stats even if count fails
+          resolve(statsRow ? [statsRow] : []);
+          return;
+        }
+        
+        // Get wins count (goal_scored > goal_taken)
+        const winsQuery = 'SELECT COUNT(*) as count FROM player_match_stats WHERE id_user = ? AND goal_scored > goal_taken';
+        
+        db.get(winsQuery, [id], (err3, winsRow) => {
+          if (err3) {
+            console.error('Error counting wins:', err3);
+            resolve(statsRow ? [statsRow] : []);
+            return;
+          }
+          
+          // Get losses count (goal_scored < goal_taken)
+          const lossesQuery = 'SELECT COUNT(*) as count FROM player_match_stats WHERE id_user = ? AND goal_scored < goal_taken';
+          
+          db.get(lossesQuery, [id], (err4, lossesRow) => {
+            if (err4) {
+              console.error('Error counting losses:', err4);
+              resolve(statsRow ? [statsRow] : []);
+              return;
+            }
+            
+            // Combine all stats
+            const combinedStats = {
+              id_player: id,
+              goal_scored: statsRow?.goal_scored || 0,
+              goal_taken: statsRow?.goal_taken || 0,
+              tournament_won: statsRow?.tournament_won || 0,
+              matches_played: matchesRow?.count || 0,
+              matches_won: winsRow?.count || 0,
+              matches_lost: lossesRow?.count || 0
+            };
+            
+            resolve([combinedStats]);
+          });
+        });
+      });
     });
   });
 }
@@ -305,7 +356,18 @@ export async function winTournament(id_player)
 export async function getAllPlayerStats() {
     return new Promise((resolve, reject) => {
         const query = `
-        SELECT * FROM player_all_time_stats
+        SELECT 
+            s.id_player,
+            u.username,
+            s.goal_scored,
+            s.goal_taken,
+            s.tournament_won,
+            (SELECT COUNT(*) FROM player_match_stats WHERE id_user = s.id_player) as matches_played,
+            (SELECT COUNT(*) FROM player_match_stats WHERE id_user = s.id_player AND goal_scored > goal_taken) as matches_won,
+            (SELECT COUNT(*) FROM player_match_stats WHERE id_user = s.id_player AND goal_scored < goal_taken) as matches_lost
+        FROM player_all_time_stats s
+        JOIN user u ON s.id_player = u.id
+        ORDER BY s.tournament_won DESC, matches_won DESC, s.goal_scored DESC
         `;
         db.all(query, [], (err, rows) => {
             if (err) {
@@ -338,4 +400,66 @@ export async function getUserLastActive(userId) {
 			resolve(row.last_active);
 		});
 	});
+}
+
+export async function uploadAvatar_db(userId, avatarData) {
+  return new Promise((resolve, reject) => {
+    const query = `UPDATE user SET avatar = ? WHERE id = ?`;
+    db.run(query, [avatarData, userId], function (err) {
+      if (err) {
+        console.error('Error while uploading avatar:', err);
+        reject(err);
+      } else {
+        resolve({ id: userId, status: 'avatar updated' });
+      }
+    });
+  });
+}
+
+export async function getAvatar_db(userId) {
+  return new Promise((resolve, reject) => {
+    const query = `SELECT avatar FROM user WHERE id = ?`;
+    db.get(query, [userId], (err, row) => {
+      if (err) {
+        console.error('Error while fetching avatar:', err);
+        reject(err);
+      } else {
+        resolve(row ? row.avatar : null);
+      }
+    });
+  });
+}
+
+// Update user profile (username and/or password)
+export async function updateUserProfile(userId, updates) {
+  return new Promise((resolve, reject) => {
+    const fields = [];
+    const values = [];
+
+    if (updates.username !== undefined) {
+      fields.push('username = ?');
+      values.push(updates.username);
+    }
+
+    if (updates.psw !== undefined) {
+      fields.push('psw = ?');
+      values.push(updates.psw);
+    }
+
+    if (fields.length === 0) {
+      return reject(new Error('No fields to update'));
+    }
+
+    values.push(userId);
+    const query = `UPDATE user SET ${fields.join(', ')} WHERE id = ?`;
+
+    db.run(query, values, function (err) {
+      if (err) {
+        console.error('Error while updating user profile:', err);
+        reject(err);
+      } else {
+        resolve({ id: userId, changes: this.changes });
+      }
+    });
+  });
 }

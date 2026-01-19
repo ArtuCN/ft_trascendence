@@ -1,0 +1,996 @@
+declare const BABYLON: any;
+import { Player } from "../typescriptFile3D/classPlayer";
+
+export const canvas_container = document.getElementById("canvas-container")!;
+const buttonLocalPlay3D = document.getElementById("LocalPlay3D") as HTMLButtonElement;
+const buttonRemotePlay3D = document.getElementById("RemotePlay3D") as HTMLButtonElement;
+const canvasContainer3D = document.getElementById("canvas-container")!;
+const textPong3D = document.getElementById("PongGame") as HTMLHeadingElement;
+const button2P3D = document.getElementById("Play2P3D") as HTMLButtonElement;
+const buttonAI3D = document.getElementById("PlayAI3D") as HTMLButtonElement;
+const button4P3D = document.getElementById("Play4P3D") as HTMLButtonElement;
+const buttonMainMenu3D = document.getElementById("returnMenu") as HTMLButtonElement;
+const textPong = document.getElementById("PongGame") as HTMLHeadingElement;
+const canvas2D = document.getElementById("gameCanvas") as HTMLCanvasElement;
+const scoreDiv = document.getElementById("score3d") as HTMLDivElement;
+
+function getCurrentUserId(): number {
+    const userId = localStorage.getItem('id');
+	return userId ? parseInt(userId) : 0;
+}
+
+function getCurrentUsername(): string {
+    return localStorage.getItem('username') || 'Guest';
+}
+
+let engine: any;
+let scene: any;
+let camera: any;
+let canvas: HTMLCanvasElement;
+let gameStarted = false;
+
+let nbrPlayer = 2;
+let playerGoals = [0, 0, 0, 0];
+let isAIMode = false;
+let aiUpdateInterval = 100;
+
+let FIELD_WIDTH_3D = 18;
+let FIELD_HEIGHT_3D = 12;
+const FIELD_DEPTH_3D = 0.5;
+
+let ball: any; 
+let players: any[] = [];
+let cornerCubes: any[] = [];
+
+// particelle ball
+let ballParticleSystem: any = null;
+
+const userId = getCurrentUserId();
+const username = getCurrentUsername();
+
+const keys: Record<string, boolean> = {};
+window.addEventListener('keydown', (e) => {
+    keys[e.key] = true;
+});
+window.addEventListener('keyup', (e) => {
+    keys[e.key] = false;
+});
+
+const COLORS = {
+	// materiali
+   ballDiffuse:    new BABYLON.Color3(0.88, 0.92, 0.98),  // bianco glaciale
+    ballEmissive:   new BABYLON.Color3(0.50, 0.82, 0.95),  // azzurro acqua
+    paddleDefault:  new BABYLON.Color3(0.78, 0.90, 0.98),  // bianco-blu
+    paddleRight:    new BABYLON.Color3(0.00, 0.60, 0.90),  // blu frutiger
+    paddleTop:      new BABYLON.Color3(0.00, 0.88, 0.78),  // turchese acqua
+    paddleBottom:   new BABYLON.Color3(0.28, 0.85, 0.82),  // acqua pastello
+    ground:         new BABYLON.Color3(0.36, 0.68, 0.78)   // azzurro più profondo
+};
+
+function disposeBabylon() {
+    if (engine) {
+        engine.stopRenderLoop();
+        engine.dispose();
+        engine = null;
+    }
+
+    if (scene) {
+        scene.dispose();
+        scene = null;
+    }
+
+    ball = null;
+    players = [];
+    cornerCubes = [];
+
+    console.log("🧹 Babylon disposed");
+}
+
+function showMenu(winner: Player) {
+    canvas.style.display = "none";
+    textPong3D.style.display = "block";
+    canvasContainer3D.style.display = "none";
+    buttonRemotePlay3D.style.display = 'inline-block';
+    buttonLocalPlay3D.style.display = 'inline-block';
+    scoreDiv.style.display = "none";
+    canvas2D.style.display = "none";
+}
+
+function showGameCanvas3D() {
+    canvas_container.style.display = "block";
+    canvasContainer3D.style.display = "block";
+    scoreDiv.style.display = "block";
+
+    const canvas3D = document.getElementById("gameCanvas3D") as HTMLCanvasElement;
+    if (canvas3D) {
+        canvas3D.style.display = "block";
+    }
+
+    canvas2D.style.display = "none"; // overlay solo per vittoria
+}
+
+export function showVictoryScreen3D(winner: any) {
+    canvas_container.style.display = "block";
+    
+    const btnBack = document.getElementById("btnBackToMenu") as HTMLButtonElement;
+    if (!btnBack) {
+        console.error("Could not find btnBackToMenu element");
+        return;
+    }
+    btnBack.style.display = "inline-block";
+    btnBack.style.position = "absolute";
+    btnBack.style.left = "50%";
+    btnBack.style.top = "60%";
+    btnBack.style.transform = "translate(-50%, -50%)";
+    btnBack.style.zIndex = "999";
+    
+    btnBack.onclick = () => {
+        gameStarted = false;
+        disposeBabylon();
+        btnBack.style.display = "none";
+        canvas_container.style.display = "none";
+        showMenu(winner); // or showMenu(null) if you want to reset
+    };
+    
+    const ctx = canvas2D.getContext("2d")!;
+    canvas2D.style.display = "block";
+    if (!ctx) {
+        console.error("Could not get 2D context from canvas");
+        return;
+    }
+    ctx.clearRect(0, 0, canvas2D.width, canvas2D.height);
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
+    ctx.fillRect(0, 0, canvas2D.width, canvas2D.height);
+    
+    ctx.fillStyle = "white";
+    ctx.font = "48px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    
+    ctx.fillText(
+      `🏆 ${winner.playerName} Wins 🏆`,
+      canvas2D.width / 2,
+      canvas2D.height / 2
+    );
+}
+
+function createGameObjects(scene: any) {
+    console.log("Creating game objects...");
+    
+    const ballMesh = BABYLON.MeshBuilder.CreateSphere("ball", {diameter: 0.5}, scene);
+    const ballMaterial = new BABYLON.StandardMaterial("ballMaterial", scene);
+    ballMaterial.diffuseColor = COLORS.ballDiffuse;
+    ballMaterial.emissiveColor = COLORS.ballEmissive;
+    ballMesh.material = ballMaterial;
+    ballMesh.position = new BABYLON.Vector3(0, 0.5, 0);
+
+    try {
+        ballParticleSystem = new BABYLON.ParticleSystem("ballTrail", 400, scene);
+        // TODO place a small glowing sprite at public/textures/flare.png
+        ballParticleSystem.particleTexture = new BABYLON.Texture("textures/flare.png", scene);
+        ballParticleSystem.emitter = ballMesh;
+        ballParticleSystem.minEmitBox = new BABYLON.Vector3(0, 0, 0); // emission from center
+        ballParticleSystem.maxEmitBox = new BABYLON.Vector3(0, 0, 0);
+
+        ballParticleSystem.color1 = new BABYLON.Color4(1, 1, 1, 0.9);
+        ballParticleSystem.color2 = new BABYLON.Color4(0.8, 0.95, 1, 0.6);
+        ballParticleSystem.minSize = 0.04;
+        ballParticleSystem.maxSize = 0.16;
+        ballParticleSystem.minLifeTime = 0.2;
+        ballParticleSystem.maxLifeTime = 0.6;
+
+        ballParticleSystem.emitRate = 180;
+        ballParticleSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_ONEONE;
+        ballParticleSystem.gravity = new BABYLON.Vector3(0, 0, 0);
+        ballParticleSystem.direction1 = new BABYLON.Vector3(-0.2, 0, -0.2);
+        ballParticleSystem.direction2 = new BABYLON.Vector3(0.2, 0, 0.2);
+        ballParticleSystem.minAngularSpeed = 0;
+        ballParticleSystem.maxAngularSpeed = Math.PI;
+        ballParticleSystem.minEmitPower = 0.1;
+        ballParticleSystem.maxEmitPower = 0.6;
+        ballParticleSystem.updateSpeed = 0.01;
+
+        ballParticleSystem.start();
+        console.log("✅ Ball particle system started");
+    } catch (err) {
+        console.warn("⚠️ Could not create ball particle system:", err);
+    }
+
+    ball = {
+        mesh: ballMesh,
+        position: ballMesh.position,
+        velocity: new BABYLON.Vector3(0.15, 0, 0.1),
+        lastTouched: null as number | null,
+        rallyActive: false as boolean,
+        ballSize: 0.5,
+        moveBall: function(players: any[]) {
+            this.position.addInPlace(this.velocity);
+            this.mesh.position.copyFrom(this.position);
+            
+            this.checkPaddleCollisions(players);
+        
+            const halfW = FIELD_WIDTH_3D / 2;
+            const halfH = FIELD_HEIGHT_3D / 2;
+            if (nbrPlayer <= 2) {
+                // 2-player mode: check left/right goals
+                if (this.position.x < -halfW) {
+                    if (this.rallyActive) {
+                        score3d[1] = (score3d[1] || 0) + 1;
+                        updateScoreDisplay();
+                    }
+                    console.log("Player 2 scored! Current score:", score3d);
+                    if (score3d[1] >= 5) {
+                        gameStarted = false;
+                        showVictoryScreen3D(players[1]);
+                    }
+                    this.resetBall();
+                    return;
+                }
+                if (this.position.x > halfW) {
+                    if (this.rallyActive) {
+                        score3d[0] = (score3d[0] || 0) + 1;
+                        updateScoreDisplay();
+                    }
+                    if (score3d[0] >= 5) {
+                        gameStarted = false;
+                        showVictoryScreen3D(players[0]);
+                    }
+                    this.resetBall();
+                    return;
+                }
+                if (this.position.z > halfH || this.position.z < -halfH) {
+                    this.velocity.z *= -1;
+                    this.position.z = (this.position.z > 0 ? 1 : -1) * (halfH - this.ballSize/2);
+                    this.mesh.position.copyFrom(this.position);
+                }
+            }
+            if (nbrPlayer === 4) {
+                if (this.position.z > halfH) {
+                    if (this.rallyActive && this.lastTouched !== null) {
+                        const scorer = this.lastTouched;
+                        score3d[scorer] = (score3d[scorer] || 0) + 1;
+                        updateScoreDisplay();
+                    }
+                    if (score3d[this.lastTouched || 0] >= 5) {
+                        gameStarted = false;
+                        showVictoryScreen3D(players[this.lastTouched || 0]);
+                    }
+                    this.resetBall();
+                    return;
+                }
+                if (this.position.z < -halfH) {
+                    if (this.rallyActive && this.lastTouched !== null) {
+                        const scorer = this.lastTouched;
+                        score3d[scorer] = (score3d[scorer] || 0) + 1;
+                        updateScoreDisplay();
+                    }
+                    if (score3d[this.lastTouched || 0] >= 5) {
+                        gameStarted = false;
+                        showVictoryScreen3D(players[this.lastTouched || 0]);
+                    }
+                    this.resetBall();
+                    return;
+                }
+                if (this.position.x < -halfW) {
+                    if (this.rallyActive && this.lastTouched !== null) {
+                        const scorer = this.lastTouched;
+                        score3d[scorer] = (score3d[scorer] || 0) + 1;
+                        updateScoreDisplay();
+                    }
+                    if (score3d[this.lastTouched || 0] >= 5) {
+                        gameStarted = false;
+                        showVictoryScreen3D(players[this.lastTouched || 0]);
+                    }
+                    this.resetBall();
+                }
+                if (this.position.x > halfW) {
+                    if (this.rallyActive && this.lastTouched !== null) {
+                        const scorer = this.lastTouched;
+                        score3d[scorer] = (score3d[scorer] || 0) + 1;
+                        updateScoreDisplay();
+                    }
+                    if (score3d[this.lastTouched || 0] >= 5) {
+                        gameStarted = false;
+                        showVictoryScreen3D(players[this.lastTouched || 0]);
+                    }
+                    this.resetBall();
+                }
+            }
+            
+            //goal checks (reset ball)
+        },
+        
+        checkPaddleCollisions: function(players: any[]) {
+            const ballRadius = this.ballSize / 2;
+            
+            players.forEach((player: any, index: number) => {
+                const paddlePos = player.position;
+                const isHorizontal = (nbrPlayer === 4 && (index === 2 || index === 3));
+                const paddleWidth = isHorizontal ? 3 : 0.3;
+                const paddleDepth = isHorizontal ? 0.3 : 3;
+                const paddleHeight = 1;
+                
+                const paddleMinX = paddlePos.x - paddleWidth / 2;
+                const paddleMaxX = paddlePos.x + paddleWidth / 2;
+                const paddleMinZ = paddlePos.z - paddleDepth / 2;
+                const paddleMaxZ = paddlePos.z + paddleDepth / 2;
+                const paddleMinY = paddlePos.y - paddleHeight / 2;
+                const paddleMaxY = paddlePos.y + paddleHeight / 2;
+                if (
+                    this.position.x + ballRadius > paddleMinX &&
+                    this.position.x - ballRadius < paddleMaxX &&
+                    this.position.z + ballRadius > paddleMinZ &&
+                    this.position.z - ballRadius < paddleMaxZ &&
+                    this.position.y + ballRadius > paddleMinY &&
+                    this.position.y - ballRadius < paddleMaxY
+                ) {
+                    console.log(`Ball hit paddle ${index}!`);
+                    // remember last player who touched the ball and mark rally active
+                    this.lastTouched = index;
+                    this.rallyActive = true;
+
+                    if (isHorizontal) {
+                        this.velocity.z *= -1;
+                    
+                        const hitPosition = (this.position.x - paddlePos.x) / (paddleWidth / 2);
+                        this.velocity.x += hitPosition * 0.05;
+                    
+                        if (this.position.z > paddlePos.z) {
+                            this.position.z = paddleMaxZ + ballRadius + 0.1;
+                        } else {
+                            this.position.z = paddleMinZ - ballRadius - 0.1;
+                        }
+                    } else {
+                        this.velocity.x *= -1;
+                    
+                        const hitPosition = (this.position.z - paddlePos.z) / (paddleDepth / 2);
+                        this.velocity.z += hitPosition * 0.05;
+                    
+                        if (this.position.x > paddlePos.x) {
+                            this.position.x = paddleMaxX + ballRadius + 0.1;
+                        } else {
+                            this.position.x = paddleMinX - ballRadius - 0.1;
+                        }
+                    }
+
+                    this.mesh.position.copyFrom(this.position);
+
+                    // speed up
+                    this.velocity.x *= 1.05;
+                    this.velocity.z *= 1.02;
+                }
+            });
+
+            cornerCubes.forEach((cube: any) => {
+                try {
+                    const boxPos = cube.position;
+                    const half = (cube.metadata && cube.metadata.halfSize) ? cube.metadata.halfSize : 0.5;
+                    const dx = Math.abs(this.position.x - boxPos.x);
+                    const dz = Math.abs(this.position.z - boxPos.z);
+                    const overlapX = half + ballRadius - dx;
+                    const overlapZ = half + ballRadius - dz;
+
+                    if (overlapX > 0 && overlapZ > 0) {
+                        // collision detected: decide axis of minimum penetration
+                        if (overlapX < overlapZ) {
+                            // push on X
+                            if (this.position.x > boxPos.x) this.position.x = boxPos.x + half + ballRadius + 0.1;
+                            else this.position.x = boxPos.x - half - ballRadius - 0.1;
+                            this.velocity.x *= -1;
+                        } else {
+                            // push on Z
+                            if (this.position.z > boxPos.z) this.position.z = boxPos.z + half + ballRadius + 0.1;
+                            else this.position.z = boxPos.z - half - ballRadius - 0.1;
+                            this.velocity.z *= -1;
+                        }
+                        this.mesh.position.copyFrom(this.position);
+                    }
+                } catch (e) {
+                }
+            });
+        },
+        
+        resetBall: function() {
+            this.position = new BABYLON.Vector3(0, 0.5, 0);
+            this.mesh.position.copyFrom(this.position);
+            // clear last toucher on reset
+            this.lastTouched = null;
+            this.rallyActive = false;
+            
+            // random direction ad ogni spawn
+            const angle = Math.random() < 0.5 ? 
+                (Math.random() - 0.5) * (Math.PI / 4) : 
+                Math.PI + (Math.random() - 0.5) * (Math.PI / 4);
+            
+            this.velocity = new BABYLON.Vector3(
+                0.15 * Math.cos(angle), 
+                0, 
+                0.15 * Math.sin(angle)
+            );
+        }
+    };
+    players = [];
+    
+    const paddle1Mesh = BABYLON.MeshBuilder.CreateBox("paddle0", 
+        {width: 0.3, height: 1, depth: 3}, scene);
+    const paddle1Material = new BABYLON.StandardMaterial("paddle0Material", scene);
+    paddle1Material.diffuseColor = COLORS.paddleDefault;
+    paddle1Material.emissiveColor = new BABYLON.Color3(0.2,0.2,0.2);
+    paddle1Mesh.material = paddle1Material;
+    paddle1Mesh.position = new BABYLON.Vector3(-FIELD_WIDTH_3D / 2 + 0.2, 0.5, 0);
+    
+    const paddle2Mesh = BABYLON.MeshBuilder.CreateBox("paddle1",
+        {width: 0.3, height: 1, depth: 3}, scene);
+    const paddle2Material = new BABYLON.StandardMaterial("paddle1Material", scene);
+    paddle2Material.diffuseColor = COLORS.paddleRight;
+    paddle2Material.emissiveColor = new BABYLON.Color3(0.2,0,0);
+    paddle2Mesh.material = paddle2Material;
+    paddle2Mesh.position = new BABYLON.Vector3(FIELD_WIDTH_3D / 2 - 0.2, 0.5, 0);
+    
+    players.push({
+        id: 0,
+        user_ids: [userId],
+        playerName: username,
+        mesh: paddle1Mesh,
+        position: paddle1Mesh.position,
+        drawAndMove: function() {
+            // Player 0
+            const step = 0.15;
+            const paddleHalfX = 0.3 / 2;
+            const paddleHalfY = 1 / 2;
+            const paddleHalfZ = 3 / 2;
+            const cubeHalf = (nbrPlayer === 4 && cornerCubes.length > 0 && cornerCubes[0].metadata) ? cornerCubes[0].metadata.halfSize : 0;
+            const margin = 0.2;
+            const vLimit = FIELD_HEIGHT_3D / 2 - paddleHalfZ - cubeHalf - margin;
+
+            if (keys['w'] || keys['W']) {
+                const candidateZ = this.position.z + step;
+                if (candidateZ <= vLimit) {
+                    const boxPos = new BABYLON.Vector3(this.position.x, this.position.y, candidateZ);
+                    if (!ball || !sphereIntersectsBox(ball.position, ball.ballSize/2, boxPos, paddleHalfX, paddleHalfY, paddleHalfZ)) {
+                        this.position.z = candidateZ;
+                    }
+                }
+            }
+            if (keys['s'] || keys['S']) {
+                const candidateZ = this.position.z - step;
+                if (candidateZ >= -vLimit) {
+                    const boxPos = new BABYLON.Vector3(this.position.x, this.position.y, candidateZ);
+                    if (!ball || !sphereIntersectsBox(ball.position, ball.ballSize/2, boxPos, paddleHalfX, paddleHalfY, paddleHalfZ)) {
+                        this.position.z = candidateZ;
+                    }
+                }
+            }
+            this.mesh.position.copyFrom(this.position);
+        }
+    });
+    
+    // Player 1 (right paddle) (human or Ai)
+    const player1 = {
+        id: 1,
+        mesh: paddle2Mesh,
+        playerName: "Guest 1",
+        position: paddle2Mesh.position,
+        drawAndMove: function() {
+            const step = 0.15;
+            const paddleHalfX = 0.3 / 2;
+            const paddleHalfY = 1 / 2;
+            const paddleHalfZ = 3 / 2;
+            const cubeHalf = (nbrPlayer === 4 && cornerCubes.length > 0 && cornerCubes[0].metadata) ? cornerCubes[0].metadata.halfSize : 0;
+            const margin = 0.2;
+            const vLimit = FIELD_HEIGHT_3D / 2 - paddleHalfZ - cubeHalf - margin;
+
+            if (nbrPlayer === 1 && typeof botKey === "string") {
+                console.log(`[BOT] drawAndMove: botKey=${botKey}, position.z=${this.position.z}`);
+                if (botKey === "ArrowDown") {
+                    const candidateZ = this.position.z + step;
+                    if (candidateZ <= vLimit) {
+                        const boxPos = new BABYLON.Vector3(this.position.x, this.position.y, candidateZ);
+                        if (!ball || !sphereIntersectsBox(ball.position, ball.ballSize/2, boxPos, paddleHalfX, paddleHalfY, paddleHalfZ)) {
+                            this.position.z = candidateZ;
+                            console.log(`[BOT] Moving DOWN to ${this.position.z}`);
+                        }
+                    }
+                }
+                if (botKey === "ArrowUp") {
+                    const candidateZ = this.position.z - step;
+                    if (candidateZ >= -vLimit) {
+                        const boxPos = new BABYLON.Vector3(this.position.x, this.position.y, candidateZ);
+                        if (!ball || !sphereIntersectsBox(ball.position, ball.ballSize/2, boxPos, paddleHalfX, paddleHalfY, paddleHalfZ)) {
+                            this.position.z = candidateZ;
+                            console.log(`[BOT] Moving UP to ${this.position.z}`);
+                        }
+                    }
+                }
+                if (this.position.z > vLimit) this.position.z = vLimit;
+                if (this.position.z < -vLimit) this.position.z = -vLimit;
+                this.mesh.position.copyFrom(this.position);
+            } else if (nbrPlayer !== 1) {
+                if (keys['ArrowUp']) {
+                    const candidateZ = this.position.z + step;
+                    if (candidateZ <= vLimit) {
+                        const boxPos = new BABYLON.Vector3(this.position.x, this.position.y, candidateZ);
+                        if (!ball || !sphereIntersectsBox(ball.position, ball.ballSize/2, boxPos, paddleHalfX, paddleHalfY, paddleHalfZ)) {
+                            this.position.z = candidateZ;
+                        }
+                    }
+                }
+                if (keys['ArrowDown']) {
+                    const candidateZ = this.position.z - step;
+                    if (candidateZ >= -vLimit) {
+                        const boxPos = new BABYLON.Vector3(this.position.x, this.position.y, candidateZ);
+                        if (!ball || !sphereIntersectsBox(ball.position, ball.ballSize/2, boxPos, paddleHalfX, paddleHalfY, paddleHalfZ)) {
+                            this.position.z = candidateZ;
+                        }
+                    }
+                }
+                this.mesh.position.copyFrom(this.position);
+            }
+        }
+    };
+    
+    players.push(player1);
+    
+    //for 4 player mode
+    if (nbrPlayer === 4) {
+        // Player 2 (top paddle)
+        const paddle3Mesh = BABYLON.MeshBuilder.CreateBox("paddle2",
+            {width: 3, height: 1, depth: 0.3}, scene);
+        const paddle3Material = new BABYLON.StandardMaterial("paddle2Material", scene);
+        paddle3Material.diffuseColor = COLORS.paddleTop;
+        paddle3Material.emissiveColor = new BABYLON.Color3(0,0,0.2);
+        paddle3Mesh.material = paddle3Material;
+        paddle3Mesh.position = new BABYLON.Vector3(0, 0.5, FIELD_HEIGHT_3D / 2 - 0.3);
+
+        players.push({
+            id: 2,
+            mesh: paddle3Mesh,
+            playerName: "Guest 2",
+            position: paddle3Mesh.position,
+            drawAndMove: function() {
+                // Player 2 controls
+                const paddleHalfX = 3 / 2;
+                const cubeHalf = (nbrPlayer === 4 && cornerCubes.length > 0 && cornerCubes[0].metadata) ? cornerCubes[0].metadata.halfSize : 0;
+                const margin = 0.2;
+                const hLimit = FIELD_HEIGHT_3D / 2 - paddleHalfX - cubeHalf - margin;
+                const step = 0.15;
+                const paddleHalfY = 1 / 2;
+                const paddleHalfZ = 0.3 / 2;
+                if (keys['f'] || keys['F']) {
+                    const candidateX = this.position.x + step;
+                    if (candidateX <= hLimit) {
+                        const boxPos = new BABYLON.Vector3(candidateX, this.position.y, this.position.z);
+                        if (!ball || !sphereIntersectsBox(ball.position, ball.ballSize/2, boxPos, paddleHalfX, paddleHalfY, paddleHalfZ)) {
+                            this.position.x = candidateX;
+                        }
+                    }
+                }
+                if (keys['d'] || keys['D']) {
+                    const candidateX = this.position.x - step;
+                    if (candidateX >= -hLimit) {
+                        const boxPos = new BABYLON.Vector3(candidateX, this.position.y, this.position.z);
+                        if (!ball || !sphereIntersectsBox(ball.position, ball.ballSize/2, boxPos, paddleHalfX, paddleHalfY, paddleHalfZ)) {
+                            this.position.x = candidateX;
+                        }
+                    }
+                }
+                this.mesh.position.copyFrom(this.position);
+            }
+        });
+
+        // Player 3 (bottom paddle)
+        const paddle4Mesh = BABYLON.MeshBuilder.CreateBox("paddle3",
+            {width: 3, height: 1, depth: 0.3}, scene);
+        const paddle4Material = new BABYLON.StandardMaterial("paddle3Material", scene);
+        paddle4Material.diffuseColor = COLORS.paddleBottom;
+        paddle4Material.emissiveColor = new BABYLON.Color3(0.2,0.2,0);
+        paddle4Mesh.material = paddle4Material;
+        paddle4Mesh.position = new BABYLON.Vector3(0, 0.5, -FIELD_HEIGHT_3D / 2 + 0.3);
+        console.log("Paddle4 initial position:", paddle4Mesh.position);
+
+        players.push({
+            id: 3,
+            mesh: paddle4Mesh,
+            playerName: "Guest 3",
+            position: paddle4Mesh.position,
+            drawAndMove: function() {
+                // Player 3 controls
+                    const paddleHalfX = 3 / 2;
+                    const cubeHalf = (nbrPlayer === 4 && cornerCubes.length > 0 && cornerCubes[0].metadata) ? cornerCubes[0].metadata.halfSize : 0;
+                    const margin = 0.2;
+                    const hLimit = FIELD_HEIGHT_3D / 2 - paddleHalfX - cubeHalf - margin;
+                const step = 0.15;
+                const paddleHalfY = 1 / 2;
+                const paddleHalfZ = 0.3 / 2;
+                if (keys['k'] || keys['K']) {
+                    const candidateX = this.position.x + step;
+                    if (candidateX <= hLimit) {
+                        const boxPos = new BABYLON.Vector3(candidateX, this.position.y, this.position.z);
+                        if (!ball || !sphereIntersectsBox(ball.position, ball.ballSize/2, boxPos, paddleHalfX, paddleHalfY, paddleHalfZ)) {
+                            this.position.x = candidateX;
+                        }
+                    }
+                }
+                if (keys['j'] || keys['J']) {
+                    const candidateX = this.position.x - step;
+                    if (candidateX >= -hLimit) {
+                        const boxPos = new BABYLON.Vector3(candidateX, this.position.y, this.position.z);
+                        if (!ball || !sphereIntersectsBox(ball.position, ball.ballSize/2, boxPos, paddleHalfX, paddleHalfY, paddleHalfZ)) {
+                            this.position.x = candidateX;
+                        }
+                    }
+                }
+                this.mesh.position.copyFrom(this.position);
+            }
+        });
+    }
+
+    console.log("✅ Game objects created (supports up to 4 players)");
+}
+
+let botPollingId: number | null = null;
+let botKey: string | null = null;
+
+function startBotPolling() {
+    if (botPollingId !== null) {
+        clearInterval(botPollingId);
+    }
+    if (!gameStarted) {
+        console.log("[BOT] Polling not started: game not running");
+        return;
+    }
+    console.log("[BOT] Starting polling...");
+    botPollingId = window.setInterval(async () => {
+        const ballY = ball ? ball.position.z * 100 : 0;
+        const paddleY = players[1] ? players[1].position.z * 100 : 0;
+        console.log(`[BOT] Polling: ballY=${ballY}, paddleY=${paddleY}`);
+        botKey = await sendBotData(ballY, paddleY);
+        console.log(`[BOT] AI decision received: ${botKey}`);
+    }, 80);
+}
+
+function stopBotPolling() {
+    if (botPollingId !== null) {
+        clearInterval(botPollingId);
+        botPollingId = null;
+    }
+}
+
+async function sendBotData(ballY: number, paddleY: number): Promise<string | null> {
+    try {
+        console.log(`[BOT] Sending data to backend: ballY=${ballY}, paddleY=${paddleY}`);
+        const response = await fetch('/ai/3d', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ball_y: ballY, paddle_y: paddleY })
+        });
+        if (!response.ok) {
+            console.log(`[BOT] Backend response not ok: ${response.status}`);
+            return null;
+        }
+        const data = await response.json();
+        console.log(`[BOT] Backend response: ${JSON.stringify(data)}`);
+        console.log(`[BOT] AI decision received: ${data.key}`);
+        return data.key;
+    } catch (error) {
+        console.error('[BOT] AI request failed:', error);
+        console.log(`[BOT] AI decision received: null`);
+        return null;
+    }
+}
+
+function setupManualCameraControls(camera: any, canvas: HTMLCanvasElement) {
+    let isMouseDown = false;
+    let mouseX = 0;
+    let mouseY = 0;
+    
+    canvas.addEventListener('mousedown', (event) => {
+        isMouseDown = true;
+        mouseX = event.clientX;
+        mouseY = event.clientY;
+        canvas.style.cursor = 'grabbing';
+    });
+    
+    canvas.addEventListener('mouseup', () => {
+        isMouseDown = false;
+        canvas.style.cursor = 'grab';
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+        isMouseDown = false;
+        canvas.style.cursor = 'grab';
+    });
+    
+    canvas.addEventListener('mousemove', (event) => {
+        if (!isMouseDown) return;
+        const deltaX = event.clientX - mouseX;
+        const deltaY = event.clientY - mouseY;
+        camera.alpha -= deltaX * 0.01;
+        camera.beta += deltaY * 0.01;
+        camera.beta = Math.max(0.1, Math.min(Math.PI - 0.1, camera.beta));
+        
+        mouseX = event.clientX;
+        mouseY = event.clientY;
+    });
+    
+    canvas.addEventListener('wheel', (event) => {
+        event.preventDefault();
+        
+        const zoomSpeed = 0.1;
+        if (event.deltaY > 0) {
+            camera.radius += zoomSpeed;
+        } else {
+            camera.radius -= zoomSpeed;
+        }
+        camera.radius = Math.max(5, Math.min(25, camera.radius));
+    });
+    
+    canvas.style.cursor = 'grab';
+    
+    console.log("🖱️  Manual mouse controls ready:");
+    console.log("   - Drag to rotate camera");
+    console.log("   - Mouse wheel to zoom in/out");
+}
+
+function sphereIntersectsBox(spherePos: any, radius: number, boxPos: any, boxHalfX: number, boxHalfY: number, boxHalfZ: number) {
+    const dx = Math.max(Math.abs(spherePos.x - boxPos.x) - boxHalfX, 0);
+    const dy = Math.max(Math.abs(spherePos.y - boxPos.y) - boxHalfY, 0);
+    const dz = Math.max(Math.abs(spherePos.z - boxPos.z) - boxHalfZ, 0);
+    return (dx*dx + dy*dy + dz*dz) <= (radius * radius);
+}
+
+//init babylon.js scene
+function initBabylon() {
+    console.log("🚀 Initializing Babylon.js...");
+    if (typeof BABYLON === 'undefined') {
+        console.error("❌ BABYLON.js is not loaded!");
+        return;
+    }
+    console.log("✅ BABYLON.js is available");
+    
+    canvas = document.getElementById("gameCanvas3D") as HTMLCanvasElement;
+    if (!canvas) {
+        console.error("❌ Canvas not found!");
+        return;
+    }
+    console.log("✅ Canvas found:", canvas);
+    console.log("Canvas dimensions:", canvas.width, "x", canvas.height);
+
+    try {
+        engine = new BABYLON.Engine(canvas, true);
+        console.log("✅ Engine created successfully");
+        scene = new BABYLON.Scene(engine);
+        scene.clearColor = new BABYLON.Color4(0.20, 0.45, 0.70, 1.0);
+        console.log("✅ Scene created successfully");
+    } catch (error) {
+        console.error("❌ Error creating engine/scene:", error);
+        return;
+    }
+
+    try {
+        camera = new BABYLON.ArcRotateCamera("camera1", -Math.PI/2, Math.PI/4, 42, BABYLON.Vector3.Zero(), scene);
+        try {
+            camera.attachControl(canvas, true);
+            console.log("✅ Camera attached to canvas for pointer controls");
+        } catch (e) {
+            console.warn("⚠️ camera.attachControl failed:", e);
+        }
+        try {
+            camera.keysUp = [];
+            camera.keysDown = [];
+            camera.keysLeft = [];
+            camera.keysRight = [];
+            console.log("✅ Camera keyboard controls disabled (arrow keys won't move camera)");
+        } catch (e) {
+            console.warn("⚠️ Failed to clear camera key bindings:", e);
+        }
+        camera.lowerRadiusLimit = 5;
+        camera.upperRadiusLimit = 25; 
+        camera.lowerBetaLimit = 0.1;
+        camera.upperBetaLimit = Math.PI/2 * 0.95;
+        
+        setupManualCameraControls(camera, canvas);
+        console.log("✅ Manual mouse controls implemented");
+        
+        console.log("✅ ArcRotate camera created successfully");
+        console.log("🖱️  Try mouse controls: Drag to rotate, Wheel to zoom");
+
+        const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+        console.log("✅ Light created");
+
+        const ground = BABYLON.MeshBuilder.CreateGround("ground", {width: FIELD_WIDTH_3D, height: FIELD_HEIGHT_3D}, scene);
+        const groundMaterial = new BABYLON.StandardMaterial("groundMat", scene);
+        groundMaterial.diffuseColor = COLORS.ground;
+        groundMaterial.specularColor = new BABYLON.Color3(0.03, 0.03, 0.03);
+        groundMaterial.specularPower = 8;
+        ground.material = groundMaterial;
+        console.log("✅ Playing field created");
+
+        if (nbrPlayer === 4) {
+            try {
+                const halfW = FIELD_WIDTH_3D / 2;
+                const halfH = FIELD_HEIGHT_3D / 2;
+                const cornerSize = 1.5; // doubled size
+                const cornerY = cornerSize / 2; // sit on the ground
+
+                const cornerColors = [COLORS.paddleRight, COLORS.paddleTop, COLORS.paddleBottom, COLORS.paddleDefault];
+
+                const cornerPositions = [
+                    new BABYLON.Vector3(-halfW + cornerSize/2, cornerY, -halfH + cornerSize/2), // bottom-left
+                    new BABYLON.Vector3(halfW - cornerSize/2, cornerY, -halfH + cornerSize/2),  // bottom-right
+                    new BABYLON.Vector3(-halfW + cornerSize/2, cornerY, halfH - cornerSize/2),  // top-left
+                    new BABYLON.Vector3(halfW - cornerSize/2, cornerY, halfH - cornerSize/2)    // top-right
+                ];
+
+                cornerPositions.forEach((pos, idx) => {
+                    const cube = BABYLON.MeshBuilder.CreateBox(`cornerCube${idx}`, {size: cornerSize}, scene);
+                    const mat = new BABYLON.StandardMaterial(`cornerMat${idx}`, scene);
+                    // use predefined palette colors
+                    mat.diffuseColor = cornerColors[idx % cornerColors.length];
+                    cube.material = mat;
+                    cube.position = pos;
+                    //mark with half-size for collision checks and register
+                    (cube as any).metadata = { halfSize: cornerSize / 2 };
+                    cornerCubes.push(cube);
+                });
+
+                console.log("✅ Corner cubes created (4-player)");
+            } catch (err) {
+                console.warn("⚠️ Could not create corner cubes:", err);
+            }
+        }
+        createGameObjects(scene);
+        console.log("✅ Game objects created using your classes");
+
+        if (nbrPlayer === 1) startBotPolling();
+        else stopBotPolling();
+    } catch (error) {
+        console.error("❌ Error creating 3D objects:", error);
+        return;
+    }
+    
+    console.log("✅ All 3D objects created successfully");
+
+    scene.render();
+    scene.clearColor = new BABYLON.Color4(0.40, 0.45, 0.70, 1.0);
+    console.log("✅ First render executed");
+
+    engine.runRenderLoop(() => {
+        if (gameStarted && ball && players.length > 0) {
+            players.forEach(player => player.drawAndMove());
+            ball.moveBall(players);
+        }
+        
+        scene.render();
+    });
+    
+    console.log("✅ Game loop started successfully");
+}
+
+let score3d: number[] = [];
+
+function updateScoreDisplay() {
+    if (!scoreDiv) return;
+
+    if (!score3d || score3d.length === 0) {
+        scoreDiv.innerText = "";
+        return;
+    }
+
+    const labels = score3d.map((s, idx) => `Player ${idx + 1}: ${s}`);
+    scoreDiv.innerText = labels.join("   ");
+}
+
+function startGame() {
+    score3d = new Array(Math.max(2, nbrPlayer)).fill(0);
+
+    updateScoreDisplay();
+    gameStarted = true;
+    if (nbrPlayer === 1) startBotPolling();
+    else stopBotPolling();
+    console.log("3D Pong Game Started!");
+}
+
+window.addEventListener("resize", () => {
+    if (engine && engine.resize) {
+        engine.resize();
+    }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    if (!buttonLocalPlay3D) {
+        console.error("ButtonLocalPlay not found!");
+        return;
+    }
+
+    console.log("All UI elements found, setting up event listeners...");
+
+buttonLocalPlay3D.addEventListener("click", () => {
+    buttonLocalPlay3D.style.display = "none";
+    buttonRemotePlay3D.style.display = "none";
+    button2P3D.style.display = "inline-block";
+    buttonAI3D.style.display = "inline-block";
+    button4P3D.style.display = "inline-block";
+    buttonMainMenu3D.style.display = "inline-block";
+});
+
+    button2P3D.addEventListener("click", () => {
+        console.log("2 Player button clicked!");
+        button2P3D.style.display = "none";
+        buttonAI3D.style.display = "none";
+        button4P3D.style.display = 'none';
+        buttonMainMenu3D.style.display = "none";
+        textPong3D.style.display = "none";
+        canvasContainer3D.style.display = "block";
+        
+        // set player count BEFORE initializing Babylon
+        showGameCanvas3D();
+        nbrPlayer = 2;
+        initBabylon();
+        //  start game (initializes score array etc.)
+        startGame();
+        stopBotPolling();
+        console.log("3D Local 2 Player Game Started!");
+    });
+
+    buttonAI3D.addEventListener("click", () => {
+        console.log("VS Bot button clicked!");
+
+        button2P3D.style.display = "none";
+        buttonAI3D.style.display = "none";
+        button4P3D.style.display = 'none';
+        buttonMainMenu3D.style.display = "none";
+        textPong3D.style.display = "none";
+        canvasContainer3D.style.display = "block";
+        
+        showGameCanvas3D();
+        nbrPlayer = 1;
+        initBabylon();
+        startGame();
+        console.log("🤖 3D VS Bot Game Started! nbrPlayer set to:", nbrPlayer);
+    });
+
+    button4P3D.addEventListener("click", () => {
+        console.log("4 Player button clicked!");
+        button2P3D.style.display = "none";
+        buttonAI3D.style.display = "none";
+        button4P3D.style.display = "none";
+        buttonMainMenu3D.style.display = "none";
+        textPong3D.style.display = "none";
+        canvasContainer3D.style.display = "block";
+        showGameCanvas3D();
+        nbrPlayer = 4;
+        FIELD_HEIGHT_3D = FIELD_WIDTH_3D;
+        initBabylon();
+        startGame();
+        stopBotPolling();
+        console.log("3D 4 Player Game Started!");
+    });
+
+    // buttonTournament3D.addEventListener("click", () => {
+    //     // Mostra solo il bottone 4 Player per il torneo
+    //     button4P3D.style.display = "inline-block";
+    //     // ...eventuali altri bottoni...
+    // });
+
+    // // Quando torni al menu, nascondi di nuovo il bottone
+    // buttonMainMenu3D.addEventListener("click", () => {
+    //     button4P3D.style.display = "none";
+    //     // ...eventuali altri bottoni...
+    // });
+
+    buttonMainMenu3D.addEventListener("click", () => {
+    // Return to main menu
+    buttonLocalPlay3D.style.display = "inline-block";
+    buttonRemotePlay3D.style.display = "inline-block";
+    button2P3D.style.display = "none";
+    buttonAI3D.style.display = "none";
+    buttonMainMenu3D.style.display = "none";
+    });
+});
+
+console.log("3D Pong Game Loaded!");
+
+(window as any).startGame = startGame;

@@ -11,7 +11,9 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.12",
-    "tailwindcss": "^4.1.10"
+    "socket.io-client": "^4.8.1",
+    "tailwindcss": "^4.1.10",
+    "viem": "^2.36.0"
   },
   "devDependencies": {
     "typescript": "~5.8.3",

@@ -1,9 +1,7 @@
 import sqlite3 from 'sqlite3';
-import models from '../models/models.js'
 
 const { verbose } = sqlite3;
 import path, { resolve } from 'path';
-import { rejects } from 'assert';
 
 
 const dbPath = path.resolve('/app/data/database.sqlite');
@@ -11,8 +9,6 @@ const db = new (verbose()).Database(dbPath, (err) => {
 
   if (err) {
     console.error('error while opening db:', err);
-  } else {
-    console.log('DB opened successfully!');
   }
 });
 db.run("PRAGMA foreign_keys = ON")
@@ -22,13 +18,16 @@ async function insertMatchInDB(id_tournament, number_of_players)
 {
       return new Promise((resolve, reject) => {
       
+        // Convert 0 to null for non-tournament matches
+        const tournamentId = id_tournament === 0 ? null : id_tournament;
+        
         const query = `
         INSERT INTO game_match (id_tournament, number_of_players)
         VALUES (?, ?)
         `;
         db.run(
             query,
-            [id_tournament, number_of_players],
+            [tournamentId, number_of_players],
             function (err)
             {
                 if (err) {
@@ -42,8 +41,10 @@ async function insertMatchInDB(id_tournament, number_of_players)
     
     })
 }
-async function insertPlayerMatchStats(id_user, id_match, goal_scored, goal_taken)
+
+export async function insertPlayerMatchStats(id_user, id_match, goal_scored, goal_taken)
 {
+    console.log("Inserting player match stats:", {id_user, id_match, goal_scored, goal_taken});
     return new Promise((resolve, reject) =>
     {
         const query = `
@@ -91,9 +92,6 @@ async function insertTournament_db(tournament_name, id_winner)
     })
 }
 
-
-
-
 export async function upsertStatsAfterMatch(id_player, goal_scored, goal_taken, tournament_won) {
   return new Promise((resolve, reject) => {
     const query = `
@@ -116,7 +114,6 @@ export async function upsertStatsAfterMatch(id_player, goal_scored, goal_taken, 
   });
 }
 
-
 export async function insertTournament(tournament_name, id_winner)
 {
   try
@@ -138,13 +135,33 @@ export async function insertMatch(id_tournament, users_ids, users_goal_scored, u
     {   
         const match = await insertMatchInDB(id_tournament, users_ids.length);
     
-        for (let i = 0; i < users_ids.length; i++)
+        if (users_ids.length === undefined)
         {
-            const userId = users_ids[i];          
-            const goalsScored = users_goal_scored[i];
-            const goalsTaken = users_goal_taken[i];
-            await insertPlayerMatchStats(userId, match.id, goalsScored, goalsTaken);
-            await upsertStatsAfterMatch(userId, goalsScored, goalsTaken, 0);
+            try {
+                await insertPlayerMatchStats(users_ids, match.id, users_goal_scored, users_goal_taken);
+                await upsertStatsAfterMatch(users_ids, users_goal_scored, users_goal_taken, 0);
+            } catch (err) {
+                console.error(`Error inserting stats for user ${users_ids}:`, err);
+                console.warn(`Warning: Could not save stats for user ${users_ids}. User may not exist in database.`);
+                console.warn(`Match will still be recorded, but without stats for this player.`);
+            }
+        }
+        else
+        {
+            for (let i = 0; i < users_ids.length; i++)
+            {
+                const userId = users_ids[i];          
+                const goalsScored = users_goal_scored[i];
+                const goalsTaken = users_goal_taken[i];
+                try {
+                    await insertPlayerMatchStats(userId, match.id, goalsScored, goalsTaken);
+                    await upsertStatsAfterMatch(userId, goalsScored, goalsTaken, 0);
+                } catch (err) {
+                    // If user doesn't exist (FOREIGN KEY constraint), skip this player's stats
+                    console.warn(`Warning: Could not save stats for user ${userId}. User may not exist in database.`);
+                    console.warn(`Match will still be recorded, but without stats for this player.`);
+                }
+            }
         }
         return { matchId: match.id };
     }

@@ -4,7 +4,7 @@ const require = createRequire(import.meta.url);
 const bcrypt = require('bcrypt');
 
 export default async function (fastify, opts) {
-    fastify.post('/logout', async (request, reply)=>{
+    fastify.post('/logout', { preHandler: [fastify.authenticate] }, async (request, reply)=>{
         try
         {
             const username = request.body.username;

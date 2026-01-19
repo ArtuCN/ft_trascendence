@@ -4,6 +4,7 @@ import {winTournament} from './user_db.js';
 const { verbose } = sqlite3;
 import path, { resolve } from 'path';
 import { rejects } from 'assert';
+import { getUserById } from './user_db.js';
 
 
 const dbPath = path.resolve('/app/data/database.sqlite');
@@ -11,23 +12,25 @@ const db = new (verbose()).Database(dbPath, (err) => {
 
   if (err) {
     console.error('error while opening db:', err);
-  } else {
-    console.log('DB opened successfully!');
   }
 });
 db.run("PRAGMA foreign_keys = ON")
 
 export async function insertTournamentInDB(name)
 {
-    const stmt = db.prepare("INSERT INTO tournament (tournament_name) VALUES (?)");
-    stmt.run(name, function (err) {
-        if (err) {
-            console.error('Error inserting tournament:', err);
-        } else {
-            console.log('Tournament inserted with ID:', this.lastID);
-        }
+    return new Promise((resolve, reject) => {
+        const stmt = db.prepare("INSERT INTO tournament (tournament_name) VALUES (?)");
+        stmt.run(name, function (err) {
+            if (err) {
+                console.error('Error inserting tournament:', err);
+                reject(err);
+            } else {
+                console.log('Tournament inserted with ID:', this.lastID);
+                resolve({ id: this.lastID });
+            }
+        });
+        stmt.finalize();
     });
-    return { id: stmt.lastID };
 }
 
 export async function getAllTournaments()
@@ -101,4 +104,191 @@ export async function finishTournament(id, id_winner)
       console.error('Error finishing tournament:', error);
       throw error;
   }
+}
+
+export function getTournament(tournament_id)
+{
+	return new Promise((resolve, reject) => {
+		db.all('SELECT * FROM tournament WHERE id = ?', [tournament_id], (err, rows) => {
+			if (err) {
+				console.error('error:', err);
+				reject(err);
+			} else {
+				resolve(rows);
+			}
+		})
+	});
+}
+
+export function getMatchesOfTournament(tournament_id)
+{
+	return new Promise((resolve, reject) => {
+		db.all('SELECT * FROM game_match WHERE id_tournament = ?', [tournament_id], (err, rows) => {
+			if (err) {
+				console.error('error:', err);
+				reject(err);
+			} else {
+				resolve(rows);
+			}
+		})
+	})
+}
+
+export function getStatsOfMatch(match_id)
+{
+	return new Promise((resolve, reject) => {
+		db.all('SELECT * FROM player_match_stats WHERE id_match = ?', [match_id], (err, rows) => {
+			if (err) {
+				console.error('error:', err);
+				reject(err);
+			} else {
+				resolve(rows);
+			}
+		})
+	})
+}
+
+export async function getUsersOfMatch(match_id)
+{
+	try {
+		const match_stats = await getStatsOfMatch(match_id);
+		const user_ids = []
+		for (let i = 0; i < match_stats.length; i++) {
+			user_ids.push(match_stats[i].id_user);
+		}
+		const users = []
+		for (let i = 0; i< user_ids.length; i++) {
+			let tmp_user = await getUserById(user_ids[i])
+			users.push(tmp_user)
+		}
+		return users
+	} catch (error) {
+		console.error('error:', error);
+	}
+}
+	
+function padTo8(arr, fill = 0) {
+	const padded = [...arr];
+	while (padded.length < 8)
+		padded.push(fill);
+	return padded.slice(0, 8);
+}
+
+
+export async function getTournamentDataForBlockchain(tournament_id)
+{
+	try {
+		console.log('[getTournamentDataForBlockchain] tournament_id:', tournament_id);
+		
+		// get tournament
+		const tournamentArray = await getTournament(tournament_id);
+		const tournament = tournamentArray[0];
+		console.log('[getTournamentDataForBlockchain] tournament:', tournament);
+
+		// get matches for the tournament and get match stats
+		// get users for all matches
+		const matches = await getMatchesOfTournament(tournament_id);
+		console.log('[getTournamentDataForBlockchain] matches found:', matches.length, matches);
+		
+		const matchResults = await Promise.all(
+			matches.map(async (match) => {
+				const [stats, users] = await Promise.all([
+					getStatsOfMatch(match.id),
+					getUsersOfMatch(match.id),
+				]);
+
+				return { stats, users };
+			})
+		);
+		console.log('[getTournamentDataForBlockchain] matchResults:', matchResults);
+		// console.log("matches:", matches);
+		// console.log("matchResults:", matchResults);
+
+		//flatten and filter results
+		const allStats = [];
+		const allUsers = [];
+		for (const result of matchResults) {
+			allStats.push(...result.stats);
+			allUsers.push(...result.users);
+		}
+		// console.log("allStats:", allStats);
+		// console.log("allUsers:", allUsers.map(user => user.id));
+
+		const uniqueStats = allStats;
+		const uniqueUsers = [];
+		// const seenMatchIds = new Set();
+		const seenUsers = new Set();
+
+		// for (const stat of allStats) {
+		// 	if (!seenMatchIds.has(stat.id_user)) {
+		// 		seenMatchIds.add(stat.id_user);
+		// 		uniqueStats.push(stat);
+		// 	}
+		// }
+		for (const user of allUsers) {
+			if (!seenUsers.has(user.id)) {
+				seenUsers.add(user.id);
+				uniqueUsers.push(user);
+			}
+		}
+		// console.log("uniqueStats:", uniqueStats);
+		// console.log("uniqueUsers:", uniqueUsers.map(user => user.id));
+
+		// get scores for matches = all goals scored - all goals taken
+		const winner_id = tournament.id_winner;
+		const winner_name = uniqueUsers.find(user => user.id === winner_id)?.username || "john doe";
+		const user_scores = [];
+		for (const user of uniqueUsers) {
+			let total_score = uniqueStats.reduce((acc, stat) => {
+				if (stat.id_user == user.id) {
+					acc += Number(stat.goal_scored);
+					acc -= Number(stat.goal_taken);
+				}
+				return acc;
+			}, 0);
+			const score_obj = {
+				"id": user.id,
+				"score": total_score >= 0 ? total_score : 0,
+			};
+			user_scores.push(score_obj);
+		}
+		// console.log("winner_id:", winner_id);
+		// console.log("winner_name:", winner_name);
+		// console.log("user_scores:", user_scores);
+
+
+		//organize data
+		// const user_ids = uniqueUsers.map(user => user.id).sort((a,b) => a - b);
+		const scoreByUserId = new Map(
+			user_scores.map(score => [Number(score.id), score.score])
+		);
+		const user_ids = Array.from(scoreByUserId.keys());
+		const user_scores_sorted = Array.from(scoreByUserId.values());
+
+		// console.log("user_ids:", user_ids);
+		// console.log("scoreByUserId:", scoreByUserId);
+		// console.log("userScores_sorted:", user_scores_sorted);
+
+		const user_ids_8     = padTo8(user_ids);
+		const user_scores_8  = padTo8(user_scores_sorted);
+		const winner_ids_8   = padTo8([Number(winner_id)]);
+		const winner_name_str = winner_name;
+
+		// console.log("user_ids_8:", user_ids_8);
+		// console.log("user_scores_8:", user_scores_8);
+		// console.log("winner_ids_8:", winner_ids_8);
+		// console.log("winner_name_str:", winner_name_str);
+		// console.log("====TOURNAMENT COMMUNICATION END=====");	
+
+		return {
+			"user_ids": user_ids_8,
+			"user_scores": user_scores_8,
+			"winner_ids": winner_ids_8,
+			"winner_names": winner_name_str,
+			"tournament_id": Number(tournament_id)
+		}
+	} catch (error) {
+		console.error('Error getting tournament data for blockchain for tournament id: ', tournament_id, ', error:', error);
+		throw error;
+	}
 }

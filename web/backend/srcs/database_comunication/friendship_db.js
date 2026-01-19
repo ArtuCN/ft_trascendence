@@ -13,8 +13,6 @@ const db = new (verbose()).Database(dbPath, (err) => {
 
   if (err) {
     console.error('error while opening db:', err);
-  } else {
-    console.log('DB opened successfully!');
   }
 });
 db.run("PRAGMA foreign_keys = ON")
@@ -70,8 +68,8 @@ async function remove_friendship_db(id1, id2)
 export async function remove_friendship(id1, id2) {
     try
     {
-        await remove_friendship_db(id1, id2);
-        return { success: true};
+        const result = await remove_friendship_db(id1, id2);
+        return result;
     }
     catch (error)
     {
@@ -84,6 +82,12 @@ export async function add_friendship(id1, id2)
 {
     try
     {
+        const ids1 = await get_friends_by_user_db(id1);
+        const ids2 = await get_friends_by_user_db(id2);
+        if (ids1.includes(id2) || ids2.includes(id1))
+            throw new Error('Friendship already exists');
+        if (id1 === id2)
+            throw new Error('Cannot friend yourself');
         await add_friendship_db(id1, id2);
         await add_friendship_db(id2, id1);
     }
@@ -98,9 +102,9 @@ export async function add_friendship(id1, id2)
 async function get_friends_by_user_db(id1) {
     return new Promise((resolve, reject) => {
         const query = `
-        SELECT id_user2
+        SELECT id_user_2
         FROM friendship
-        WHERE id_user1 = ?
+        WHERE id_user_1 = ?
         `;
 
         db.all(query, [id1], (err, rows) => {
@@ -108,7 +112,7 @@ async function get_friends_by_user_db(id1) {
                 console.error('Error while fetching friends:', err);
                 reject(err);
             } else {
-                resolve(rows.map(row => row.id_user2));
+                resolve(rows.map(row => row.id_user_2));
             }
         });
     });

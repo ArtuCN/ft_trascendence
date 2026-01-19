@@ -79,6 +79,8 @@
     #canvas-container {
       width: 100%;
       max-width: 900px;
+      height: 100vh;
+      overflow: hidden;
       aspect-ratio: 3 / 2;
       margin: 0 auto;            /* Center horizontally */
       display: none;
@@ -87,8 +89,8 @@
     }
 
     canvas {
-      width: 100%;
-      height: auto;
+      max-width: 100vw;
+      max-height: 100vh;
       background: black;
       border: 4px solid white;
       display: block;
@@ -166,9 +168,18 @@
   <h1 id="PongGame">Pong Game</h1>
 
   <div id="menu-container">
+    <div id="playerName" style="display: none; position: fixed;">
+      <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; text-align: center;">
+        <h2 id="modalTitle">Inserisci i nomi dei giocatori</h2>
+        <div id="playerInputsContainer"></div>
+        <button id="startGameButton" style="margin-top: 20px; padding: 10px 20px; font-size: 16px;">Inizia partita</button>
+        <button id="cancelButton" style="margin-top: 10px; padding: 10px 20px; font-size: 16px;">Annulla</button>
+      </div>
+    </div>
     <button id="LocalPlay" value="1">Local</button>
     <button id="RemotePlay" value="2">Remote</button>
     <button id="Play2P" value="2" style="display: none;">2 Player</button>
+    <button id="Play2PRemote" value="2" style="display: none;">2 Player</button>
     <button id="Play4P" value="4" style="display: none;">4 Player</button>
     <button id="PlayAI" value="1" style="display: none;">VS Bot</button>
     <button id="Tournament" style="display: none;">Tournament</button>
@@ -180,6 +191,7 @@
     </select>
     <button id="StartTournament" style="display:none;">Start Tournament</button>
     <button id="btnBackToMenu" style="display:none;">Back to Menu</button>
+    <button id="saveOnChain" style="display: none;">Save on Chain</button>
     <div id="bracket-container" style="display:none; margin-bottom: 20px;"></div>
     <button id="PlayGame" style="display:none;">Play Game</button>
     

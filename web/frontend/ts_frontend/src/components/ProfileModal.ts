@@ -2,22 +2,80 @@ import { createElement, createButton } from '../utils/dom.js';
 import { authState } from '../state/auth.js';
 import { Stats } from '../types/index.js';
 import { ProfileImageUpload } from './ProfileImageUpload.js';
-
-const COLORS = {
-  primary: '#E67923',
-  dark: '#2A2A2A',
-  white: '#ffffff'
-};
+import { apiService } from '../services/api.js';
+import { blockchainService } from '../services/blockchainService.js';
+import { COLORS } from '../utils/constants.js';
 
 export class ProfileModal {
   private isVisible: boolean = false;
   private modalElement?: HTMLElement;
+  private walletButtonElement?: HTMLElement;
+  private walletAddressElement?: HTMLElement;
+  private unsubscribeWallet?: () => void;
+  private isEditMode: boolean = false;
+  private isSaving: boolean = false; // Previeni doppi click
+  private editFormData = {
+    username: '',
+    password: '',
+    confirmPassword: '',
+    currentPassword: ''
+  };
 
-  show(stats?: Stats): void {
-    if (this.isVisible) return;
+  async show(stats?: Stats): Promise<void> {
+    // Close existing modal if open
+    if (this.isVisible) {
+      this.hide();
+    }
     
     this.isVisible = true;
-    this.modalElement = this.createModal(stats);
+    
+    // Carica le statistiche reali dal backend se non fornite
+    let playerStats = stats;
+    if (!playerStats) {
+      const { user } = authState.getState();
+      if (user?.id) {
+        try {
+          const backendStats = await apiService.getStats(Number(user.id));
+          
+          // Carica anche tutti gli stats per calcolare la posizione
+          const allStats = await apiService.getAllStats();
+          
+          // Mappa i dati dal backend al formato atteso dal frontend
+          if (backendStats && Array.isArray(backendStats) && backendStats.length > 0) {
+            const stat = backendStats[0];
+            console.log('Backend stats received:', stat);
+            
+            // Calcola la posizione del giocatore basandosi sul ranking
+            // Il ranking è già ordinato dal backend per tournament_won DESC, matches_won DESC, goal_scored DESC
+            const playerRank = allStats.findIndex((s: any) => s.id_player === Number(user.id)) + 1;
+            
+            playerStats = {
+              matchesPlayed: stat.matches_played || 0,
+              matchesWon: stat.matches_won || 0,
+              matchesLost: stat.matches_lost || 0,
+              goalsScored: stat.goal_scored || 0,
+              tournamentsWon: stat.tournament_won || 0,
+              rank: playerRank || 0
+            };
+          } else {
+            throw new Error('No stats found');
+          }
+        } catch (error) {
+          console.error('Errore nel caricamento delle statistiche:', error);
+          // Usa stats di default in caso di errore
+          playerStats = {
+            matchesPlayed: 0,
+            matchesWon: 0,
+            matchesLost: 0,
+            goalsScored: 0,
+            tournamentsWon: 0,
+            rank: 0
+          };
+        }
+      }
+    }
+    
+    this.modalElement = this.createModal(playerStats);
     document.body.appendChild(this.modalElement);
   }
 
@@ -25,6 +83,7 @@ export class ProfileModal {
     if (!this.isVisible || !this.modalElement) return;
     
     this.isVisible = false;
+    // Don't reset edit mode here - let the caller decide
     document.body.removeChild(this.modalElement);
     this.modalElement = undefined;
   }
@@ -33,12 +92,12 @@ export class ProfileModal {
     const { user } = authState.getState();
     
     const defaultStats: Stats = {
-      matchesPlayed: 10,
-      matchesWon: 5,
-      matchesLost: 5,
-      goalsScored: 20,
-      tournamentsWon: 2,
-      rank: 1
+      matchesPlayed: 0,
+      matchesWon: 0,
+      matchesLost: 0,
+      goalsScored: 0,
+      tournamentsWon: 0,
+      rank: 0
     };
 
     const playerStats = stats || defaultStats;
@@ -58,13 +117,17 @@ export class ProfileModal {
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
       </svg>`,
       'absolute top-4 right-4 hover:opacity-70 transition-opacity focus:outline-none',
-      () => this.hide()
+      () => {
+        this.isEditMode = false;
+        this.resetEditForm();
+        this.hide();
+      }
     );
     closeButton.style.color = COLORS.primary;
 
     const title = createElement('h2', {
       className: 'text-2xl font-bold mb-6 text-center',
-      innerHTML: `Profilo: ${user?.username || 'Giocatore'}`,
+      innerHTML: `Profilo`,
       style: `color: ${COLORS.primary};`
     });
 
@@ -85,7 +148,7 @@ export class ProfileModal {
     const tr = createElement('tr');
 
     const avatarTd = createElement('td', {
-      className: 'align-middle w-32'
+      className: 'align-top w-48'
     });
 
     const profileImageUpload = new ProfileImageUpload(
@@ -95,48 +158,223 @@ export class ProfileModal {
       }
     );
 
-    avatarTd.appendChild(profileImageUpload.getElement());
+    // Container per avatar
+    const avatarContainer = createElement('div', {
+      className: 'flex flex-col gap-4'
+    });
+    
+    avatarContainer.appendChild(profileImageUpload.getElement());
+    
     const infoTd = createElement('td', {
-      className: 'align-middle'
+      className: 'align-top'
     });
 
     const infoDiv = createElement('div', {
       className: 'space-y-5'
     });
 
+    // Username display/edit
+    const usernameDiv = createElement('div', {
+      className: 'text-sm text-left'
+    });
+
+    if (this.isEditMode) {
+      const usernameLabel = createElement('label', {
+        className: 'block text-xs font-medium mb-1',
+        innerHTML: 'Username:'
+      });
+      
+      const usernameInput = createElement('input', {
+        type: 'text',
+        className: 'w-full px-3 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:outline-none focus:border-blue-500',
+        value: this.editFormData.username || user?.username || '',
+        placeholder: 'Enter new username'
+      }) as HTMLInputElement;
+
+      usernameInput.addEventListener('input', (e) => {
+        this.editFormData.username = (e.target as HTMLInputElement).value;
+      });
+
+      usernameDiv.appendChild(usernameLabel);
+      usernameDiv.appendChild(usernameInput);
+    } else {
+      usernameDiv.innerHTML = `
+        <div>
+          <div><strong>Username:</strong> ${user?.username || 'N/A'}</div>
+          <div class="text-xs text-gray-400 mt-1"><strong>ID:</strong> ${user?.id || 'N/A'}</div>
+        </div>
+      `;
+    }
+
     const mailDiv = createElement('div', {
       className: 'text-sm text-left',
       innerHTML: `<span><strong>Mail:</strong> ${user?.mail || 'N/A'}</span>`
     });
 
+    // Edit button container (if not in edit mode)
+    const editButtonContainer = createElement('div', {
+      className: 'mt-2'
+    });
+
     const walletDiv = createElement('div', {
-      className: 'text-sm text-left'
+      className: 'text-sm text-left mt-4'
     });
 
     const walletContainer = createElement('div', {
-      className: 'flex items-center'
+      className: 'flex flex-col gap-2'
     });
 
     const walletLabel = createElement('span', {
-      className: 'text-sm font-medium mr-2',
+      className: 'text-sm font-medium',
       innerHTML: '<strong>Wallet:</strong>'
     });
 
-    const walletButton = createButton(
-      'Collega Wallet',
-      'text-white px-3 py-1 rounded text-sm hover:opacity-90 transition-opacity focus:outline-none',
-      () => alert('Collega Wallet')
-    );
-    walletButton.style.backgroundColor = COLORS.primary;
-
+    // Check wallet state
+    const walletState = blockchainService.getWalletState();
+    
     walletContainer.appendChild(walletLabel);
-    walletContainer.appendChild(walletButton);
+    
+    if (walletState.isConnected && walletState.address) {
+      // Show wallet address and buttons
+      this.walletAddressElement = createElement('div', {
+        className: 'text-xs font-mono bg-gray-700 px-3 py-2 rounded mt-2',
+        innerHTML: blockchainService.formatAddress(walletState.address)
+      });
+      
+      const walletButtonsContainer = createElement('div', {
+        className: 'flex gap-2 mt-2'
+      });
+      
+      const disconnectButton = createButton(
+        'Disconnect',
+        'text-white px-3 py-1 rounded text-sm hover:opacity-90 transition-opacity focus:outline-none flex-1',
+        async () => {
+          blockchainService.disconnect();
+          this.hide();
+          await this.show(stats);
+        }
+      );
+      disconnectButton.style.backgroundColor = '#EF4444'; // red
+      
+      const viewGamesButton = createButton(
+        '📊 Games & Tournaments',
+        'text-white px-3 py-1 rounded text-sm hover:opacity-90 transition-opacity focus:outline-none flex-1',
+        async () => this.showUserGamesAndTournaments(walletState.address!)
+      );
+      viewGamesButton.style.backgroundColor = '#10B981'; // green
+      
+      walletButtonsContainer.appendChild(disconnectButton);
+      walletButtonsContainer.appendChild(viewGamesButton);
+      
+      walletContainer.appendChild(this.walletAddressElement);
+      walletContainer.appendChild(walletButtonsContainer);
+    } else {
+      // Show connect button
+      this.walletButtonElement = createButton(
+        blockchainService.isMetaMaskInstalled() ? '🦊 Connect MetaMask' : '⚠️ Install MetaMask',
+        'text-white px-4 py-2 rounded text-sm hover:opacity-90 transition-opacity focus:outline-none w-full mt-2',
+        async () => this.handleWalletConnect()
+      );
+      this.walletButtonElement.style.backgroundColor = blockchainService.isMetaMaskInstalled() ? COLORS.primary : '#6B7280';
+      
+      walletContainer.appendChild(this.walletButtonElement);
+    }
+
     walletDiv.appendChild(walletContainer);
 
+    infoDiv.appendChild(usernameDiv);
     infoDiv.appendChild(mailDiv);
-    infoDiv.appendChild(walletDiv);
+    
+    // Add edit button to infoDiv if not in edit mode
+    if (!this.isEditMode) {
+      const editButton = createButton(
+        '✏️ Edit Profile',
+        'px-6 py-2 rounded text-white hover:opacity-90 transition-opacity focus:outline-none w-full mt-4',
+        async () => {
+          this.isEditMode = true;
+          this.editFormData.username = user?.username || '';
+          await this.show(stats);
+        }
+      );
+      editButton.style.backgroundColor = COLORS.primary;
+      editButtonContainer.appendChild(editButton);
+      infoDiv.appendChild(editButtonContainer);
+    }
+    
+    // Add wallet to avatar column
+    avatarContainer.appendChild(walletDiv);
+
+    // Password change fields (only in edit mode)
+    if (this.isEditMode) {
+      const passwordSection = createElement('div', {
+        className: 'space-y-3 mt-4 pt-4 border-t border-gray-600'
+      });
+
+      const passwordTitle = createElement('div', {
+        className: 'text-xs font-medium mb-2',
+        innerHTML: 'Change Password (optional)',
+        style: `color: ${COLORS.primary};`
+      });
+
+      const currentPasswordLabel = createElement('label', {
+        className: 'block text-xs font-medium mb-1',
+        innerHTML: 'Current Password:'
+      });
+      
+      const currentPasswordInput = createElement('input', {
+        type: 'password',
+        className: 'w-full px-3 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:outline-none focus:border-blue-500',
+        placeholder: 'Enter current password'
+      }) as HTMLInputElement;
+
+      currentPasswordInput.addEventListener('input', (e) => {
+        this.editFormData.currentPassword = (e.target as HTMLInputElement).value;
+      });
+
+      const newPasswordLabel = createElement('label', {
+        className: 'block text-xs font-medium mb-1 mt-2',
+        innerHTML: 'New Password:'
+      });
+      
+      const newPasswordInput = createElement('input', {
+        type: 'password',
+        className: 'w-full px-3 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:outline-none focus:border-blue-500',
+        placeholder: 'Enter new password'
+      }) as HTMLInputElement;
+
+      newPasswordInput.addEventListener('input', (e) => {
+        this.editFormData.password = (e.target as HTMLInputElement).value;
+      });
+
+      const confirmPasswordLabel = createElement('label', {
+        className: 'block text-xs font-medium mb-1 mt-2',
+        innerHTML: 'Confirm New Password:'
+      });
+      
+      const confirmPasswordInput = createElement('input', {
+        type: 'password',
+        className: 'w-full px-3 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:outline-none focus:border-blue-500',
+        placeholder: 'Confirm new password'
+      }) as HTMLInputElement;
+
+      confirmPasswordInput.addEventListener('input', (e) => {
+        this.editFormData.confirmPassword = (e.target as HTMLInputElement).value;
+      });
+
+      passwordSection.appendChild(passwordTitle);
+      passwordSection.appendChild(currentPasswordLabel);
+      passwordSection.appendChild(currentPasswordInput);
+      passwordSection.appendChild(newPasswordLabel);
+      passwordSection.appendChild(newPasswordInput);
+      passwordSection.appendChild(confirmPasswordLabel);
+      passwordSection.appendChild(confirmPasswordInput);
+
+      infoDiv.appendChild(passwordSection);
+    }
+
     infoTd.appendChild(infoDiv);
 
+    avatarTd.appendChild(avatarContainer);
     tr.appendChild(avatarTd);
     tr.appendChild(infoTd);
     tbody.appendChild(tr);
@@ -341,6 +579,48 @@ export class ProfileModal {
 
     // Mettiamo tutto insieme come un puzzle
     content.appendChild(userTable);
+    
+    // Edit/Save/Cancel buttons
+    if (this.isEditMode) {
+      const buttonContainer = createElement('div', {
+        className: 'flex gap-4 justify-center mt-6 mb-4'
+      });
+
+      const saveButton = createButton(
+        'Save Changes',
+        'px-6 py-2 rounded text-white hover:opacity-90 transition-opacity focus:outline-none',
+        async () => {
+          if (this.isSaving) return; // Previeni doppi click
+          this.isSaving = true;
+          saveButton.style.opacity = '0.5';
+          saveButton.style.cursor = 'not-allowed';
+          (saveButton as HTMLButtonElement).disabled = true;
+          
+          try {
+            await this.handleSaveProfile(stats);
+          } finally {
+            this.isSaving = false;
+          }
+        }
+      );
+      saveButton.style.backgroundColor = '#10B981'; // green
+
+      const cancelButton = createButton(
+        'Cancel',
+        'px-6 py-2 rounded text-white hover:opacity-90 transition-opacity focus:outline-none',
+        async () => {
+          this.isEditMode = false;
+          this.resetEditForm();
+          await this.show(stats);
+        }
+      );
+      cancelButton.style.backgroundColor = '#6B7280'; // gray
+
+      buttonContainer.appendChild(saveButton);
+      buttonContainer.appendChild(cancelButton);
+      content.appendChild(buttonContainer);
+    }
+    
     content.appendChild(statsTopGrid);
     content.appendChild(mainStatsGrid);
     content.appendChild(matchResultsSection);
@@ -353,6 +633,8 @@ export class ProfileModal {
     // Se clicchi fuori dal modal si chiude (comodo no?)
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
+        this.isEditMode = false;
+        this.resetEditForm();
         this.hide();
       }
     });
@@ -360,7 +642,247 @@ export class ProfileModal {
     return overlay;
   }
 
+  private async handleWalletConnect(): Promise<void> {
+    if (!blockchainService.isMetaMaskInstalled()) {
+      alert('Please install MetaMask to use blockchain features!\nVisit: https://metamask.io');
+      return;
+    }
+
+    const result = await blockchainService.connect();
+    
+    if (result.success) {
+      // Refresh modal to show connected state
+      this.hide();
+      await this.show();
+    } else {
+      alert(`Failed to connect wallet: ${result.error || 'Unknown error'}`);
+    }
+  }
+
+  private async showUserGames(walletAddress: string): Promise<void> {
+    try {
+      const gameIds = await blockchainService.getUserGames(walletAddress);
+      
+      if (gameIds.length === 0) {
+        alert('No games found for this wallet address');
+        return;
+      }
+
+      let message = `Your Games (${gameIds.length} total):\n\n`;
+      gameIds.slice(0, 10).forEach((id, index) => {
+        message += `Game #${id}\n`;
+      });
+      
+      if (gameIds.length > 10) {
+        message += `\n...and ${gameIds.length - 10} more`;
+      }
+      
+      alert(message);
+    } catch (error) {
+      console.error('Error fetching games:', error);
+      alert('Failed to fetch games from blockchain');
+    }
+  }
+
+  private async showUserGamesAndTournaments(walletAddress: string): Promise<void> {
+    try {
+      const { user } = authState.getState();
+      if (!user) {
+        alert('User not found');
+        return;
+      }
+
+      const userId = parseInt(localStorage.getItem('id') || '0');
+      if (!userId) {
+        alert('User ID not found');
+        return;
+      }
+
+      // Fetch games
+      const gameIds = await blockchainService.getUserGames(walletAddress);
+      
+      // Fetch all tournaments from backend
+      const allTournaments = await apiService.getAllTournaments();
+      
+      // Filter tournaments where user participated and are saved on blockchain
+      const userTournaments = [];
+      for (const tournament of allTournaments as any[]) {
+        try {
+          // Call getTournamentData which returns: [user_ids, user_scores, winner_ids, winner_names, tournament_id]
+          const tournamentData = await blockchainService.getTournamentData(tournament.id);
+		  console.log("tournament data:", tournamentData);
+          
+          if (!tournamentData) continue;
+
+          // Extract data from returned tuple
+          const user_ids = tournamentData[0] as any[]; // array of user IDs
+          const user_scores = tournamentData[1] as any[]; // array of scores
+          const winner_ids = tournamentData[2] as any[]; // array of winner IDs
+          const winner_names = tournamentData[3] as string; // winner names string
+          const tournament_id = tournamentData[4]; // tournament ID
+
+          
+          // Check if tournament exists on blockchain (tournament_id !== 0)
+          if (tournament_id && tournament_id !== 0n) {
+            // Check if current user participated in this tournament
+            const userParticipated = user_ids.some(id => Number(id) === userId);
+            
+            if (userParticipated) {
+
+				console.log("user_ids:", user_ids.map((id: bigint) => id.toString()));
+				console.log("user_scores:", user_scores.map((score: bigint) => score.toString()));
+				console.log("winner_ids:", winner_ids.map((id: bigint) => id.toString()));
+				console.log("winner_names:", winner_names);
+				console.log("tournament_id:", tournament_id);
+				const winner_idx = user_ids.indexOf(winner_ids[0]);
+				const winner_score = user_scores[winner_idx];
+
+              userTournaments.push({
+                id: tournament_id,
+                participants: user_ids,
+				scores: user_scores,
+                winnerNames: winner_names,
+				winnerScore: winner_score
+              });
+            }
+          }
+        } catch (error) {
+          // Tournament not on blockchain, skip it
+          console.log(`Tournament ${tournament.id} not found on blockchain`);
+        }
+      }
+
+      // Build message
+      let message = '';
+      
+      if (gameIds.length === 0 && userTournaments.length === 0) {
+        alert('No games or tournaments found on blockchain');
+        return;
+      }
+
+      if (gameIds.length > 0) {
+        message += `🎮 Your Games (${gameIds.length} total):\n`;
+        gameIds.slice(0, 30).forEach((id) => {
+          message += `  • Game #${id}\n`;
+        });
+        if (gameIds.length > 5) {
+          message += `  ...and ${gameIds.length - 5} more\n`;
+        }
+      }
+
+      if (userTournaments.length > 0) {
+        message += `\n🏆 Your Tournaments (${userTournaments.length} on blockchain):\n`;
+        userTournaments.slice(0, 40).forEach((tournament) => {
+          message += `  • ${tournament.id}\n`;
+          if (tournament.winnerNames) {
+            message += `    Winner(s): ${tournament.winnerNames}\n`;
+            message += `    Winner score: ${tournament.winnerScore}\n`;
+          }
+        });
+        if (userTournaments.length > 5) {
+          message += `  ...and ${userTournaments.length - 5} more\n`;
+        }
+      }
+
+      alert(message);
+    } catch (error) {
+      console.error('Error fetching games and tournaments:', error);
+      alert('Failed to fetch data from blockchain');
+    }
+  }
+
+  private async handleSaveProfile(stats?: Stats): Promise<void> {
+    try {
+      const { user } = authState.getState();
+      if (!user) {
+        alert('User not found');
+        return;
+      }
+
+      // Validate inputs
+      const updates: any = {};
+      
+      // Check if username changed
+      if (this.editFormData.username && this.editFormData.username !== user.username) {
+        if (this.editFormData.username.trim().length < 3) {
+          alert('Username must be at least 3 characters');
+          return;
+        }
+        updates.username = this.editFormData.username.trim();
+      }
+
+      // Check if password is being changed
+      if (this.editFormData.password || this.editFormData.currentPassword) {
+        if (!this.editFormData.currentPassword) {
+          alert('Current password is required to change password');
+          return;
+        }
+        
+        if (!this.editFormData.password) {
+          alert('Please enter a new password');
+          return;
+        }
+
+        if (this.editFormData.password.length < 6) {
+          alert('New password must be at least 6 characters');
+          return;
+        }
+
+        if (this.editFormData.password !== this.editFormData.confirmPassword) {
+          alert('New passwords do not match');
+          return;
+        }
+
+        updates.password = this.editFormData.password;
+        updates.currentPassword = this.editFormData.currentPassword;
+      }
+
+      // If no changes, just exit edit mode
+      if (Object.keys(updates).length === 0 || (Object.keys(updates).length === 1 && updates.currentPassword)) {
+        alert('No changes to save');
+        return;
+      }
+
+      // Call API to update profile
+      const response = await apiService.updateProfile(updates);
+
+      // Update auth state with new user data
+      if (response.user) {
+        authState.updateUser(response.user);
+        localStorage.setItem('username', response.user.username);
+        localStorage.setItem('user', JSON.stringify(response.user));
+      }
+
+      // Reset edit mode
+      this.isEditMode = false;
+      this.resetEditForm();
+
+      // Show success message
+      alert('Profile updated successfully!');
+
+      // Refresh modal with updated data
+      await this.show(stats);
+
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update profile';
+      alert(`Error: ${errorMessage}`);
+    }
+  }
+
+  private resetEditForm(): void {
+    this.editFormData = {
+      username: '',
+      password: '',
+      confirmPassword: '',
+      currentPassword: ''
+    };
+  }
+
   destroy(): void {
+    if (this.unsubscribeWallet) {
+      this.unsubscribeWallet();
+    }
     this.hide();
   }
 }

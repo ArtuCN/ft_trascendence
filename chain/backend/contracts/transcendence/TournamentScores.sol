@@ -176,8 +176,8 @@ contract TournamentScores is ERC721URIStorage {
 		uint256
 	) {
 
-		if (tournamentIndex >= _current_tournament)
-			revert indexOutOfBounds("index of turnament is out of bounds. Max index: ", _current_tournament);
+		// if (tournamentIndex >= _current_tournament)
+		// 	revert indexOutOfBounds("index of turnament is out of bounds. Max index: ", _current_tournament);
 
 		tournament memory t = tournament_registry[tournamentIndex];
 		return (
@@ -197,5 +197,14 @@ contract TournamentScores is ERC721URIStorage {
 			revert indexOutOfBounds("this address has no games associated", 0);
 		return games;
 	}
+
+	// // get user tournaments - ids of tournaments where user was  participating
+	// function getUserTournaments(address userAddress) public view returns (uint256[] memory tournamentIds) {
+	// 	require(userAddress != address(0), "Not a valid Address!");
+	// 	uint256[] memory tournaments = _user_tournaments[userAddress];
+	// 	if (tournaments.length == 0)
+	// 		revert indexOutOfBounds("this address has no games associated", 0);
+	// 	return tournaments;
+	// }
 
 }

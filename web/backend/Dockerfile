@@ -1,12 +1,16 @@
-FROM node:18-alpine
+FROM node:20-bullseye
 
 WORKDIR /app
 
-COPY package*.json ./
-
+COPY package.json ./
 RUN npm install
+RUN npm rebuild
 
 COPY . .
 
-EXPOSE 3000
-CMD ["node", "srcs/server.js"]
+RUN mkdir -p /app/data
+
+EXPOSE ${BACKEND_PORT}
+
+# Inizializza il database prima di avviare il server
+CMD ["sh", "-c", "node init-db.js && node seed-admin.js && node srcs/server.js"]

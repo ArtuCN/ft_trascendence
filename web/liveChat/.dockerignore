@@ -1,0 +1,44 @@
+# Node modules (will be installed in container)
+node_modules/
+npm-debug.log
+# package-lock.json
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Vite frontend build artifacts (not needed for backend)
+dist-vite/
+.vite/
+
+# Environment files (will be provided by docker-compose)
+.env
+.env.local
+.env.*.local
+
+# Development files
+*.log
+logs/
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+
+# Testing
+coverage/
+.nyc_output/
+
+# Misc
+*.md
+README.md
+LICENSE

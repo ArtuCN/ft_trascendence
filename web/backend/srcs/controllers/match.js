@@ -1,8 +1,8 @@
 // controllers/match.js
-import { insertMatch, getAllMatches, getMatchById, getPlayerMatchStats, getPlayerByMatchId } from '../database_comunication/match_db.js';
+import { insertMatch, getAllMatches, getMatchById, getPlayerMatchStats, getPlayerByMatchId, insertPlayerMatchStats, upsertStatsAfterMatch } from '../database_comunication/match_db.js';
 import { getAllMatchesOfPlayer } from '../database_comunication/user_db.js';
 export default async function (fastify, opts) {
-  fastify.get('/allmatch', async (request, reply) => {
+  fastify.get('/allmatch', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try {
       const result = await getAllMatches();
       reply.send(result);
@@ -11,7 +11,7 @@ export default async function (fastify, opts) {
       reply.code(500).send({ error: 'Internal Server Error ' + error });
     }
   });
-  fastify.get('/matchid', async (request, reply) => {
+  fastify.get('/matchid', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try {
       const { id } = request.query;
       if (!id) return reply.code(400).send({ error: 'Missing id' });
@@ -24,7 +24,7 @@ export default async function (fastify, opts) {
     }
   });
 
-  fastify.get('/allmatchplayer', async (request, reply) => {
+  fastify.get('/allmatchplayer', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try {
       const { id_player } = request.query;
       if (!id_player) return reply.code(400).send({ error: 'Missing id_player' });
@@ -46,7 +46,7 @@ export default async function (fastify, opts) {
     }
   });
 
-  fastify.get('/playersbymatchid', async (request, reply) => {
+  fastify.get('/playersbymatchid', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try {
       const { id } = request.query;
       if (!id) return reply.code(400).send({ error: 'Missing id_match' });
@@ -59,14 +59,25 @@ export default async function (fastify, opts) {
     }
   });
 
-  fastify.post('/match', async (request, reply) => {
+  fastify.post('/match', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try {
       const { id_tournament, users_ids, users_goal_scored, users_goal_taken } = request.body;
+      
+      // Allow id_tournament to be null for non-tournament matches
+      if (users_ids === undefined || users_goal_scored === undefined || users_goal_taken === undefined) {
+        return reply.code(400).send({ error: 'Missing required fields in request body' });
+      }
 
-      if (!id_tournament || !users_ids || !users_goal_scored || !users_goal_taken)
-        return reply.code(400).send({ error: 'Missing something in request body' });
+      if (users_ids.length !== users_goal_scored.length || users_ids.length !== users_goal_taken.length) {
+        return reply.code(400).send({ error: 'Array lengths must match' });
+      }
+    
+      console.log('📊 Saving match:', { id_tournament, users_ids, users_goal_scored, users_goal_taken });
+
       const result = await insertMatch(id_tournament, users_ids, users_goal_scored, users_goal_taken);
+      console.log('✅ Match saved with ID:', result);
       reply.send(result);
+      // }
     } catch (error) {
       console.log(error);
       reply.code(500).send({ error: 'Internal Server Error ' + error });
