@@ -65,8 +65,9 @@ export class Navbar {
 
   private createNavbar(): HTMLElement {
     const nav = createElement('nav', {
-      className: 'navbar-glow w-full py-4 px-8 flex items-center justify-center shadow-lg',
-      style: 'padding: 1rem 1rem;'
+      className: 'w-full py-4 px-8 flex items-center justify-center shadow-lg',
+      // Fruitiger / Aero inspired cool-blue palette
+      style: 'background: linear-gradient(90deg, #062A3A 0%, #0B4F6C 100%);'
     });
 
     this.element = nav;

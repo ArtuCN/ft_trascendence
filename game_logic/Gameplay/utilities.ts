@@ -2,6 +2,7 @@ import { canvas, ctx, canvas_container, cornerWallSize } from "./typescriptFile/
 import { Player } from "./typescriptFile/classPlayer.js";
 import type { Player as Player3D } from "./typescriptFile3D/classPlayer.js";
 import { BracketMatch, showMenu, players, nbrPlayer, buttonPlayGame, quarterfinals, semifinals, final, currentMatchIndex, currentRound, countPlayers, playerGoals, playerGoalsRecived, TournamentID } from "./script.js";
+import { setCurrentTournamentId } from "./blockchainIntegration.js";
 
 export function resetCanvas() {
     canvas.width = 900;
@@ -199,8 +200,7 @@ export function clonePlayer(original: Player | Player3D, newID: number): Player 
 }
 
 export function getToken() {
-	const token = localStorage.getItem("token");
-	return token
+	return localStorage.getItem("token");
 }
 
 export async function sendBotData(ball_y: number, paddle_y: number): Promise<string> {
@@ -224,23 +224,54 @@ export async function sendBotData(ball_y: number, paddle_y: number): Promise<str
 	return data.key;
 }
 
-export function sendTournamentData() {
+export async function sendTournamentData(): Promise<string | null> {
+	const token = getToken();
+	
+    try {
+        const response = await fetch("/api/tournament", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ tournament_name: `Tournament ${new Date().toISOString()}` })
+        });
+        
+        if (!response.ok) {
+            console.error("Failed to create tournament:", response.status);
+            return null;
+        }
+        
+        const result = await response.json();
+        return result.id ? result.id.toString() : null;
+    } catch (error) {
+        console.error("Error creating tournament:", error);
+        return null;
+    }
+}
 
-    let body = {
-        id_tournament: TournamentID,
-        quarterfinals: quarterfinals,
-        semifinals: semifinals,
-        final: final
-    };
-	const token = getToken()
-    fetch("/api/tournament", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-			"Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify(body)
-    })
+export async function finishTournament(tournamentId: string, winnerId: number): Promise<void> {
+	const token = getToken();
+    try {
+        const response = await fetch("/api/finishtournament", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ 
+                id: parseInt(tournamentId), 
+                id_winner: winnerId 
+            })
+        });
+		console.log("winner id in gameplay: ", winnerId);
+        
+        if (!response.ok) {
+            console.error("Failed to finish tournament:", response.status);
+        }
+    } catch (error) {
+        console.error("Error finishing tournament:", error);
+    }
 }
 
 
@@ -250,8 +281,10 @@ export async function sendMatchData() {
     for (let i = 0; i < players.length; i++)
         players_id[i] = players[i].getUserID();
 
+    const tournamentIdNum = TournamentID && TournamentID !== "0" ? parseInt(TournamentID) : null;
+    
     let body = {
-        id_tournament: TournamentID || null, // null for non-tournament matches
+        id_tournament: tournamentIdNum,
         users_ids: players[0].getUserID(),
         users_goal_scored: playerGoals[0],
         users_goal_taken: playerGoalsRecived[0]
@@ -285,7 +318,7 @@ export async function sendMatchData() {
     }
 }
 
-export function showVictoryScreen(winner: Player) {
+export async function showVictoryScreen(winner: Player) {
 
     canvas_container.style.display = "block";
 
@@ -296,15 +329,55 @@ export function showVictoryScreen(winner: Player) {
     ctx.fillText(`🏆` + winner.getNameTag() + ` Wins 🏆`, canvas.width / 2, canvas.height / 2);
 
     const btnBack = document.getElementById("btnBackToMenu") as HTMLButtonElement;
+    const btnSaveOnChain = document.getElementById("saveOnChain") as HTMLButtonElement;
+    
     btnBack.style.display = "inline-block";
     btnBack.style.position = "absolute";
-    btnBack.style.left = "50%";
-    btnBack.style.top = "60%";
-    btnBack.style.transform = "translate(-50%, -50%)";
+    
+    // Show Save on Chain button only if this is the tournament final
+    const isTournamentFinal = currentRound === "final" && TournamentID && TournamentID !== "0";
+    
+    if (isTournamentFinal) {
+		try {
+			await finishTournament(TournamentID, winner.getUserID());
+			console.log('Tournament finished successfully, winner ID saved');
+		} catch (error) {
+			console.error('Error finishing tournament:', error);
+		}
+
+        // Position buttons side by side
+        btnBack.style.left = "40%";
+        btnBack.style.top = "60%";
+        btnBack.style.transform = "translate(-50%, -50%)";
+        
+        btnSaveOnChain.style.display = "inline-block";
+        btnSaveOnChain.style.position = "absolute";
+        btnSaveOnChain.style.left = "60%";
+        btnSaveOnChain.style.top = "60%";
+        btnSaveOnChain.style.transform = "translate(-50%, -50%)";
+        // Set tournament ID for blockchain save
+        setCurrentTournamentId(TournamentID);
+    } else {
+        // Single button centered
+        btnBack.style.left = "50%";
+        btnBack.style.top = "60%";
+        btnBack.style.transform = "translate(-50%, -50%)";
+    }
 
     btnBack.onclick = () => {
       btnBack.style.display = "none";
+      btnSaveOnChain.style.display = "none";
+      btnBack.style.position = "";
+      btnBack.style.left = "";
+      btnBack.style.top = "";
+      btnBack.style.transform = "";
+      btnSaveOnChain.style.position = "";
+      btnSaveOnChain.style.left = "";
+      btnSaveOnChain.style.top = "";
+      btnSaveOnChain.style.transform = "";
+      // Reset tournament ID
+      setCurrentTournamentId('0');
       canvas_container.style.display = "none";
-      showMenu(winner); // or showMenu(null) if you want to reset
+      showMenu(winner);
     };
 }

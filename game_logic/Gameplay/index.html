@@ -186,8 +186,8 @@
     }
 
     canvas {
-      max-width: 90vw;
-      max-height: 90vh;
+      max-width: 100vw;
+      max-height: 100vh;
       background: black;
       border: 2px solid #ff6ec7;
       box-shadow: 0 0 24px rgba(255, 110, 199, 0.55);
@@ -266,14 +266,12 @@
   <h1 id="PongGame">Pong Game</h1>
 
   <div id="menu-container">
-    <div id="playerName">
-      <div class="modal-panel">
-        <h2 id="modalTitle" class="modal-title">Inserisci i nomi dei giocatori</h2>
+    <div id="playerName" style="display: none; position: fixed;">
+      <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; text-align: center;">
+        <h2 id="modalTitle">Inserisci i nomi dei giocatori</h2>
         <div id="playerInputsContainer"></div>
-        <div class="modal-actions">
-          <button id="startGameButton">Inizia partita</button>
-          <button id="cancelButton">Annulla</button>
-        </div>
+        <button id="startGameButton" style="margin-top: 20px; padding: 10px 20px; font-size: 16px;">Inizia partita</button>
+        <button id="cancelButton" style="margin-top: 10px; padding: 10px 20px; font-size: 16px;">Annulla</button>
       </div>
     </div>
     <button id="LocalPlay" value="1">Local</button>
@@ -291,6 +289,7 @@
     </select>
     <button id="StartTournament" style="display:none;">Start Tournament</button>
     <button id="btnBackToMenu" style="display:none;">Back to Menu</button>
+    <button id="saveOnChain" style="display: none;">Save on Chain</button>
     <div id="bracket-container" style="display:none; margin-bottom: 20px;"></div>
     <button id="PlayGame" style="display:none;">Play Game</button>
     

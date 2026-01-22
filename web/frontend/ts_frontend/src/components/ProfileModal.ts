@@ -257,9 +257,9 @@ export class ProfileModal {
       disconnectButton.style.backgroundColor = '#EF4444'; // red
       
       const viewGamesButton = createButton(
-        '📊 Games',
+        '📊 Games & Tournaments',
         'text-white px-3 py-1 rounded text-sm hover:opacity-90 transition-opacity focus:outline-none flex-1',
-        async () => this.showUserGames(walletState.address!)
+        async () => this.showUserGamesAndTournaments(walletState.address!)
       );
       viewGamesButton.style.backgroundColor = '#10B981'; // green
       
@@ -681,6 +681,113 @@ export class ProfileModal {
     } catch (error) {
       console.error('Error fetching games:', error);
       alert('Failed to fetch games from blockchain');
+    }
+  }
+
+  private async showUserGamesAndTournaments(walletAddress: string): Promise<void> {
+    try {
+      const { user } = authState.getState();
+      if (!user) {
+        alert('User not found');
+        return;
+      }
+
+      const userId = parseInt(localStorage.getItem('id') || '0');
+      if (!userId) {
+        alert('User ID not found');
+        return;
+      }
+
+      // Fetch games
+      const gameIds = await blockchainService.getUserGames(walletAddress);
+      
+      // Fetch all tournaments from backend
+      const allTournaments = await apiService.getAllTournaments();
+      
+      // Filter tournaments where user participated and are saved on blockchain
+      const userTournaments = [];
+      for (const tournament of allTournaments as any[]) {
+        try {
+          // Call getTournamentData which returns: [user_ids, user_scores, winner_ids, winner_names, tournament_id]
+          const tournamentData = await blockchainService.getTournamentData(tournament.id);
+		  console.log("tournament data:", tournamentData);
+          
+          if (!tournamentData) continue;
+
+          // Extract data from returned tuple
+          const user_ids = tournamentData[0] as any[]; // array of user IDs
+          const user_scores = tournamentData[1] as any[]; // array of scores
+          const winner_ids = tournamentData[2] as any[]; // array of winner IDs
+          const winner_names = tournamentData[3] as string; // winner names string
+          const tournament_id = tournamentData[4]; // tournament ID
+
+          
+          // Check if tournament exists on blockchain (tournament_id !== 0)
+          if (tournament_id && tournament_id !== 0n) {
+            // Check if current user participated in this tournament
+            const userParticipated = user_ids.some(id => Number(id) === userId);
+            
+            if (userParticipated) {
+
+				console.log("user_ids:", user_ids.map((id: bigint) => id.toString()));
+				console.log("user_scores:", user_scores.map((score: bigint) => score.toString()));
+				console.log("winner_ids:", winner_ids.map((id: bigint) => id.toString()));
+				console.log("winner_names:", winner_names);
+				console.log("tournament_id:", tournament_id);
+				const winner_idx = user_ids.indexOf(winner_ids[0]);
+				const winner_score = user_scores[winner_idx];
+
+              userTournaments.push({
+                id: tournament_id,
+                participants: user_ids,
+				scores: user_scores,
+                winnerNames: winner_names,
+				winnerScore: winner_score
+              });
+            }
+          }
+        } catch (error) {
+          // Tournament not on blockchain, skip it
+          console.log(`Tournament ${tournament.id} not found on blockchain`);
+        }
+      }
+
+      // Build message
+      let message = '';
+      
+      if (gameIds.length === 0 && userTournaments.length === 0) {
+        alert('No games or tournaments found on blockchain');
+        return;
+      }
+
+      if (gameIds.length > 0) {
+        message += `🎮 Your Games (${gameIds.length} total):\n`;
+        gameIds.slice(0, 30).forEach((id) => {
+          message += `  • Game #${id}\n`;
+        });
+        if (gameIds.length > 5) {
+          message += `  ...and ${gameIds.length - 5} more\n`;
+        }
+      }
+
+      if (userTournaments.length > 0) {
+        message += `\n🏆 Your Tournaments (${userTournaments.length} on blockchain):\n`;
+        userTournaments.slice(0, 40).forEach((tournament) => {
+          message += `  • ${tournament.id}\n`;
+          if (tournament.winnerNames) {
+            message += `    Winner(s): ${tournament.winnerNames}\n`;
+            message += `    Winner score: ${tournament.winnerScore}\n`;
+          }
+        });
+        if (userTournaments.length > 5) {
+          message += `  ...and ${userTournaments.length - 5} more\n`;
+        }
+      }
+
+      alert(message);
+    } catch (error) {
+      console.error('Error fetching games and tournaments:', error);
+      alert('Failed to fetch data from blockchain');
     }
   }
 
